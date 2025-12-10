@@ -22,11 +22,8 @@ npm run dev -- --host --port 5173
 ```
 Frontend runs at `http://localhost:5173` and calls the API at `http://localhost:5024` by default (set `VITE_API_BASE` to override).
 
-## API endpoints (TestModel)
-- `GET  /api/testmodels` – list
-- `GET  /api/testmodels/{id}` – get by id
-- `POST /api/testmodels` – create `{ name, note }`
-- `DELETE /api/testmodels/{id}` – delete
+## API endpoints
+- Add your own controllers for clinic entities (Users/Patients/Doctors/Appointments/etc.). Sample CORS and database wiring are already configured.
 
 ## Azure deployment notes
 - Use Azure SQL and place its ADO.NET connection string in App Service settings: `ConnectionStrings:DefaultConnection`.
