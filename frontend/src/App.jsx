@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import Login from './Login';
 import Signup from './Signup';
@@ -7,13 +7,30 @@ import './App.css';
 function App() {
   const [user, setUser] = useState(null);
 
+  // Restore user from localStorage on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('user');
+      }
+    }
+  }, []);
+
   const handleLogin = (userData) => {
     setUser(userData);
+    // Save user data and token to localStorage
+    localStorage.setItem('user', JSON.stringify(userData));
     alert(`Welcome ${userData.username}!`);
   };
 
   const handleLogout = () => {
     setUser(null);
+    // Clear user data from localStorage
+    localStorage.removeItem('user');
   };
 
   return (

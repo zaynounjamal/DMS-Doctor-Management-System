@@ -1,5 +1,32 @@
 const API_URL = "http://localhost:5024/api";
 
+// Helper function to get auth token from localStorage
+const getAuthToken = () => {
+  const user = localStorage.getItem('user');
+  if (user) {
+    try {
+      const userData = JSON.parse(user);
+      return userData.token;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return null;
+    }
+  }
+  return null;
+};
+
+// Helper function to create headers with auth token
+const getAuthHeaders = () => {
+  const token = getAuthToken();
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 export const login = async (username, password) => {
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
@@ -44,11 +71,21 @@ export const checkUsernameAvailability = async (username, signal) => {
 };
 
 export const getDoctors = async () => {
-  const response = await fetch(`${API_URL}/doctors`);
+  const response = await fetch(`${API_URL}/doctors`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch doctors');
+  }
   return response.json();
 };
 
 export const getAppointments = async () => {
-  const response = await fetch(`${API_URL}/appointments`);
+  const response = await fetch(`${API_URL}/appointments`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch appointments');
+  }
   return response.json();
 };

@@ -1,5 +1,10 @@
 using DMS_DOTNETREACT.Data;
+using DMS_DOTNETREACT.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,12 +18,102 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ClinicDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Register custom services
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<PasswordHasher>();
+
+// JWT Authentication with validation
+var jwtSecretKey = builder.Configuration["Jwt:SecretKey"] 
+    ?? throw new InvalidOperationException("JWT SecretKey is not configured");
+
+// Validate secret key length for security
+if (jwtSecretKey.Length < 32)
+{
+    throw new InvalidOperationException("JWT SecretKey must be at least 32 characters long for security");
+}
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+        ClockSkew = TimeSpan.Zero // Remove default 5 minute clock skew
+    };
+});
+
+// Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("PatientOnly", policy => policy.RequireRole("patient"));
+    options.AddPolicy("DoctorOnly", policy => policy.RequireRole("doctor"));
+    options.AddPolicy("SecretaryOnly", policy => policy.RequireRole("secretary"));
+    options.AddPolicy("DoctorOrSecretary", policy => policy.RequireRole("doctor", "secretary"));
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
+});
+
+// Rate Limiting Configuration
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(options =>
+{
+    options.EnableEndpointRateLimiting = true;
+    options.StackBlockedRequests = false;
+    options.HttpStatusCode = 429;
+    options.RealIpHeader = "X-Real-IP";
+    options.GeneralRules = new List<RateLimitRule>
+    {
+        new RateLimitRule
+        {
+            Endpoint = "*",
+            Period = "1m",
+            Limit = 100
+        },
+        new RateLimitRule
+        {
+            Endpoint = "*/api/auth/login",
+            Period = "1m",
+            Limit = 5
+        },
+        new RateLimitRule
+        {
+            Endpoint = "*/api/auth/signup",
+            Period = "1m",
+            Limit = 3
+        },
+        new RateLimitRule
+        {
+            Endpoint = "*/api/auth/check-username",
+            Period = "1m",
+            Limit = 20
+        }
+    };
+});
+
+builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+
 // Add CORS services
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:5174")
+        var allowedOrigins = builder.Environment.IsDevelopment()
+            ? new[] { "http://localhost:3000", "http://localhost:5173", "http://localhost:5174" }
+            : new[] { "https://yourdomain.com" }; // Update with your production domain
+
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -49,14 +144,38 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Security Headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Add("X-Frame-Options", "DENY");
+    context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Add("Referrer-Policy", "strict-origin-when-cross-origin");
+    
+    if (!app.Environment.IsDevelopment())
+    {
+        context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+    
+    await next();
+});
+
 // Enable CORS - must be before UseHttpsRedirection and UseAuthorization
 app.UseCors("AllowReactFrontend");
 
-// app.UseHttpsRedirection();
+// Enable HTTPS redirection in production
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
+// Rate Limiting
+app.UseIpRateLimiting();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGet("/api/health", () => "OK");
+app.MapGet("/api/health", () => "OK").AllowAnonymous();
 
 app.Run();

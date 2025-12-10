@@ -2,6 +2,7 @@ using DMS_DOTNETREACT.Data;
 using DMS_DOTNETREACT.DataModel;
 using DMS_DOTNETREACT.Models.BindingModels;
 using DMS_DOTNETREACT.Models.ViewModels;
+using DMS_DOTNETREACT.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,10 +13,14 @@ namespace DMS_DOTNETREACT.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly ClinicDbContext _context;
+    private readonly JwtService _jwtService;
+    private readonly PasswordHasher _passwordHasher;
 
-    public AuthController(ClinicDbContext context)
+    public AuthController(ClinicDbContext context, JwtService jwtService, PasswordHasher passwordHasher)
     {
         _context = context;
+        _jwtService = jwtService;
+        _passwordHasher = passwordHasher;
     }
 
     [HttpPost("login")]
@@ -29,7 +34,7 @@ public class AuthController : ControllerBase
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Username == model.Username);
 
-        if (user == null || user.PasswordHash != model.Password) // In real app, use hashing!
+        if (user == null || !_passwordHasher.VerifyPassword(model.Password, user.PasswordHash))
         {
             return Unauthorized("Invalid username or password");
         }
@@ -39,12 +44,14 @@ public class AuthController : ControllerBase
             return Unauthorized("User is inactive");
         }
 
+        var token = _jwtService.GenerateToken(user.Id, user.Username, user.Role);
+
         var viewModel = new UserViewModel
         {
             Id = user.Id,
             Username = user.Username,
             Role = user.Role,
-            Token = "dummy-token" // In real app, generate JWT
+            Token = token
         };
 
         return Ok(viewModel);
@@ -66,7 +73,7 @@ public class AuthController : ControllerBase
         var user = new User
         {
             Username = model.Username,
-            PasswordHash = model.Password, // In real app, use hashing!
+            PasswordHash = _passwordHasher.HashPassword(model.Password),
             Role = "patient",
             IsActive = true,
             CreatedAt = DateTime.UtcNow
@@ -85,12 +92,14 @@ public class AuthController : ControllerBase
         _context.Patients.Add(patient);
         await _context.SaveChangesAsync();
 
+        var token = _jwtService.GenerateToken(user.Id, user.Username, user.Role);
+
         var viewModel = new UserViewModel
         {
             Id = user.Id,
             Username = user.Username,
             Role = user.Role,
-            Token = "dummy-token" // In real app, generate JWT
+            Token = token
         };
 
         return CreatedAtAction(nameof(Login), new { }, viewModel);
