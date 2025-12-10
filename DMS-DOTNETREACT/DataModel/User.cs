@@ -4,6 +4,7 @@ namespace DMS_DOTNETREACT.DataModel;
 
 public class User
 {
+    [Key]
     public int Id { get; set; }
 
     [Required, MaxLength(50)]
