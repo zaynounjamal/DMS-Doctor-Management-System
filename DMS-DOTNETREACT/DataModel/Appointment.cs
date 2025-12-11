@@ -9,6 +9,7 @@ public class Appointment
     public int DoctorId { get; set; }
 
     public DateOnly AppointmentDate { get; set; }
+    public TimeOnly AppointmentTime { get; set; } // Main appointment time
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
 
@@ -21,6 +22,9 @@ public class Appointment
     public string PaymentStatus { get; set; } = "unpaid"; // unpaid, paid
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [MaxLength(500)]
+    public string? Notes { get; set; } // Patient notes for appointment
 
     [MaxLength(255)]
     public string? CancelReason { get; set; }

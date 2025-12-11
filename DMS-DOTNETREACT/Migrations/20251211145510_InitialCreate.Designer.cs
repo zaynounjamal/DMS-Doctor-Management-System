@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DMS_DOTNETREACT.Migrations
 {
     [DbContext(typeof(ClinicDbContext))]
-    [Migration("20251210131651_InitialCreate")]
+    [Migration("20251211145510_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -36,6 +36,9 @@ namespace DMS_DOTNETREACT.Migrations
                     b.Property<DateOnly>("AppointmentDate")
                         .HasColumnType("date");
 
+                    b.Property<TimeOnly>("AppointmentTime")
+                        .HasColumnType("time");
+
                     b.Property<string>("AppointmentType")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -52,6 +55,10 @@ namespace DMS_DOTNETREACT.Migrations
 
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
@@ -246,6 +253,46 @@ namespace DMS_DOTNETREACT.Migrations
                     b.ToTable("Patients");
                 });
 
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.PatientTreatment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AppointmentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("AssignedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("TreatmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppointmentId");
+
+                    b.HasIndex("PatientId");
+
+                    b.HasIndex("TreatmentId");
+
+                    b.ToTable("PatientTreatments");
+                });
+
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Payment", b =>
                 {
                     b.Property<int>("Id")
@@ -300,6 +347,41 @@ namespace DMS_DOTNETREACT.Migrations
                         .IsUnique();
 
                     b.ToTable("Secretaries");
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Treatment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal?>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Treatments");
                 });
 
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.User", b =>
@@ -421,6 +503,32 @@ namespace DMS_DOTNETREACT.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.PatientTreatment", b =>
+                {
+                    b.HasOne("DMS_DOTNETREACT.DataModel.Appointment", "Appointment")
+                        .WithMany()
+                        .HasForeignKey("AppointmentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("DMS_DOTNETREACT.DataModel.Patient", "Patient")
+                        .WithMany("PatientTreatments")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DMS_DOTNETREACT.DataModel.Treatment", "Treatment")
+                        .WithMany("PatientTreatments")
+                        .HasForeignKey("TreatmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Appointment");
+
+                    b.Navigation("Patient");
+
+                    b.Navigation("Treatment");
+                });
+
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Payment", b =>
                 {
                     b.HasOne("DMS_DOTNETREACT.DataModel.Appointment", "Appointment")
@@ -468,11 +576,18 @@ namespace DMS_DOTNETREACT.Migrations
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Patient", b =>
                 {
                     b.Navigation("Appointments");
+
+                    b.Navigation("PatientTreatments");
                 });
 
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Secretary", b =>
                 {
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Treatment", b =>
+                {
+                    b.Navigation("PatientTreatments");
                 });
 
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.User", b =>

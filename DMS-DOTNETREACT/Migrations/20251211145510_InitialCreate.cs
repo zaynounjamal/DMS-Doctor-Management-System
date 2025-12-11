@@ -12,6 +12,24 @@ namespace DMS_DOTNETREACT.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Treatments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Icon = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Treatments", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -150,12 +168,14 @@ namespace DMS_DOTNETREACT.Migrations
                     PatientId = table.Column<int>(type: "int", nullable: false),
                     DoctorId = table.Column<int>(type: "int", nullable: false),
                     AppointmentDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    AppointmentTime = table.Column<TimeOnly>(type: "time", nullable: false),
                     StartTime = table.Column<TimeOnly>(type: "time", nullable: false),
                     EndTime = table.Column<TimeOnly>(type: "time", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Price = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     PaymentStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     CancelReason = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     AppointmentType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
                 },
@@ -200,6 +220,42 @@ namespace DMS_DOTNETREACT.Migrations
                         name: "FK_MedicalNotes_Doctors_DoctorId",
                         column: x => x.DoctorId,
                         principalTable: "Doctors",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PatientTreatments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PatientId = table.Column<int>(type: "int", nullable: false),
+                    TreatmentId = table.Column<int>(type: "int", nullable: false),
+                    AppointmentId = table.Column<int>(type: "int", nullable: true),
+                    Notes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    AssignedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PatientTreatments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PatientTreatments_Appointments_AppointmentId",
+                        column: x => x.AppointmentId,
+                        principalTable: "Appointments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_PatientTreatments_Patients_PatientId",
+                        column: x => x.PatientId,
+                        principalTable: "Patients",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PatientTreatments_Treatments_TreatmentId",
+                        column: x => x.TreatmentId,
+                        principalTable: "Treatments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -274,6 +330,21 @@ namespace DMS_DOTNETREACT.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_PatientTreatments_AppointmentId",
+                table: "PatientTreatments",
+                column: "AppointmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PatientTreatments_PatientId",
+                table: "PatientTreatments",
+                column: "PatientId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PatientTreatments_TreatmentId",
+                table: "PatientTreatments",
+                column: "TreatmentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Payments_AppointmentId",
                 table: "Payments",
                 column: "AppointmentId",
@@ -310,7 +381,13 @@ namespace DMS_DOTNETREACT.Migrations
                 name: "OffDays");
 
             migrationBuilder.DropTable(
+                name: "PatientTreatments");
+
+            migrationBuilder.DropTable(
                 name: "Payments");
+
+            migrationBuilder.DropTable(
+                name: "Treatments");
 
             migrationBuilder.DropTable(
                 name: "Appointments");

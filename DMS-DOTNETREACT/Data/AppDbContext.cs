@@ -17,6 +17,8 @@ public class ClinicDbContext : DbContext
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<OffDay> OffDays => Set<OffDay>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Treatment> Treatments => Set<Treatment>();
+    public DbSet<PatientTreatment> PatientTreatments => Set<PatientTreatment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -91,6 +93,24 @@ public class ClinicDbContext : DbContext
             .WithMany(u => u.OffDays)
             .HasForeignKey(o => o.CreatedByUser)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PatientTreatment>()
+            .HasOne(pt => pt.Patient)
+            .WithMany(p => p.PatientTreatments)
+            .HasForeignKey(pt => pt.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PatientTreatment>()
+            .HasOne(pt => pt.Treatment)
+            .WithMany(t => t.PatientTreatments)
+            .HasForeignKey(pt => pt.TreatmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PatientTreatment>()
+            .HasOne(pt => pt.Appointment)
+            .WithMany()
+            .HasForeignKey(pt => pt.AppointmentId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
 

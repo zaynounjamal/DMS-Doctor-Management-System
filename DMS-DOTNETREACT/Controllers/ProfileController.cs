@@ -1,4 +1,5 @@
 using DMS_DOTNETREACT.Data;
+using DMS_DOTNETREACT.Models.BindingModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -41,19 +42,49 @@ public class ProfileController : ControllerBase
             return NotFound("User not found");
         }
 
+        // Return clean DTO based on role to avoid circular references
+        object? profileData = null;
+        
+        if (user.Role == "patient" && user.Patient != null)
+        {
+            profileData = new
+            {
+                user.Patient.Id,
+                user.Patient.FullName,
+                user.Patient.Phone,
+                user.Patient.ProfilePhoto,
+                user.Patient.Gender,
+                user.Patient.BirthDate
+            };
+        }
+        else if (user.Role == "doctor" && user.Doctor != null)
+        {
+            profileData = new
+            {
+                user.Doctor.Id,
+                user.Doctor.FullName,
+                user.Doctor.Specialty,
+                user.Doctor.Phone,
+                user.Doctor.ProfilePhoto
+            };
+        }
+        else if (user.Role == "secretary" && user.Secretary != null)
+        {
+            profileData = new
+            {
+                user.Secretary.Id,
+                user.Secretary.FullName,
+                user.Secretary.Phone
+            };
+        }
+
         return Ok(new
         {
             user.Id,
             user.Username,
             user.Role,
             user.CreatedAt,
-            Profile = user.Role switch
-            {
-                "patient" => (object?)user.Patient,
-                "doctor" => user.Doctor,
-                "secretary" => user.Secretary,
-                _ => null
-            }
+            Profile = profileData
         });
     }
 
@@ -105,5 +136,76 @@ public class ProfileController : ControllerBase
             .ToListAsync();
 
         return Ok(appointments);
+    }
+    /// <summary>
+    /// Update patient profile
+    /// </summary>
+    [HttpPut("patient")]
+    [Authorize(Policy = "PatientOnly")]
+    public async Task<ActionResult> UpdatePatientProfile([FromBody] UpdatePatientProfileBindingModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null)
+        {
+            return NotFound("Patient profile not found");
+        }
+
+        // Update fields
+        patient.FullName = model.FullName;
+        patient.Phone = model.Phone;
+        patient.Gender = model.Gender;
+        patient.BirthDate = model.BirthDate;
+        patient.ProfilePhoto = model.ProfilePhoto;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { Message = "Profile updated successfully", Patient = patient });
+    }
+
+    /// <summary>
+    /// Change user password
+    /// </summary>
+    [HttpPost("change-password")]
+    public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordBindingModel model, [FromServices] Services.PasswordHasher passwordHasher)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            return NotFound("User not found");
+        }
+
+        // Verify current password
+        if (!passwordHasher.VerifyPassword(model.CurrentPassword, user.PasswordHash))
+        {
+            return BadRequest("Current password is incorrect");
+        }
+
+        // Hash and save new password
+        user.PasswordHash = passwordHasher.HashPassword(model.NewPassword);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { Message = "Password changed successfully" });
     }
 }

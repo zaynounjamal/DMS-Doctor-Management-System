@@ -23,5 +23,6 @@ public class Patient
 
     public User User { get; set; } = null!;
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    public ICollection<PatientTreatment> PatientTreatments { get; set; } = new List<PatientTreatment>();
 }
 

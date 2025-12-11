@@ -1,5 +1,6 @@
 using DMS_DOTNETREACT.Data;
 using DMS_DOTNETREACT.Services;
+using DMS_DOTNETREACT.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -129,8 +130,12 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var db = services.GetRequiredService<ClinicDbContext>();
+        var passwordHasher = services.GetRequiredService<PasswordHasher>();
         var created = db.Database.EnsureCreated();
         Console.WriteLine($"Database created: {created}");
+        
+        // Seed database with dummy data
+        DatabaseSeeder.SeedDatabase(db, passwordHasher);
     }
     catch (Exception ex)
     {
@@ -139,6 +144,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"[Request] {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
+    await next();
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -163,6 +174,9 @@ app.Use(async (context, next) =>
 // Enable CORS - must be before UseHttpsRedirection and UseAuthorization
 app.UseCors("AllowReactFrontend");
 
+// Enable static files to serve uploaded photos
+app.UseStaticFiles();
+
 // Enable HTTPS redirection in production
 if (!app.Environment.IsDevelopment())
 {
@@ -177,5 +191,15 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapGet("/api/health", () => "OK").AllowAnonymous();
+
+// Seed database
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ClinicDbContext>();
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
+    
+    context.Database.Migrate();
+    DMS_DOTNETREACT.Helpers.DatabaseSeeder.SeedDatabase(context, passwordHasher);
+}
 
 app.Run();
