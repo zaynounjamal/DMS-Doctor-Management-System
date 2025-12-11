@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getPublicStats } from './api';
+import { getPublicStats } from '../api';
 
 const StatsSection = () => {
   const [stats, setStats] = useState({

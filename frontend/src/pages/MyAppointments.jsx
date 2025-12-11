@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getMyAppointments, cancelAppointment } from './api';
-import './BookAppointment.css'; // Reusing styles for consistency
+import { getMyAppointments, cancelAppointment } from '../api';
+import '../BookAppointment.css'; // Reusing styles for consistency
 
 const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getDoctors, getAvailableDates, getTimeSlots, bookAppointment } from './api';
-import './BookAppointment.css';
+import { getDoctors, getAvailableDates, getTimeSlots, bookAppointment } from '../api';
+import '../BookAppointment.css';
 
 const BookAppointment = () => {
   const navigate = useNavigate();

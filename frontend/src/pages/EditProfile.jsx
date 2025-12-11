@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getProfile, updateProfile, uploadProfilePhoto } from './api';
-import './BookAppointment.css'; // Reusing styles
+import { getProfile, updateProfile, uploadProfilePhoto } from '../api';
+import '../BookAppointment.css'; // Reusing styles
 
 const EditProfile = () => {
   const [formData, setFormData] = useState({

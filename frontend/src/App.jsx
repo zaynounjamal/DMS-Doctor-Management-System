@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import Login from './Login';
-import Signup from './Signup';
-import BookAppointment from './BookAppointment';
-import MyAppointments from './MyAppointments';
-import EditProfile from './EditProfile';
-import ChangePassword from './ChangePassword';
-import FinancialSummary from './FinancialSummary';
-import StatsSection from './StatsSection';
-import TreatmentsPage from './TreatmentsPage';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
+import Header from './components/layout/Header';
+import LoginModal from './components/auth/LoginModal';
+import BookAppointment from './pages/BookAppointment';
+import MyAppointments from './pages/MyAppointments';
+import EditProfile from './pages/EditProfile';
+import ChangePassword from './pages/ChangePassword';
+import FinancialSummary from './pages/FinancialSummary';
+import StatsSection from './pages/StatsSection';
+import TreatmentsPage from './pages/TreatmentsPage';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Restore user from localStorage on mount
   useEffect(() => {
@@ -41,46 +43,40 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="app-container">
-        <nav>
-          <ul>
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/treatments">Treatments</Link></li>
-            <li><Link to="/book-appointment">Book Appointment</Link></li>
-            <li><Link to="/my-appointments">My Appointments</Link></li>
-            <li><Link to="/financial-summary">Financial Summary</Link></li>
-            <li><Link to="/edit-profile">Edit Profile</Link></li>
-            <li><Link to="/change-password">Change Password</Link></li>
-            {!user ? (
-              <>
-                <li><Link to="/login">Login</Link></li>
-                <li><Link to="/signup">Signup</Link></li>
-              </>
-            ) : (
-              <li><button onClick={handleLogout}>Logout</button></li>
-            )}
-          </ul>
-        </nav>
-
-        <Routes>
-          <Route path="/" element={
-            <>
-              <h1>Welcome to DMS</h1>
-              <StatsSection />
-            </>
-          } />
-          <Route path="/treatments" element={<TreatmentsPage />} />
-          <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />
-          <Route path="/signup" element={!user ? <Signup onLogin={handleLogin} /> : <Navigate to="/" />} />
-          <Route path="/book-appointment" element={<BookAppointment />} />
-          <Route path="/my-appointments" element={user ? <MyAppointments /> : <Navigate to="/login" />} />
-          <Route path="/financial-summary" element={user ? <FinancialSummary /> : <Navigate to="/login" />} />
-          <Route path="/edit-profile" element={user ? <EditProfile /> : <Navigate to="/login" />} />
-          <Route path="/change-password" element={user ? <ChangePassword /> : <Navigate to="/login" />} />
-        </Routes>
-      </div>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+          <Header 
+            onLoginClick={() => setIsLoginModalOpen(true)}
+            user={user}
+            onLogout={handleLogout}
+          />
+          
+          <main className="relative" style={{ paddingTop: '56px' }}>
+            <Routes>
+              <Route path="/" element={
+                <>
+                  <h1 className="text-3xl font-bold text-center mt-8">Welcome to DMS</h1>
+                  <StatsSection />
+                </>
+              } />
+              <Route path="/treatments" element={<TreatmentsPage />} />
+              <Route path="/book-appointment" element={<BookAppointment />} />
+              <Route path="/my-appointments" element={user ? <MyAppointments /> : <Navigate to="/" />} />
+              <Route path="/financial-summary" element={user ? <FinancialSummary /> : <Navigate to="/" />} />
+              <Route path="/edit-profile" element={user ? <EditProfile /> : <Navigate to="/" />} />
+              <Route path="/change-password" element={user ? <ChangePassword /> : <Navigate to="/" />} />
+            </Routes>
+          </main>
+          
+          <LoginModal 
+            isOpen={isLoginModalOpen} 
+            onClose={() => setIsLoginModalOpen(false)} 
+            onLogin={handleLogin}
+          />
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }
 
