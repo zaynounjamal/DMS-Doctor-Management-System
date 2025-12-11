@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getFinancialSummary } from './api';
-import './BookAppointment.css';
+import { getFinancialSummary } from '../api';
+import '../BookAppointment.css';
 
 const FinancialSummary = () => {
   const [data, setData] = useState(null);

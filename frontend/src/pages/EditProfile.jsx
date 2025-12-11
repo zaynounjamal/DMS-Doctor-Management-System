@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getProfile, updateProfile, uploadProfilePhoto } from './api';
-import './BookAppointment.css'; // Reusing styles
+import { getProfile, updateProfile, uploadProfilePhoto } from '../api';
+import '../BookAppointment.css'; // Reusing styles
 
 const EditProfile = () => {
   const [formData, setFormData] = useState({
@@ -191,7 +191,7 @@ const EditProfile = () => {
         <div className="form-group">
           <label>Phone Number:</label>
           <input
-            type="tel"
+            type="number"
             name="phone"
             value={formData.phone}
             onChange={handleChange}

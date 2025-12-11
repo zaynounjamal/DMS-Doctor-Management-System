@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { changePassword } from './api';
-import './BookAppointment.css'; // Reusing styles
+import { changePassword } from '../api';
+import '../BookAppointment.css'; // Reusing styles
 
 const ChangePassword = () => {
   const [formData, setFormData] = useState({

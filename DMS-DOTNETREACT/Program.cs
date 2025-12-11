@@ -124,24 +124,8 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Ensure database exists
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var db = services.GetRequiredService<ClinicDbContext>();
-        var passwordHasher = services.GetRequiredService<PasswordHasher>();
-        var created = db.Database.EnsureCreated();
-        Console.WriteLine($"Database created: {created}");
-        
-        // Seed database with dummy data
-        DatabaseSeeder.SeedDatabase(db, passwordHasher);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"An error occurred creating the DB: {ex.Message}");
-    }
-}
+// Database initialization and seeding is handled at the end of the pipeline
+
 
 // Configure the HTTP request pipeline.
 app.Use(async (context, next) =>
@@ -198,7 +182,7 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ClinicDbContext>();
     var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
     
-    context.Database.Migrate();
+    context.Database.EnsureCreated();
     DMS_DOTNETREACT.Helpers.DatabaseSeeder.SeedDatabase(context, passwordHasher);
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTreatments } from './api';
+import { getTreatments } from '../api';
 
 const TreatmentsPage = () => {
   const [treatments, setTreatments] = useState([]);
