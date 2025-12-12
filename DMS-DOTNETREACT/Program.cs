@@ -179,11 +179,29 @@ app.MapGet("/api/health", () => "OK").AllowAnonymous();
 // Seed database
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<ClinicDbContext>();
-    var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
-    
-    context.Database.EnsureCreated();
-    DMS_DOTNETREACT.Helpers.DatabaseSeeder.SeedDatabase(context, passwordHasher);
+    try
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ClinicDbContext>();
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
+        
+        // For development: delete and recreate database
+        context.Database.EnsureDeleted();
+        context.Database.EnsureCreated();
+        Console.WriteLine("Database created successfully!");
+        
+        DMS_DOTNETREACT.Helpers.DatabaseSeeder.SeedDatabase(context, passwordHasher);
+        Console.WriteLine("Database seeded successfully!");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"ERROR during database setup: {ex.Message}");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        if (ex.InnerException != null)
+        {
+            Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+        }
+        throw;
+    }
 }
 
 app.Run();
