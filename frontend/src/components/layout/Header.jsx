@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Stethoscope } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import Sidebar from './Sidebar';
 import UserProfileMenu from './UserProfileMenu';
@@ -8,12 +9,17 @@ const Header = ({ onLoginClick, user, onLogout }) => {
   const { theme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showLogo, setShowLogo] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 20);
+      // Show logo in header when hero logo has shrunk (around 350-400px scroll)
+      setShowLogo(scrollY > 350);
     };
     window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check initial scroll position
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -31,18 +37,39 @@ const Header = ({ onLoginClick, user, onLogout }) => {
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 z-40 bg-primary-light dark:bg-primary-dark transition-all duration-300"
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+          isScrolled 
+            ? 'bg-primary-light/90 dark:bg-primary-dark/90 backdrop-blur-sm' 
+            : 'bg-primary-light dark:bg-primary-dark'
+        }`}
         style={{
           height: '56px',
         }}
       >
-        <nav className="max-w-7xl mx-auto px-4 h-full">
+        <nav className="max-w-7xl mx-auto px-4 h-full relative">
           <div className="flex items-center justify-between h-full">
-            {/* Left Side: Hamburger Menu */}
+            {/* Left Side: Logo and Hamburger Menu */}
             <div className="flex items-center space-x-3">
+              {/* Logo with rounded border - appears when scrolling */}
+              <AnimatePresence>
+                {showLogo && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8, width: 0, marginRight: 0 }}
+                    animate={{ opacity: 1, scale: 1, width: '40px', marginRight: '12px' }}
+                    exit={{ opacity: 0, scale: 0.8, width: 0, marginRight: 0 }}
+                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                    className="h-10 w-10 flex items-center justify-center rounded-lg border-2 border-white/30 bg-white/10 backdrop-blur-sm flex-shrink-0"
+                  >
+                    <Stethoscope 
+                      className="w-6 h-6 text-white"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              {/* Hamburger menu - always in same position */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 rounded-full hover:bg-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="p-2 rounded-full hover:bg-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 flex-shrink-0"
                 aria-label="Open navigation menu"
                 style={{ minWidth: '40px', minHeight: '40px' }}
               >
