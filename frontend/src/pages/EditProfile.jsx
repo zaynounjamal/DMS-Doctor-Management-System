@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getProfile, updateProfile, uploadProfilePhoto } from '../api';
+import { getProfile, updateProfile, updateDoctorProfile, uploadProfilePhoto } from '../api';
 import '../BookAppointment.css'; // Reusing styles
 
 const EditProfile = () => {
@@ -8,8 +8,12 @@ const EditProfile = () => {
     phone: '',
     gender: '',
     birthDate: '',
+    specialty: '',
+    startHour: '',
+    endHour: '',
     profilePhoto: ''
   });
+  const [role, setRole] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -23,6 +27,7 @@ const EditProfile = () => {
     try {
       const data = await getProfile();
       const profile = data.profile;
+      setRole(data.role?.toLowerCase() || '');
       
       if (profile) {
         setFormData({
@@ -30,10 +35,13 @@ const EditProfile = () => {
           phone: profile.phone || '',
           gender: profile.gender || '',
           birthDate: profile.birthDate || '',
+          specialty: profile.specialty || '',
+          startHour: profile.startHour || '',
+          endHour: profile.endHour || '',
           profilePhoto: profile.profilePhoto || ''
         });
       } else {
-        setMessage({ type: 'error', text: 'Patient profile not found. Please contact support.' });
+        setMessage({ type: 'error', text: 'Profile not found. Please contact support.' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to load profile: ' + error.message });
@@ -76,13 +84,27 @@ const EditProfile = () => {
     setMessage(null);
 
     try {
-      // Prepare data - convert empty birthDate to null
-      const dataToSend = {
-        ...formData,
-        birthDate: formData.birthDate || null
-      };
-      
-      await updateProfile(dataToSend);
+      if (role === 'doctor') {
+        const doctorData = {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          specialty: formData.specialty,
+          startHour: formData.startHour,
+          endHour: formData.endHour,
+          profilePhoto: formData.profilePhoto
+        };
+        await updateDoctorProfile(doctorData);
+      } else {
+        // Patient update
+        const patientData = {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          gender: formData.gender,
+          birthDate: formData.birthDate || null,
+          profilePhoto: formData.profilePhoto
+        };
+        await updateProfile(patientData);
+      }
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (error) {
       setMessage({ type: 'error', text: error.message });
@@ -191,7 +213,7 @@ const EditProfile = () => {
         <div className="form-group">
           <label>Phone Number:</label>
           <input
-            type="number"
+            type="text"
             name="phone"
             value={formData.phone}
             onChange={handleChange}
@@ -200,29 +222,67 @@ const EditProfile = () => {
           />
         </div>
 
-        <div className="form-group">
-          <label>Gender:</label>
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-          >
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
+        {role === 'doctor' ? (
+          <>
+            <div className="form-group">
+              <label>Specialty:</label>
+              <input
+                type="text"
+                name="specialty"
+                value={formData.specialty}
+                onChange={handleChange}
+                required
+                maxLength={50}
+              />
+            </div>
+            <div className="form-group">
+              <label>Start Hour:</label>
+              <input
+                type="time"
+                name="startHour"
+                value={formData.startHour}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>End Hour:</label>
+              <input
+                type="time"
+                name="endHour"
+                value={formData.endHour}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="form-group">
+              <label>Gender:</label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+              >
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
 
-        <div className="form-group">
-          <label>Birth Date:</label>
-          <input
-            type="date"
-            name="birthDate"
-            value={formData.birthDate}
-            onChange={handleChange}
-          />
-        </div>
+            <div className="form-group">
+              <label>Birth Date:</label>
+              <input
+                type="date"
+                name="birthDate"
+                value={formData.birthDate}
+                onChange={handleChange}
+              />
+            </div>
+          </>
+        )}
 
         <button type="submit" className="submit-btn">Update Profile</button>
       </form>

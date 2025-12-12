@@ -23,16 +23,34 @@ const Header = ({ onLoginClick, user, onLogout }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Navigation items for DMS
-  const navItems = [
-    { name: 'Home', href: '/' },
-    { name: 'Treatments', href: '/treatments' },
-    { name: 'Book Appointment', href: '/book-appointment' },
-    { name: 'My Appointments', href: '/my-appointments' },
-    { name: 'Financial Summary', href: '/financial-summary' },
-    { name: 'Edit Profile', href: '/edit-profile' },
-    { name: 'Change Password', href: '/change-password' },
-  ];
+  // Navigation items based on user role
+  const getNavItems = () => {
+    if (user?.role?.toLowerCase() === 'doctor') {
+      return [
+        { name: 'Dashboard', href: '/doctor/dashboard' },
+        { name: 'Appointments', href: '/doctor/appointments' },
+        { name: 'Calendar', href: '/doctor/calendar' },
+        { name: 'Patients', href: '/doctor/patients' },
+        { name: 'Profit Analytics', href: '/doctor/profit' },
+        { name: 'Off Days', href: '/doctor/offdays' },
+        { name: 'Edit Profile', href: '/edit-profile' },
+        { name: 'Change Password', href: '/change-password' },
+      ];
+    }
+    
+    // Patient navigation
+    return [
+      { name: 'Home', href: '/' },
+      { name: 'Treatments', href: '/treatments' },
+      { name: 'Book Appointment', href: '/book-appointment' },
+      { name: 'My Appointments', href: '/my-appointments' },
+      { name: 'Financial Summary', href: '/financial-summary' },
+      { name: 'Edit Profile', href: '/edit-profile' },
+      { name: 'Change Password', href: '/change-password' },
+    ];
+  };
+
+  const navItems = getNavItems();
 
   return (
     <>

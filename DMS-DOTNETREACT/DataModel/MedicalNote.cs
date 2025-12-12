@@ -12,6 +12,8 @@ public class MedicalNote
     public string Note { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+    public bool IsEdited { get; set; } = false;
 
     public Appointment Appointment { get; set; } = null!;
     public Doctor Doctor { get; set; } = null!;

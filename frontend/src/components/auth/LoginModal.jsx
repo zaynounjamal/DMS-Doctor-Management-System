@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, Eye, EyeOff, User, Loader2, Phone, Calendar, UserCircle, ChevronDown, Check, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { login, signup, checkUsernameAvailability } from '../../api';
 
 const LoginModal = ({ isOpen, onClose, onLogin }) => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const [currentView, setCurrentView] = useState('login'); // 'login' or 'signup'
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -248,6 +250,16 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
         const userData = await login(formData.username, formData.password);
         onLogin(userData);
         onClose();
+        
+        // Redirect based on role (case-insensitive)
+        const userRole = userData.role?.toLowerCase();
+        if (userRole === 'doctor') {
+          navigate('/doctor/dashboard');
+        } else if (userRole === 'secretary') {
+          navigate('/'); // Secretary dashboard (if exists)
+        } else {
+          navigate('/'); // Patient home
+        }
       } else {
         // Signup with DMS API - map fields correctly
         const signupData = {
@@ -262,6 +274,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
         const userData = await signup(signupData);
         onLogin(userData);
         onClose();
+        navigate('/'); // Patients go to home after signup
       }
     } catch (err) {
       setError(err.message || 'An error occurred. Please try again.');

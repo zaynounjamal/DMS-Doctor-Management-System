@@ -22,6 +22,14 @@ public class Appointment
     public string PaymentStatus { get; set; } = "unpaid"; // unpaid, paid
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    // Doctor completion fields
+    public bool IsCompleted { get; set; } = false;
+    public DateTime? CompletedAt { get; set; }
+    public decimal? FinalPrice { get; set; } // Locked price after completion
+    
+    [MaxLength(1000)]
+    public string? CompletionNotes { get; set; } // Doctor's notes when marking as done
 
     [MaxLength(500)]
     public string? Notes { get; set; } // Patient notes for appointment

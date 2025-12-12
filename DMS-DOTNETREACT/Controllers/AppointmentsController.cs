@@ -121,6 +121,15 @@ public class AppointmentsController : ControllerBase
             var startTime = new TimeOnly(9, 0);
             var endTime = new TimeOnly(17, 0);
 
+            // Check for off day
+            var isOffDay = await _context.OffDays
+                .AnyAsync(od => od.CreatedByUser == doctorId && od.OffDate == parsedDate);
+
+            if (isOffDay)
+            {
+                return Ok(new List<object>()); // Return empty list if it's an off day
+            }
+
             // Get existing appointments for this doctor on this date
             var existingAppointments = await _context.Appointments
                 .Where(a => a.DoctorId == doctorId && a.AppointmentDate == parsedDate && a.Status != "Cancelled")
@@ -318,5 +327,267 @@ public class AppointmentsController : ControllerBase
             .ToListAsync();
 
         return Ok(appointments);
+    }
+
+    // ==================== DOCTOR ENDPOINTS ====================
+
+    /// <summary>
+    /// Get today's appointments for the logged-in doctor
+    /// </summary>
+    [HttpGet("doctor/today")]
+    [Authorize(Policy = "DoctorOnly")]
+    public async Task<ActionResult> GetDoctorTodayAppointments()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (doctor == null)
+        {
+            return NotFound("Doctor not found");
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var appointments = await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.MedicalNotes)
+            .Where(a => a.DoctorId == doctor.Id && a.AppointmentDate == today)
+            .OrderBy(a => a.AppointmentTime)
+            .Select(a => new
+            {
+                a.Id,
+                a.AppointmentDate,
+                a.AppointmentTime,
+                a.Status,
+                a.IsCompleted,
+                a.CompletedAt,
+                a.FinalPrice,
+                a.PaymentStatus,
+                a.CompletionNotes,
+                a.Notes,
+                Patient = new
+                {
+                    a.Patient.Id,
+                    a.Patient.FullName,
+                    a.Patient.Phone,
+                    a.Patient.Gender,
+                    a.Patient.BirthDate
+                },
+                MedicalNotesCount = a.MedicalNotes.Count
+            })
+            .ToListAsync();
+
+        return Ok(appointments);
+    }
+
+    /// <summary>
+    /// Get tomorrow's appointments for the logged-in doctor
+    /// </summary>
+    [HttpGet("doctor/tomorrow")]
+    [Authorize(Policy = "DoctorOnly")]
+    public async Task<ActionResult> GetDoctorTomorrowAppointments()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (doctor == null)
+        {
+            return NotFound("Doctor not found");
+        }
+
+        var tomorrow = DateOnly.FromDateTime(DateTime.Today.AddDays(1));
+
+        var appointments = await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.MedicalNotes)
+            .Where(a => a.DoctorId == doctor.Id && a.AppointmentDate == tomorrow)
+            .OrderBy(a => a.AppointmentTime)
+            .Select(a => new
+            {
+                a.Id,
+                a.AppointmentDate,
+                a.AppointmentTime,
+                a.Status,
+                a.IsCompleted,
+                a.CompletedAt,
+                a.FinalPrice,
+                a.PaymentStatus,
+                a.CompletionNotes,
+                a.Notes,
+                Patient = new
+                {
+                    a.Patient.Id,
+                    a.Patient.FullName,
+                    a.Patient.Phone,
+                    a.Patient.Gender,
+                    a.Patient.BirthDate
+                },
+                MedicalNotesCount = a.MedicalNotes.Count
+            })
+            .ToListAsync();
+
+        return Ok(appointments);
+    }
+
+    /// <summary>
+    /// Get future appointments for the logged-in doctor (after tomorrow)
+    /// </summary>
+    [HttpGet("doctor/future")]
+    [Authorize(Policy = "DoctorOnly")]
+    public async Task<ActionResult> GetDoctorFutureAppointments()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (doctor == null)
+        {
+            return NotFound("Doctor not found");
+        }
+
+        var dayAfterTomorrow = DateOnly.FromDateTime(DateTime.Today.AddDays(2));
+
+        var appointments = await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.MedicalNotes)
+            .Where(a => a.DoctorId == doctor.Id && a.AppointmentDate >= dayAfterTomorrow)
+            .OrderBy(a => a.AppointmentDate)
+            .ThenBy(a => a.AppointmentTime)
+            .Select(a => new
+            {
+                a.Id,
+                a.AppointmentDate,
+                a.AppointmentTime,
+                a.Status,
+                a.IsCompleted,
+                a.CompletedAt,
+                a.FinalPrice,
+                a.PaymentStatus,
+                a.CompletionNotes,
+                a.Notes,
+                Patient = new
+                {
+                    a.Patient.Id,
+                    a.Patient.FullName,
+                    a.Patient.Phone,
+                    a.Patient.Gender,
+                    a.Patient.BirthDate
+                },
+                MedicalNotesCount = a.MedicalNotes.Count
+            })
+            .ToListAsync();
+
+        return Ok(appointments);
+    }
+
+    /// <summary>
+    /// Get past appointments for the logged-in doctor
+    /// </summary>
+    [HttpGet("doctor/past")]
+    [Authorize(Policy = "DoctorOnly")]
+    public async Task<ActionResult> GetDoctorPastAppointments()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (doctor == null)
+        {
+            return NotFound("Doctor not found");
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var appointments = await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.MedicalNotes)
+            .Where(a => a.DoctorId == doctor.Id && a.AppointmentDate < today)
+            .OrderByDescending(a => a.AppointmentDate)
+            .ThenByDescending(a => a.AppointmentTime)
+            .Select(a => new
+            {
+                a.Id,
+                a.AppointmentDate,
+                a.AppointmentTime,
+                a.Status,
+                a.IsCompleted,
+                a.CompletedAt,
+                a.FinalPrice,
+                a.PaymentStatus,
+                a.CompletionNotes,
+                a.Notes,
+                Patient = new
+                {
+                    a.Patient.Id,
+                    a.Patient.FullName,
+                    a.Patient.Phone,
+                    a.Patient.Gender,
+                    a.Patient.BirthDate
+                },
+                MedicalNotesCount = a.MedicalNotes.Count
+            })
+            .ToListAsync();
+
+        return Ok(appointments);
+    }
+
+    /// <summary>
+    /// Mark appointment as done with final price and completion notes
+    /// </summary>
+    [HttpPut("{id}/complete")]
+    [Authorize(Policy = "DoctorOnly")]
+    public async Task<ActionResult> CompleteAppointment(int id, [FromBody] CompleteAppointmentBindingModel model)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (doctor == null)
+        {
+            return NotFound("Doctor not found");
+        }
+
+        var appointment = await _context.Appointments.FindAsync(id);
+        if (appointment == null)
+        {
+            return NotFound("Appointment not found");
+        }
+
+        if (appointment.DoctorId != doctor.Id)
+        {
+            return Forbid("You can only complete your own appointments");
+        }
+
+        if (appointment.IsCompleted)
+        {
+            return BadRequest("Appointment is already completed. Price is locked.");
+        }
+
+        appointment.IsCompleted = true;
+        appointment.CompletedAt = DateTime.UtcNow;
+        appointment.FinalPrice = model.FinalPrice;
+        appointment.CompletionNotes = model.CompletionNotes;
+        appointment.Status = "done";
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { Message = "Appointment marked as done", Appointment = appointment });
     }
 }
