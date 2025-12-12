@@ -9,10 +9,17 @@ public static class DatabaseSeeder
     public static void SeedDatabase(ClinicDbContext context, PasswordHasher passwordHasher)
     {
         // Check if we already have doctors
-        if (context.Doctors.Any())
+        try
         {
-            Console.WriteLine("Database already seeded.");
-            return;
+            if (context.Doctors.Any())
+            {
+                Console.WriteLine("Database already seeded.");
+                return;
+            }
+        }
+        catch
+        {
+            // Table doesn't exist yet or is empty, continue with seeding
         }
 
         Console.WriteLine("Seeding database with dummy data...");
