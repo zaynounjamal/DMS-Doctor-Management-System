@@ -12,6 +12,7 @@ import FinancialSummary from './pages/FinancialSummary';
 import StatsSection from './pages/StatsSection';
 import TreatmentsPage from './pages/TreatmentsPage';
 import HomePage from './pages/HomePage';
+import Profile from './pages/Profile';
 import './App.css';
 
 const AppContent = () => {
@@ -31,6 +32,7 @@ const AppContent = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/treatments" element={<TreatmentsPage />} />
             <Route path="/book-appointment" element={<BookAppointment />} />
+            <Route path="/profile" element={user ? <Profile /> : <Navigate to="/" />} />
             <Route path="/my-appointments" element={user ? <MyAppointments /> : <Navigate to="/" />} />
             <Route path="/financial-summary" element={user ? <FinancialSummary /> : <Navigate to="/" />} />
             <Route path="/edit-profile" element={user ? <EditProfile /> : <Navigate to="/" />} />

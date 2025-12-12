@@ -8,6 +8,8 @@ import { useAuth } from '../contexts/AuthContext';
 import DoctorSelector from '../components/booking/DoctorSelector';
 import AppointmentCalendar from '../components/booking/AppointmentCalendar';
 import TimeSelector from '../components/booking/TimeSelector';
+import TimeSlotModal from '../components/booking/TimeSlotModal';
+import SuccessModal from '../components/booking/SuccessModal';
 import NoteSection from '../components/booking/NoteSection';
 import AppointmentForm from '../components/booking/AppointmentForm';
 
@@ -20,32 +22,33 @@ const BookAppointment = () => {
   const [availableDates, setAvailableDates] = useState([]); // ISO strings "YYYY-MM-DD"
   const [timeSlots, setTimeSlots] = useState([]);
   
-  // Selection States
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null); // Date object
-  const [selectedTime, setSelectedTime] = useState(null); // Slot object
-  const [notes, setNotes] = useState('');
+  // Selection States - with sessionStorage persistence
+  const [selectedDoctor, setSelectedDoctor] = useState(() => {
+    const saved = sessionStorage.getItem('bookingDoctor');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const saved = sessionStorage.getItem('bookingDate');
+    return saved ? new Date(saved) : null;
+  });
+  const [selectedTime, setSelectedTime] = useState(() => {
+    const saved = sessionStorage.getItem('bookingTime');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [notes, setNotes] = useState(() => {
+    return sessionStorage.getItem('bookingNotes') || '';
+  });
   
   // UI States
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(''); // Just a string for error passing mostly, or success via alert/toast ideally
   const [error, setError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [validationWarning, setValidationWarning] = useState('');
 
-  // Check if user is logged in
-  useEffect(() => {
-    const verifyLogin = async () => {
-        try {
-            // Requirement: Call existing backend controller to verify status
-            await getProfile();
-        } catch (error) {
-            // Not logged in or token invalid
-            alert("You need to log in first.");
-            openLoginModal();
-            navigate('/');
-        }
-    };
-    verifyLogin();
-  }, []);
+  // Removed login verification - guests can now browse freely
 
   // Load doctors on mount
   useEffect(() => {
@@ -74,8 +77,13 @@ const BookAppointment = () => {
     if (!doctor) return;
 
     setSelectedDoctor(doctor);
+    sessionStorage.setItem('bookingDoctor', JSON.stringify(doctor));
+    
     setSelectedDate(null);
     setSelectedTime(null);
+    sessionStorage.removeItem('bookingDate');
+    sessionStorage.removeItem('bookingTime');
+    
     setTimeSlots([]);
     setAvailableDates([]);
     setError('');
@@ -95,7 +103,11 @@ const BookAppointment = () => {
     if (!selectedDoctor || !date) return;
     
     setSelectedDate(date);
+    sessionStorage.setItem('bookingDate', date.toISOString());
+    
     setSelectedTime(null);
+    sessionStorage.removeItem('bookingTime');
+    
     setLoading(true);
     setError('');
 
@@ -119,6 +131,11 @@ const BookAppointment = () => {
 
       const slots = await getTimeSlots(selectedDoctor.id, dateStr);
       setTimeSlots(slots);
+      
+      // Auto-open modal when time slots are loaded
+      if (slots && slots.length > 0) {
+        setIsModalOpen(true);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -129,22 +146,46 @@ const BookAppointment = () => {
   const handleTimeChange = (slot) => {
     if (slot.isAvailable) {
       setSelectedTime(slot);
+      sessionStorage.setItem('bookingTime', JSON.stringify(slot));
     }
   };
 
+  const handleNotesChange = (value) => {
+    setNotes(value);
+    sessionStorage.setItem('bookingNotes', value);
+  };
+
+  const validateBooking = () => {
+    if (!selectedDoctor) {
+      setValidationWarning('Please select a doctor first');
+      return false;
+    }
+    if (!selectedDate) {
+      setValidationWarning('Please select a date');
+      return false;
+    }
+    if (!selectedTime) {
+      setValidationWarning('Please select a time slot');
+      return false;
+    }
+    setValidationWarning('');
+    return true;
+  };
+
   const onBook = async () => {
+    // Check if user is logged in - open login modal for guests
     if (!user) {
-      navigate('/login');
+      openLoginModal();
       return;
     }
 
-    if (!selectedDoctor || !selectedDate || !selectedTime) {
-      setError('Please complete all selection steps.');
+    if (!validateBooking()) {
       return;
     }
 
     setLoading(true);
     setError('');
+    setValidationWarning('');
 
     try {
         const offset = selectedDate.getTimezoneOffset()
@@ -160,10 +201,17 @@ const BookAppointment = () => {
 
       const result = await bookAppointment(appointmentData);
       
-      // Success
-      alert(result.message || 'Appointment booked successfully!');
+      // Success - show modal
+      setSuccessMessage(result.message || 'Appointment booked successfully!');
+      setSuccessModalOpen(true);
       
-      // Reset
+      // Clear sessionStorage after successful booking
+      sessionStorage.removeItem('bookingDoctor');
+      sessionStorage.removeItem('bookingDate');
+      sessionStorage.removeItem('bookingTime');
+      sessionStorage.removeItem('bookingNotes');
+      
+      // Reset state
       setSelectedDoctor(null);
       setSelectedDate(null);
       setSelectedTime(null);
@@ -207,48 +255,114 @@ const BookAppointment = () => {
         </section>
         )}
 
-        {/* Step 3: Time */}
-        {selectedDate && (
-             <section>
-                 <div className="mt-6">
-                    <TimeSelector
-                        timeSlots={timeSlots}
-                        value={selectedTime}
-                        onChange={handleTimeChange}
-                        disabled={loading}
-                    />
-                    {timeSlots.length === 0 && !loading && (
-                        <p className="text-gray-500 text-sm mt-2">No available time slots for this date.</p>
-                    )}
-                 </div>
-             </section>
+        {/* Step 3: Time Slot Modal */}
+        <TimeSlotModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          timeSlots={timeSlots}
+          value={selectedTime}
+          onChange={handleTimeChange}
+          disabled={loading}
+          loading={loading}
+        />
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={successModalOpen}
+          onClose={() => setSuccessModalOpen(false)}
+          message={successMessage}
+          title="Booking Confirmed!"
+        />
+
+        {/* Selected Time Display */}
+        {selectedTime && (
+          <section>
+            <div className="rounded-lg border border-gray-200 dark:border-muted-dark bg-white dark:bg-secondary-dark p-4">
+              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Selected Time</h3>
+              <p className="text-lg font-semibold text-primary-light dark:text-primary-dark">
+                {selectedTime.displayTime}
+              </p>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="text-sm text-primary-light dark:text-primary-dark hover:underline mt-2"
+              >
+                Change time slot
+              </button>
+            </div>
+          </section>
         )}
 
         {/* Step 4: Notes */}
-        {selectedTime && (
+        {selectedDoctor && selectedDate && (
             <section>
                 <div className="mt-6">
-                    <NoteSection value={notes} onChange={setNotes} />
+                    <NoteSection value={notes} onChange={handleNotesChange} />
                 </div>
             </section>
         )}
 
-        {/* Step 5: Summary & Submit */}
-        {selectedTime && (
-            <section>
-                <div className="mt-6">
-                    <h2 className="text-xl font-semibold mb-3">Step 5: Confirm Booking</h2>
-                    <AppointmentForm
-                        doctor={selectedDoctor}
-                        date={selectedDate}
-                        time={selectedTime}
-                        onSubmit={onBook}
-                        loading={loading}
-                        error={error}
-                    />
+        {/* Booking Button - Now visible to all users */}
+        <section>
+            <div className="mt-6">
+              {/* Validation Warning */}
+              {validationWarning && (
+                <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-sm text-yellow-800 dark:text-yellow-400">
+                  {validationWarning}
                 </div>
-            </section>
-        )}
+              )}
+
+              {/* Error Display */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+                  {error}
+                </div>
+              )}
+
+              {/* Booking Summary Card */}
+              <div className="rounded-xl border border-gray-200 dark:border-muted-dark bg-white dark:bg-secondary-dark shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-muted-dark">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">Booking Summary</h3>
+                </div>
+                <div className="px-4 py-4 space-y-3">
+                  <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                    <li>
+                      <span className="font-medium text-gray-600 dark:text-gray-400">Doctor:</span>{' '}
+                      {selectedDoctor?.fullName || selectedDoctor?.name || '-'}{' '}
+                      {selectedDoctor?.specialization ? `(${selectedDoctor.specialization})` : ''}
+                    </li>
+                    <li>
+                      <span className="font-medium text-gray-600 dark:text-gray-400">Date:</span>{' '}
+                      {selectedDate ? new Date(selectedDate).toLocaleDateString() : '-'}
+                    </li>
+                    <li>
+                      <span className="font-medium text-gray-600 dark:text-gray-400">Time:</span>{' '}
+                      {selectedTime?.displayTime || '-'}
+                    </li>
+                  </ul>
+                  
+                  <button
+                    onClick={() => {
+                      if (validateBooking()) {
+                        onBook();
+                      }
+                    }}
+                    disabled={loading}
+                    className={`w-full px-4 py-3 rounded-lg font-semibold text-white transition-all ${
+                      loading
+                        ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                        : 'bg-primary-light dark:bg-primary-dark hover:opacity-90 hover:shadow-lg'
+                    }`}
+                  >
+                    {loading ? 'Booking...' : 'Book Appointment'}
+                  </button>
+                  
+                  <div className="text-xs text-gray-600 dark:text-gray-400 text-center">
+                    You will receive a confirmation once your appointment is booked.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
       </main>
     </div>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Menu, Stethoscope } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import Sidebar from './Sidebar';
-import UserProfileMenu from './UserProfileMenu';
 
 const Header = ({ onLoginClick, user, onLogout }) => {
   const { theme } = useTheme();
@@ -28,10 +28,6 @@ const Header = ({ onLoginClick, user, onLogout }) => {
     { name: 'Home', href: '/' },
     { name: 'Treatments', href: '/treatments' },
     { name: 'Book Appointment', href: '/book-appointment' },
-    { name: 'My Appointments', href: '/my-appointments' },
-    { name: 'Financial Summary', href: '/financial-summary' },
-    { name: 'Edit Profile', href: '/edit-profile' },
-    { name: 'Change Password', href: '/change-password' },
   ];
 
   return (
@@ -77,13 +73,16 @@ const Header = ({ onLoginClick, user, onLogout }) => {
               </button>
             </div>
 
-            {/* Right Side: Sign Up Button or User Avatar */}
+            {/* Right Side: Profile Button or Sign Up */}
             <div className="flex items-center space-x-3">
               {user ? (
-                <UserProfileMenu 
-                  userProfile={user} 
-                  onLogout={onLogout} 
-                />
+                <Link
+                  to="/profile"
+                  className="flex items-center justify-center px-4 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white font-bold hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+                  aria-label="Profile"
+                >
+                  <span className="text-sm">Profile</span>
+                </Link>
               ) : (
                 <button
                   onClick={onLoginClick}
