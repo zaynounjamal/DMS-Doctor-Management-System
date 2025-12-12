@@ -255,8 +255,8 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
           password: formData.password,
           fullName: formData.fullName,
           phone: formData.phoneNumber, // DMS expects 'phone', not 'phoneNumber'
-          gender: formData.gender,
-          birthDate: formData.dateOfBirth || null, // DMS expects 'birthDate', not 'dateOfBirth'
+          gender: formData.gender || null, // Convert empty string to null
+          birthDate: formData.dateOfBirth ? formData.dateOfBirth : null, // DMS expects 'birthDate', format: YYYY-MM-DD
         };
         
         const userData = await signup(signupData);

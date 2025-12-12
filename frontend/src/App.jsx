@@ -11,6 +11,7 @@ import ChangePassword from './pages/ChangePassword';
 import FinancialSummary from './pages/FinancialSummary';
 import StatsSection from './pages/StatsSection';
 import TreatmentsPage from './pages/TreatmentsPage';
+import HomePage from './pages/HomePage';
 import './App.css';
 
 const AppContent = () => {
@@ -27,12 +28,7 @@ const AppContent = () => {
         
         <main className="relative" style={{ paddingTop: '56px' }}>
           <Routes>
-            <Route path="/" element={
-              <>
-                <h1 className="text-3xl font-bold text-center mt-8">Welcome to DMS</h1>
-                <StatsSection />
-              </>
-            } />
+            <Route path="/" element={<HomePage />} />
             <Route path="/treatments" element={<TreatmentsPage />} />
             <Route path="/book-appointment" element={<BookAppointment />} />
             <Route path="/my-appointments" element={user ? <MyAppointments /> : <Navigate to="/" />} />
