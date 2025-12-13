@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getProfile, updateProfile, uploadProfilePhoto } from '../api';
-import '../BookAppointment.css'; // Reusing styles
+import { Camera, User, Phone, Calendar, Save, AlertCircle, CheckCircle } from 'lucide-react';
 
 const EditProfile = () => {
   const [formData, setFormData] = useState({
@@ -29,11 +29,11 @@ const EditProfile = () => {
           fullName: profile.fullName || '',
           phone: profile.phone || '',
           gender: profile.gender || '',
-          birthDate: profile.birthDate || '',
+          birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : '',
           profilePhoto: profile.profilePhoto || ''
         });
       } else {
-        setMessage({ type: 'error', text: 'Patient profile not found. Please contact support.' });
+        setMessage({ type: 'error', text: 'Patient profile not found.' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to load profile: ' + error.message });
@@ -76,7 +76,7 @@ const EditProfile = () => {
     setMessage(null);
 
     try {
-      // Prepare data - convert empty birthDate to null
+      // Prepare data
       const dataToSend = {
         ...formData,
         birthDate: formData.birthDate || null
@@ -89,143 +89,175 @@ const EditProfile = () => {
     }
   };
 
-  if (loading) return <div className="loading">Loading profile...</div>;
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    return path.startsWith('http') ? path : `http://localhost:5024${path}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-light"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="booking-container">
-      <h2>Edit Profile</h2>
-      
-      {message && (
-        <div className={`message ${message.type}`}>
-          {message.text}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 md:p-8">
+      <div className="max-w-3xl mx-auto space-y-8">
+        <div>
+           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Edit Profile</h1>
+           <p className="text-gray-500 dark:text-gray-400 mt-1">Update your personal information and profile picture.</p>
         </div>
-      )}
 
-      {/* Profile Photo Section - Centered at Top */}
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        marginBottom: '30px',
-        padding: '20px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '10px'
-      }}>
-        {formData.profilePhoto ? (
-          <img 
-            src={`http://localhost:5024${formData.profilePhoto}`}
-            alt="Profile" 
-            style={{ 
-              width: '150px', 
-              height: '150px', 
-              borderRadius: '50%', 
-              objectFit: 'cover', 
-              border: '4px solid #3498db',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-            }}
-            onError={(e) => { 
-              e.target.style.display = 'none';
-            }} 
-          />
-        ) : (
-          <div style={{
-            width: '150px',
-            height: '150px',
-            borderRadius: '50%',
-            backgroundColor: '#3498db',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '60px',
-            color: 'white',
-            fontWeight: 'bold',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-          }}>
-            {formData.fullName ? formData.fullName.charAt(0).toUpperCase() : '?'}
+        {message && (
+          <div className={`p-4 rounded-xl border flex items-center gap-3 ${
+            message.type === 'error' 
+              ? 'bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800' 
+              : 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800'
+          }`}>
+             {message.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
+             <p>{message.text}</p>
           </div>
         )}
-        
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handlePhotoChange}
-          style={{ display: 'none' }}
-        />
-        
-        <button 
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          style={{
-            marginTop: '15px',
-            padding: '10px 20px',
-            backgroundColor: '#3498db',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: uploading ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: '500',
-            opacity: uploading ? 0.6 : 1
-          }}
-        >
-          {uploading ? 'Uploading...' : 'Update Photo'}
-        </button>
+
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8">
+          
+          {/* Photo Upload Section */}
+          <div className="flex flex-col items-center mb-8 pb-8 border-b border-gray-100 dark:border-gray-700">
+             <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                <div className="w-32 h-32 rounded-full border-4 border-gray-100 dark:border-gray-700 overflow-hidden bg-gray-100 dark:bg-gray-700 shadow-inner">
+                   {formData.profilePhoto ? (
+                      <img 
+                        src={getImageUrl(formData.profilePhoto)}
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; }} 
+                      />
+                   ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                         <span className="text-4xl font-bold">
+                            {(formData.fullName || '?').charAt(0).toUpperCase()}
+                         </span>
+                      </div>
+                   )}
+                </div>
+                
+                {/* Overlay */}
+                <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                   <div className="bg-white/90 p-2 rounded-full shadow-lg">
+                      <Camera className="w-5 h-5 text-gray-700" />
+                   </div>
+                </div>
+
+                {uploading && (
+                  <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                  </div>
+                )}
+             </div>
+             
+             <button 
+               type="button" 
+               onClick={() => fileInputRef.current?.click()}
+               className="mt-4 text-sm font-medium text-primary-light hover:text-primary-dark transition-colors"
+               disabled={uploading}
+             >
+                Change Profile Photo
+             </button>
+             
+             <input
+               ref={fileInputRef}
+               type="file"
+               accept="image/*"
+               onChange={handlePhotoChange}
+               className="hidden"
+             />
+          </div>
+
+          {/* Form Fields */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                  <div className="relative">
+                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <User size={18} />
+                     </div>
+                     <input
+                       type="text"
+                       name="fullName"
+                       value={formData.fullName}
+                       onChange={handleChange}
+                       required
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                       placeholder="Enter your full name"
+                     />
+                  </div>
+               </div>
+
+               <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+                  <div className="relative">
+                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <Phone size={18} />
+                     </div>
+                     <input
+                       type="number" // Consider 'tel' but number is requested in old code
+                       name="phone"
+                       value={formData.phone}
+                       onChange={handleChange}
+                       required
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                       placeholder="Enter phone number"
+                     />
+                  </div>
+               </div>
+
+               <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Gender</label>
+                  <select
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none appearance-none"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+               </div>
+
+               <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Date of Birth</label>
+                  <div className="relative">
+                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <Calendar size={18} />
+                     </div>
+                     <input
+                       type="date"
+                       name="birthDate"
+                       value={formData.birthDate || ''}
+                       onChange={handleChange}
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                     />
+                  </div>
+               </div>
+            </div>
+
+            <div className="pt-4">
+              <button 
+                type="submit" 
+                className="w-full md:w-auto px-8 py-3 bg-primary-light hover:bg-primary-dark text-white font-semibold rounded-xl shadow-lg shadow-primary-light/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+              >
+                <Save size={20} />
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-
-      {/* Profile Form */}
-      <form onSubmit={handleSubmit} className="booking-form">
-        <div className="form-group">
-          <label>Full Name:</label>
-          <input
-            type="text"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            required
-            maxLength={100}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Phone Number:</label>
-          <input
-            type="number"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            required
-            maxLength={20}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Gender:</label>
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-          >
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Birth Date:</label>
-          <input
-            type="date"
-            name="birthDate"
-            value={formData.birthDate}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button type="submit" className="submit-btn">Update Profile</button>
-      </form>
     </div>
   );
 };
