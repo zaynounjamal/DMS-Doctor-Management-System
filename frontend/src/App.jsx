@@ -12,11 +12,27 @@ import FinancialSummary from './pages/FinancialSummary';
 import StatsSection from './pages/StatsSection';
 import TreatmentsPage from './pages/TreatmentsPage';
 import HomePage from './pages/HomePage';
+// Doctor pages
+import DoctorDashboard from './pages/DoctorDashboard';
+import DoctorAppointments from './pages/DoctorAppointments';
+import DoctorPatients from './pages/DoctorPatients';
+import DoctorPatientView from './pages/DoctorPatientView';
+import DoctorProfitAnalytics from './pages/DoctorProfitAnalytics';
+import OffDaysManager from './pages/OffDaysManager';
+import CalendarView from './pages/CalendarView';
 import Profile from './pages/Profile';
 import './App.css';
 
 const AppContent = () => {
-  const { user, login, logout, isLoginModalOpen, openLoginModal, closeLoginModal } = useAuth();
+  const { user, login, logout, isLoginModalOpen, openLoginModal, closeLoginModal, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <Router>
@@ -37,6 +53,15 @@ const AppContent = () => {
             <Route path="/financial-summary" element={user ? <FinancialSummary /> : <Navigate to="/" />} />
             <Route path="/edit-profile" element={user ? <EditProfile /> : <Navigate to="/" />} />
             <Route path="/change-password" element={user ? <ChangePassword /> : <Navigate to="/" />} />
+            
+            {/* Doctor Routes */}
+            <Route path="/doctor/dashboard" element={user?.role?.toLowerCase() === 'doctor' ? <DoctorDashboard /> : <Navigate to="/" />} />
+            <Route path="/doctor/appointments" element={user?.role?.toLowerCase() === 'doctor' ? <DoctorAppointments /> : <Navigate to="/" />} />
+            <Route path="/doctor/patients" element={user?.role?.toLowerCase() === 'doctor' ? <DoctorPatients /> : <Navigate to="/" />} />
+            <Route path="/doctor/patients/:patientId" element={user?.role?.toLowerCase() === 'doctor' ? <DoctorPatientView /> : <Navigate to="/" />} />
+            <Route path="/doctor/profit" element={user?.role?.toLowerCase() === 'doctor' ? <DoctorProfitAnalytics /> : <Navigate to="/" />} />
+            <Route path="/doctor/offdays" element={user?.role?.toLowerCase() === 'doctor' ? <OffDaysManager /> : <Navigate to="/" />} />
+            <Route path="/doctor/calendar" element={user?.role?.toLowerCase() === 'doctor' ? <CalendarView /> : <Navigate to="/" />} />
           </Routes>
         </main>
         

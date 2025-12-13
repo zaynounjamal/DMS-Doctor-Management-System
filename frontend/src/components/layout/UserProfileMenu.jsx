@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Settings, LogOut } from 'lucide-react';
 
@@ -81,20 +82,20 @@ const UserProfileMenu = ({ userProfile, onLogout }) => {
                   )}
                 </div>
               )}
-              <a
-                href="#profile"
+              <Link
+                to="/edit-profile"
                 className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-muted-light dark:hover:bg-muted-dark rounded transition-colors"
               >
                 <User size={16} />
                 <span>Profile</span>
-              </a>
-              <a
-                href="#settings"
+              </Link>
+              <Link
+                to="/change-password"
                 className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-muted-light dark:hover:bg-muted-dark rounded transition-colors"
               >
                 <Settings size={16} />
-                <span>Settings</span>
-              </a>
+                <span>Change Password</span>
+              </Link>
               <button
                 onClick={() => {
                   onLogout();

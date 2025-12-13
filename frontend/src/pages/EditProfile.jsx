@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getProfile, updateProfile, uploadProfilePhoto } from '../api';
+import { getProfile, updateProfile, updateDoctorProfile, uploadProfilePhoto } from '../api';
 import { Camera, User, Phone, Calendar, Save, AlertCircle, CheckCircle } from 'lucide-react';
 
 const EditProfile = () => {
@@ -8,8 +8,12 @@ const EditProfile = () => {
     phone: '',
     gender: '',
     birthDate: '',
+    specialty: '',
+    startHour: '',
+    endHour: '',
     profilePhoto: ''
   });
+  const [role, setRole] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -23,6 +27,7 @@ const EditProfile = () => {
     try {
       const data = await getProfile();
       const profile = data.profile;
+      setRole(data.role?.toLowerCase() || '');
       
       if (profile) {
         setFormData({
@@ -30,10 +35,13 @@ const EditProfile = () => {
           phone: profile.phone || '',
           gender: profile.gender || '',
           birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : '',
+          specialty: profile.specialty || '',
+          startHour: profile.startHour || '',
+          endHour: profile.endHour || '',
           profilePhoto: profile.profilePhoto || ''
         });
       } else {
-        setMessage({ type: 'error', text: 'Patient profile not found.' });
+        setMessage({ type: 'error', text: 'Profile not found. Please contact support.' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to load profile: ' + error.message });
@@ -76,13 +84,27 @@ const EditProfile = () => {
     setMessage(null);
 
     try {
-      // Prepare data
-      const dataToSend = {
-        ...formData,
-        birthDate: formData.birthDate || null
-      };
-      
-      await updateProfile(dataToSend);
+      if (role === 'doctor') {
+        const doctorData = {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          specialty: formData.specialty,
+          startHour: formData.startHour,
+          endHour: formData.endHour,
+          profilePhoto: formData.profilePhoto
+        };
+        await updateDoctorProfile(doctorData);
+      } else {
+        // Patient update
+        const patientData = {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          gender: formData.gender,
+          birthDate: formData.birthDate || null,
+          profilePhoto: formData.profilePhoto
+        };
+        await updateProfile(patientData);
+      }
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (error) {
       setMessage({ type: 'error', text: error.message });

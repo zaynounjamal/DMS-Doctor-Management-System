@@ -16,6 +16,7 @@ public class ClinicDbContext : DbContext
     public DbSet<MedicalNote> MedicalNotes => Set<MedicalNote>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<OffDay> OffDays => Set<OffDay>();
+
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Treatment> Treatments => Set<Treatment>();
     public DbSet<PatientTreatment> PatientTreatments => Set<PatientTreatment>();

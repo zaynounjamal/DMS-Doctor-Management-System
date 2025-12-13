@@ -174,6 +174,43 @@ public class ProfileController : ControllerBase
     }
 
     /// <summary>
+    /// Update doctor profile
+    /// </summary>
+    [HttpPut("doctor")]
+    [Authorize(Policy = "DoctorOnly")]
+    public async Task<ActionResult> UpdateDoctorProfile([FromBody] UpdateDoctorProfileBindingModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (doctor == null)
+        {
+            return NotFound("Doctor profile not found");
+        }
+
+        // Update fields
+        doctor.FullName = model.FullName;
+        doctor.Specialty = model.Specialty;
+        doctor.Phone = model.Phone;
+        doctor.StartHour = model.StartHour;
+        doctor.EndHour = model.EndHour;
+        doctor.ProfilePhoto = model.ProfilePhoto;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { Message = "Profile updated successfully", Doctor = doctor });
+    }
+
+    /// <summary>
     /// Change user password
     /// </summary>
     [HttpPost("change-password")]

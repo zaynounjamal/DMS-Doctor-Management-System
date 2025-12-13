@@ -6,6 +6,9 @@ public class Payment
     public int AppointmentId { get; set; }
     public int SecretaryId { get; set; }
 
+    public decimal Amount { get; set; }
+    public string? PaymentMethod { get; set; } // cash, card, etc.
+    public DateTime PaymentDate { get; set; } = DateTime.UtcNow;
     public DateTime PaidAt { get; set; } = DateTime.UtcNow;
 
     public Appointment Appointment { get; set; } = null!;

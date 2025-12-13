@@ -168,6 +168,19 @@ export const updateProfile = async (profileData) => {
   return response.json();
 };
 
+export const updateDoctorProfile = async (profileData) => {
+  const response = await fetch(`${API_URL}/profile/doctor`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(profileData),
+  });
+  if (!response.ok) {
+    const errorData = await response.text();
+    throw new Error(errorData || 'Failed to update profile');
+  }
+  return response.json();
+};
+
 export const uploadProfilePhoto = async (file) => {
   const formData = new FormData();
   formData.append('file', file);

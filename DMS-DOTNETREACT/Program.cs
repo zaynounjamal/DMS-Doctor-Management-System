@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// builder.Services.AddOpenApi();
 
 // Database
 builder.Services.AddDbContext<ClinicDbContext>(options =>
@@ -22,6 +22,8 @@ builder.Services.AddDbContext<ClinicDbContext>(options =>
 // Register custom services
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<PasswordHasher>();
+builder.Services.AddScoped<ExportService>();
+builder.Services.AddScoped<EmailService>();
 
 // JWT Authentication with validation
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"] 
@@ -136,20 +138,20 @@ app.Use(async (context, next) =>
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    // app.MapOpenApi();
 }
 
 // Security Headers
 app.Use(async (context, next) =>
 {
-    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
-    context.Response.Headers.Add("X-Frame-Options", "DENY");
-    context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
-    context.Response.Headers.Add("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     
     if (!app.Environment.IsDevelopment())
     {
-        context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+        context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
     }
     
     await next();
