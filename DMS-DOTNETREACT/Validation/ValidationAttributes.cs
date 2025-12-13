@@ -102,9 +102,9 @@ public class ValidPhoneAttribute : ValidationAttribute
         // Remove common separators
         phone = Regex.Replace(phone, @"[\s\-\(\)]", "");
 
-        if (!Regex.IsMatch(phone, @"^\d{10,15}$"))
+        if (!Regex.IsMatch(phone, @"^\d{8,15}$"))
         {
-            return new ValidationResult("Phone number must contain 10-15 digits");
+            return new ValidationResult("Phone number must contain 8-15 digits");
         }
 
         return ValidationResult.Success;

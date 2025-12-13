@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { changePassword } from '../api';
-import '../BookAppointment.css'; // Reusing styles
+import { Lock, Key, ShieldCheck, AlertCircle, CheckCircle } from 'lucide-react';
 
 const ChangePassword = () => {
   const [formData, setFormData] = useState({
@@ -54,55 +54,111 @@ const ChangePassword = () => {
   };
 
   return (
-    <div className="booking-container">
-      <h2>Change Password</h2>
-      
-      {message && (
-        <div className={`message ${message.type}`}>
-          {message.text}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="booking-form">
-        <div className="form-group">
-          <label>Current Password:</label>
-          <input
-            type="password"
-            name="currentPassword"
-            value={formData.currentPassword}
-            onChange={handleChange}
-            required
-          />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 md:p-8">
+      <div className="max-w-2xl mx-auto space-y-8">
+        <div>
+           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Change Password</h1>
+           <p className="text-gray-500 dark:text-gray-400 mt-1">Ensure your account is secure by using a strong password.</p>
         </div>
 
-        <div className="form-group">
-          <label>New Password:</label>
-          <input
-            type="password"
-            name="newPassword"
-            value={formData.newPassword}
-            onChange={handleChange}
-            required
-            minLength={6}
-          />
-          <small>Minimum 6 characters</small>
-        </div>
+        {message && (
+          <div className={`p-4 rounded-xl border flex items-center gap-3 ${
+            message.type === 'error' 
+              ? 'bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800' 
+              : 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800'
+          }`}>
+             {message.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
+             <p>{message.text}</p>
+          </div>
+        )}
 
-        <div className="form-group">
-          <label>Confirm New Password:</label>
-          <input
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            <div className="space-y-2">
+               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Current Password</label>
+               <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                     <Key size={18} />
+                  </div>
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    value={formData.currentPassword}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                    placeholder="Enter current password"
+                  />
+               </div>
+            </div>
 
-        <button type="submit" className="submit-btn" disabled={loading}>
-          {loading ? 'Changing Password...' : 'Change Password'}
-        </button>
-      </form>
+            <div className="space-y-4 pt-2">
+               <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
+                  <div className="relative">
+                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <Lock size={18} />
+                     </div>
+                     <input
+                       type="password"
+                       name="newPassword"
+                       value={formData.newPassword}
+                       onChange={handleChange}
+                       required
+                       minLength={6}
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                       placeholder="Enter new password"
+                     />
+                  </div>
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                     <AlertCircle size={12} />
+                     Minimum 6 characters
+                  </p>
+               </div>
+
+               <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Confirm New Password</label>
+                  <div className="relative">
+                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <ShieldCheck size={18} />
+                     </div>
+                     <input
+                       type="password"
+                       name="confirmPassword"
+                       value={formData.confirmPassword}
+                       onChange={handleChange}
+                       required
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                       placeholder="Re-enter new password"
+                     />
+                  </div>
+               </div>
+            </div>
+
+            <div className="pt-4">
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full md:w-auto px-8 py-3 bg-primary-light hover:bg-primary-dark text-white font-semibold rounded-xl shadow-lg shadow-primary-light/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                   <>
+                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                     Updating...
+                   </>
+                ) : (
+                   <>
+                     <ShieldCheck size={20} />
+                     Change Password
+                   </>
+                )}
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
     </div>
   );
 };

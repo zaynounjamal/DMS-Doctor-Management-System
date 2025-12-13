@@ -15,24 +15,33 @@ export const AuthProvider = ({ children }) => {
       if (savedUser) {
         try {
           const userData = JSON.parse(savedUser);
-          setUser(userData);
           
-          // Verify with backend
+          // Verify with backend - call getProfile to check if token is still valid
+          // AND get the most up-to-date user info (like profile photo)
           try {
-             // We just fire this to check validity, if it fails (401), we clear user
-             // But getProfile might return 401 if token expired
-             // api.js getProfile headers use localStorage token.
-             // If we want to be strict, we wait for this.
-             await getProfile();
+             const profileResponse = await getProfile();
+             
+             // The backend returns { profile: { ... } }
+             // We need to merge this fresh data with our existing token/user data
+             const freshUser = {
+               ...userData,
+               ...profileResponse.profile, // Overwrite with fresh db data
+               token: userData.token // Keep the token
+             };
+
+             setUser(freshUser);
+             localStorage.setItem('user', JSON.stringify(freshUser));
           } catch (err) {
              console.error("Token invalid or expired", err);
-             // Optional: logout if strict verification required on every load
-             // handleLogout(); 
-             // For now, we trust localStorage until an API call fails or component checks specifically
+             // Token is invalid - logout user
+             setUser(null);
+             localStorage.removeItem('user');
+             localStorage.removeItem('token'); 
           }
         } catch (error) {
           console.error('Error parsing saved user:', error);
           localStorage.removeItem('user');
+          localStorage.removeItem('token');
         }
       }
       setLoading(false);

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Menu, Stethoscope } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import Sidebar from './Sidebar';
-import UserProfileMenu from './UserProfileMenu';
 
 const Header = ({ onLoginClick, user, onLogout }) => {
   const { theme } = useTheme();
@@ -22,6 +22,7 @@ const Header = ({ onLoginClick, user, onLogout }) => {
     handleScroll(); // Check initial scroll position
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
 
   // Navigation items based on user role
   const getNavItems = () => {
@@ -51,6 +52,7 @@ const Header = ({ onLoginClick, user, onLogout }) => {
   };
 
   const navItems = getNavItems();
+
 
   return (
     <>
@@ -95,13 +97,16 @@ const Header = ({ onLoginClick, user, onLogout }) => {
               </button>
             </div>
 
-            {/* Right Side: Sign Up Button or User Avatar */}
+            {/* Right Side: Profile Button or Sign Up */}
             <div className="flex items-center space-x-3">
               {user ? (
-                <UserProfileMenu 
-                  userProfile={user} 
-                  onLogout={onLogout} 
-                />
+                <Link
+                  to="/profile"
+                  className="flex items-center justify-center px-4 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white font-bold hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+                  aria-label="Profile"
+                >
+                  <span className="text-sm">Profile</span>
+                </Link>
               ) : (
                 <button
                   onClick={onLoginClick}

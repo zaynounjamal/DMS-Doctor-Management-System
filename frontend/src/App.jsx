@@ -20,6 +20,7 @@ import DoctorPatientView from './pages/DoctorPatientView';
 import DoctorProfitAnalytics from './pages/DoctorProfitAnalytics';
 import OffDaysManager from './pages/OffDaysManager';
 import CalendarView from './pages/CalendarView';
+import Profile from './pages/Profile';
 import './App.css';
 
 const AppContent = () => {
@@ -47,6 +48,7 @@ const AppContent = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/treatments" element={<TreatmentsPage />} />
             <Route path="/book-appointment" element={<BookAppointment />} />
+            <Route path="/profile" element={user ? <Profile /> : <Navigate to="/" />} />
             <Route path="/my-appointments" element={user ? <MyAppointments /> : <Navigate to="/" />} />
             <Route path="/financial-summary" element={user ? <FinancialSummary /> : <Navigate to="/" />} />
             <Route path="/edit-profile" element={user ? <EditProfile /> : <Navigate to="/" />} />
