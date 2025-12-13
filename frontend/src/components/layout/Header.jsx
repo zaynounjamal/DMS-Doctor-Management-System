@@ -34,8 +34,6 @@ const Header = ({ onLoginClick, user, onLogout }) => {
         { name: 'Patients', href: '/doctor/patients' },
         { name: 'Profit Analytics', href: '/doctor/profit' },
         { name: 'Off Days', href: '/doctor/offdays' },
-        { name: 'Edit Profile', href: '/edit-profile' },
-        { name: 'Change Password', href: '/change-password' },
       ];
     }
     
@@ -44,10 +42,6 @@ const Header = ({ onLoginClick, user, onLogout }) => {
       { name: 'Home', href: '/' },
       { name: 'Treatments', href: '/treatments' },
       { name: 'Book Appointment', href: '/book-appointment' },
-      { name: 'My Appointments', href: '/my-appointments' },
-      { name: 'Financial Summary', href: '/financial-summary' },
-      { name: 'Edit Profile', href: '/edit-profile' },
-      { name: 'Change Password', href: '/change-password' },
     ];
   };
 

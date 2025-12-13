@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getFinancialSummary } from '../api';
 import { DollarSign, CreditCard, AlertTriangle, CheckCircle, Wallet, Calendar, User } from 'lucide-react';
+import BackButton from '../components/ui/BackButton';
 
 const FinancialSummary = () => {
   const [data, setData] = useState(null);
@@ -56,6 +57,7 @@ const FinancialSummary = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
+         <BackButton to="/profile" />
          <div className="flex items-center justify-between">
             <div>
                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Financial Summary</h1>

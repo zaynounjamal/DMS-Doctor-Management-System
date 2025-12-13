@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { changePassword } from '../api';
-import { Lock, Key, ShieldCheck, AlertCircle, CheckCircle } from 'lucide-react';
+import { Lock, Key, ShieldCheck, AlertCircle, CheckCircle, Check, X } from 'lucide-react';
+import BackButton from '../components/ui/BackButton';
 
 const ChangePassword = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,22 @@ const ChangePassword = () => {
   });
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Password validation rules (Reused from LoginModal)
+  const passwordRules = [
+    { id: 'length', label: 'At least 8 characters', validator: (p) => p.length >= 8 },
+    { id: 'uppercase', label: 'One uppercase letter', validator: (p) => /[A-Z]/.test(p) },
+    { id: 'lowercase', label: 'One lowercase letter', validator: (p) => /[a-z]/.test(p) },
+    { id: 'number', label: 'One number', validator: (p) => /[0-9]/.test(p) },
+    { id: 'special', label: 'One special character', validator: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p) }
+  ];
+
+  const getPasswordValidation = (password) => {
+    return passwordRules.map(rule => ({
+      ...rule,
+      isValid: rule.validator(password)
+    }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,8 +41,11 @@ const ChangePassword = () => {
     setMessage(null);
 
     // Client-side validation
-    if (formData.newPassword.length < 6) {
-      setMessage({ type: 'error', text: 'New password must be at least 6 characters long' });
+    const validations = getPasswordValidation(formData.newPassword);
+    const isPasswordValid = validations.every(v => v.isValid);
+
+    if (!isPasswordValid) {
+      setMessage({ type: 'error', text: 'Password does not meet all security requirements.' });
       return;
     }
 
@@ -56,6 +76,7 @@ const ChangePassword = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 md:p-8">
       <div className="max-w-2xl mx-auto space-y-8">
+        <BackButton to="/profile" />
         <div>
            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Change Password</h1>
            <p className="text-gray-500 dark:text-gray-400 mt-1">Ensure your account is secure by using a strong password.</p>
@@ -106,15 +127,31 @@ const ChangePassword = () => {
                        value={formData.newPassword}
                        onChange={handleChange}
                        required
-                       minLength={6}
                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
                        placeholder="Enter new password"
                      />
                   </div>
-                  <p className="text-xs text-gray-500 flex items-center gap-1">
-                     <AlertCircle size={12} />
-                     Minimum 6 characters
-                  </p>
+                  
+                  {/* Password Strength Indicator */}
+                  {formData.newPassword.length > 0 && (
+                     <div className="mt-2 space-y-1 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Password requirements:</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                           {getPasswordValidation(formData.newPassword).map((rule) => (
+                              <div key={rule.id} className="flex items-center text-xs">
+                                 {rule.isValid ? (
+                                    <Check size={14} className="text-green-500 mr-2" />
+                                 ) : (
+                                    <div className="w-3.5 h-3.5 rounded-full border border-gray-300 mr-2" />
+                                 )}
+                                 <span className={rule.isValid ? 'text-green-600 dark:text-green-400 font-medium' : 'text-gray-500 dark:text-gray-400'}>
+                                    {rule.label}
+                                 </span>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  )}
                </div>
 
                <div className="space-y-2">

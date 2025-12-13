@@ -4,6 +4,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/layout/Header';
 import LoginModal from './components/auth/LoginModal';
+import Footer from './components/layout/Footer';
 import BookAppointment from './pages/BookAppointment';
 import MyAppointments from './pages/MyAppointments';
 import EditProfile from './pages/EditProfile';
@@ -65,6 +66,8 @@ const AppContent = () => {
           </Routes>
         </main>
         
+        <Footer />
+
         <LoginModal 
           isOpen={isLoginModalOpen} 
           onClose={closeLoginModal} 

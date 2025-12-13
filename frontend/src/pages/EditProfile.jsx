@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getProfile, updateProfile, updateDoctorProfile, uploadProfilePhoto } from '../api';
+import { useAuth } from '../contexts/AuthContext';
 import { Camera, User, Phone, Calendar, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import BackButton from '../components/ui/BackButton';
 
 const EditProfile = () => {
+  const { user, login } = useAuth(); // Get user and login (to update context)
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -20,31 +23,58 @@ const EditProfile = () => {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    // Populate form from User Context first (Fast & Reliable)
+    if (user) {
+      setRole(user.role?.toLowerCase() || '');
+      setFormData({
+        fullName: user.fullName || '',
+        phone: user.phone || '',
+        gender: user.gender || '',
+        birthDate: user.birthDate ? user.birthDate.split('T')[0] : '',
+        specialty: user.specialty || '',
+        startHour: user.startHour || '',
+        endHour: user.endHour || '',
+        profilePhoto: user.profilePhoto || ''
+      });
+      setLoading(false);
+    }
+    // Also fetch fresh from API to ensure sync
     loadProfile();
-  }, []);
+  }, [user]); // Re-run if user context changes
 
   const loadProfile = async () => {
     try {
+      // Logic: If we already have user data, we don't strictly need to show loading
+      // But we fetch to get the absolute latest from DB
       const data = await getProfile();
       const profile = data.profile;
-      setRole(data.role?.toLowerCase() || '');
+      
+      // Update form only if it differs? Or just set it. 
+      // To avoid overwriting user edits in progress, we might be careful, 
+      // but typical pattern is load once. 
+      // Since user dependency controls this, valid.
       
       if (profile) {
-        setFormData({
-          fullName: profile.fullName || '',
-          phone: profile.phone || '',
-          gender: profile.gender || '',
-          birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : '',
-          specialty: profile.specialty || '',
-          startHour: profile.startHour || '',
-          endHour: profile.endHour || '',
-          profilePhoto: profile.profilePhoto || ''
-        });
-      } else {
-        setMessage({ type: 'error', text: 'Profile not found. Please contact support.' });
+         // Only update role/form if not already set or to ensure freshness
+         setRole(data.role?.toLowerCase() || '');
+         setFormData(prev => ({
+           ...prev,
+           fullName: profile.fullName || prev.fullName,
+           phone: profile.phone || prev.phone,
+           gender: profile.gender || prev.gender,
+           birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : (prev.birthDate || ''),
+           specialty: profile.specialty || prev.specialty,
+           startHour: profile.startHour || prev.startHour,
+           endHour: profile.endHour || prev.endHour,
+           profilePhoto: profile.profilePhoto || prev.profilePhoto
+         }));
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to load profile: ' + error.message });
+      console.error("Background profile fetch failed:", error);
+      // If we have user data from context, suppress the UI error or show it subtly
+      if (!user) {
+        setMessage({ type: 'error', text: 'Failed to load profile: ' + error.message });
+      }
     } finally {
       setLoading(false);
     }
@@ -83,17 +113,24 @@ const EditProfile = () => {
     e.preventDefault();
     setMessage(null);
 
+    // Phone Validation
+    if (formData.phone && formData.phone.length < 8) {
+      setMessage({ type: 'error', text: 'Phone number must be at least 8 characters long.' });
+      return;
+    }
+
     try {
+      let updatedDataResponse;
       if (role === 'doctor') {
         const doctorData = {
-          fullName: formData.fullName,
-          phone: formData.phone,
-          specialty: formData.specialty,
-          startHour: formData.startHour,
-          endHour: formData.endHour,
-          profilePhoto: formData.profilePhoto
+           fullName: formData.fullName,
+           phone: formData.phone,
+           specialty: formData.specialty,
+           startHour: formData.startHour,
+           endHour: formData.endHour,
+           profilePhoto: formData.profilePhoto
         };
-        await updateDoctorProfile(doctorData);
+        updatedDataResponse = await updateDoctorProfile(doctorData);
       } else {
         // Patient update
         const patientData = {
@@ -103,8 +140,13 @@ const EditProfile = () => {
           birthDate: formData.birthDate || null,
           profilePhoto: formData.profilePhoto
         };
-        await updateProfile(patientData);
+        updatedDataResponse = await updateProfile(patientData);
       }
+
+      // Update Auth Context with new data to keep UI in sync
+      const updatedUser = { ...user, ...formData };
+      login(updatedUser);
+
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (error) {
       setMessage({ type: 'error', text: error.message });
@@ -127,6 +169,7 @@ const EditProfile = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 md:p-8">
       <div className="max-w-3xl mx-auto space-y-8">
+        <BackButton to="/profile" />
         <div>
            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Edit Profile</h1>
            <p className="text-gray-500 dark:text-gray-400 mt-1">Update your personal information and profile picture.</p>

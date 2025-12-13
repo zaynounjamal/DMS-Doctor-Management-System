@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getDoctors, getAvailableDates, getTimeSlots, bookAppointment, getProfile } from '../api';
 import { useAuth } from '../contexts/AuthContext';
+import BackButton from '../components/ui/BackButton';
 // import '../BookAppointment.css'; // REMOVED: Using new Tailwind components
 
 // New Components
@@ -15,6 +16,7 @@ import AppointmentForm from '../components/booking/AppointmentForm';
 
 const BookAppointment = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, openLoginModal } = useAuth();
   
   // Data States
@@ -175,7 +177,7 @@ const BookAppointment = () => {
   const onBook = async () => {
     // Check if user is logged in - open login modal for guests
     if (!user) {
-      openLoginModal();
+      openLoginModal(location.pathname);
       return;
     }
 
@@ -228,6 +230,7 @@ const BookAppointment = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 p-4 md:p-8">
       <main className="max-w-4xl mx-auto space-y-6">
+        <BackButton />
         <h1 className="text-3xl font-bold mb-6">Book Your Visit</h1>
         
         {/* Step 1: Doctor */}
