@@ -279,16 +279,20 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
       };
 
       // 5. Update Context & Close Modal
+      console.log("Login successful, full user object:", completeUser);
       onLogin(completeUser);
       onClose();
       
       // 6. Redirect Logic
       if (redirectPath) {
+        console.log("Redirecting to saved path:", redirectPath);
         navigate(redirectPath);
         setRedirectPath(null); // Clear redirection
       } else {
          const userRole = completeUser.role?.toLowerCase();
+         console.log("Redirecting based on role:", userRole);
          if (userRole === 'doctor') {
+            console.log("Reviewing doctor dashboard route...");
             navigate('/doctor/dashboard');
          } else if (userRole === 'secretary') {
             navigate('/');

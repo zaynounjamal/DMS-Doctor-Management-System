@@ -166,6 +166,24 @@ const DoctorDashboard = () => {
           >
             📊 Profit Analytics
           </button>
+          <button
+            onClick={() => navigate('/doctor/offdays')}
+            style={{
+              padding: '12px 24px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              border: 'none',
+              borderRadius: '8px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
+          >
+            🚫 Manage Off Days
+          </button>
         </div>
       </div>
 

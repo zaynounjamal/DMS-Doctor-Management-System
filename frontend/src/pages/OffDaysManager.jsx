@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getOffDays, addOffDay, deleteOffDay } from '../doctorApi';
 
 const OffDaysManager = () => {
   const [offDays, setOffDays] = useState([]);
@@ -14,12 +15,7 @@ const OffDaysManager = () => {
   const loadOffDays = async () => {
     try {
       setLoading(true);
-      const token = JSON.parse(localStorage.getItem('user') || '{}').token;
-      const response = await fetch('http://localhost:5024/api/offdays', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Failed to load off days');
-      const data = await response.json();
+      const data = await getOffDays();
       setOffDays(data);
     } catch (error) {
       console.error('Failed to load off days:', error);
@@ -32,23 +28,7 @@ const OffDaysManager = () => {
   const handleAddOffDay = async (e) => {
     e.preventDefault();
     try {
-      const token = JSON.parse(localStorage.getItem('user') || '{}').token;
-      const response = await fetch('http://localhost:5024/api/offdays', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          offDate: selectedDate,
-          reason: reason || null
-        })
-      });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
-      }
+      await addOffDay(selectedDate, reason);
       
       await loadOffDays();
       setSelectedDate('');
@@ -65,13 +45,7 @@ const OffDaysManager = () => {
     if (!confirm('Are you sure you want to remove this off day?')) return;
     
     try {
-      const token = JSON.parse(localStorage.getItem('user') || '{}').token;
-      const response = await fetch(`http://localhost:5024/api/offdays/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete off day');
+      await deleteOffDay(id);
       
       await loadOffDays();
       alert('Off day removed successfully!');
