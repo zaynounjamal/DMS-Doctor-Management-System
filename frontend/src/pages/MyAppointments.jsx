@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getMyAppointments, cancelAppointment } from '../api';
 import { Calendar, Clock, MapPin, AlertCircle, CheckCircle, XCircle, Info } from 'lucide-react';
+import BackButton from '../components/ui/BackButton';
 
 const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -72,6 +73,7 @@ const MyAppointments = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
+        <BackButton to="/profile" />
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Appointments</h1>

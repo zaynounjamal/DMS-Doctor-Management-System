@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getTreatments } from '../api';
+import BackButton from '../components/ui/BackButton';
 
 const TreatmentsPage = () => {
   const [treatments, setTreatments] = useState([]);
@@ -25,6 +26,9 @@ const TreatmentsPage = () => {
   return (
     <div style={{ padding: '40px 20px', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '20px' }}>
+           <BackButton />
+        </div>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '50px' }}>
           <h1 style={{ 

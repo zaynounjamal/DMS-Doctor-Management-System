@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Mail, Phone, Calendar, Shield, LogOut, AlertTriangle, X } from 'lucide-react';
+import BackButton from '../components/ui/BackButton';
 
 const Profile = () => {
   const { user, logout } = useAuth();
@@ -32,6 +33,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
+        <BackButton to="/" />
         <div className="flex items-center justify-between">
            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
         </div>

@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, Eye, EyeOff, User, Loader2, Phone, Calendar, UserCircle, ChevronDown, Check, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
-import { login, signup, checkUsernameAvailability } from '../../api';
+import { useAuth } from '../../contexts/AuthContext';
+import { login, signup, checkUsernameAvailability, getProfile } from '../../api';
 
 const LoginModal = ({ isOpen, onClose, onLogin }) => {
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const { redirectPath, setRedirectPath } = useAuth();
   const [currentView, setCurrentView] = useState('login'); // 'login' or 'signup'
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -28,6 +30,8 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
   const [usernameStatus, setUsernameStatus] = useState(''); // 'checking', 'available', 'taken', ''
   
   const genderDropdownRef = useRef(null);
+
+
   
   const genderOptions = [
     { value: 'Male', label: 'Male' },
@@ -225,7 +229,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
     const newErrors = {};
     const fieldsToValidate = isLogin 
       ? ['username', 'password']
-      : ['fullName', 'username', 'phoneNumber', 'password', 'confirmPassword']; // DOB and Gender are optional now
+      : ['fullName', 'username', 'phoneNumber', 'password', 'confirmPassword'];
 
     fieldsToValidate.forEach(field => {
       const errorMsg = validateField(field, formData[field]);
@@ -245,38 +249,58 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
     setIsLoading(true);
 
     try {
+      // 1. Authenticate (Login or Signup)
+      let authData;
       if (isLogin) {
-        // Login with DMS API
-        const userData = await login(formData.username, formData.password);
-        onLogin(userData);
-        onClose();
-        
-        // Redirect based on role (case-insensitive)
-        const userRole = userData.role?.toLowerCase();
-        if (userRole === 'doctor') {
-          navigate('/doctor/dashboard');
-        } else if (userRole === 'secretary') {
-          navigate('/'); // Secretary dashboard (if exists)
-        } else {
-          navigate('/'); // Patient home
-        }
+        authData = await login(formData.username, formData.password);
       } else {
-        // Signup with DMS API - map fields correctly
         const signupData = {
           username: formData.username,
           password: formData.password,
           fullName: formData.fullName,
-          phone: formData.phoneNumber, // DMS expects 'phone', not 'phoneNumber'
-          gender: formData.gender || null, // Convert empty string to null
-          birthDate: formData.dateOfBirth ? formData.dateOfBirth : null, // DMS expects 'birthDate', format: YYYY-MM-DD
+          phone: formData.phoneNumber,
+          gender: formData.gender || null,
+          birthDate: formData.dateOfBirth ? formData.dateOfBirth : null,
         };
-        
-        const userData = await signup(signupData);
-        onLogin(userData);
-        onClose();
-        navigate('/'); // Patients go to home after signup
+        authData = await signup(signupData);
       }
+
+      // 2. Save token temporarily to allow getProfile via API to work
+      localStorage.setItem('user', JSON.stringify(authData));
+
+      // 3. Fetch full profile to ensure we have all details (Phone, Photo, etc.)
+      const profileResponse = await getProfile();
+      
+      // 4. Merge Data
+      const completeUser = {
+        ...authData,
+        ...profileResponse.profile,
+        token: authData.token
+      };
+
+      // 5. Update Context & Close Modal
+      onLogin(completeUser);
+      onClose();
+      
+      // 6. Redirect Logic
+      if (redirectPath) {
+        navigate(redirectPath);
+        setRedirectPath(null); // Clear redirection
+      } else {
+         const userRole = completeUser.role?.toLowerCase();
+         if (userRole === 'doctor') {
+            navigate('/doctor/dashboard');
+         } else if (userRole === 'secretary') {
+            navigate('/');
+         } else {
+            navigate('/');
+         }
+      }
+
     } catch (err) {
+      console.error("Authentication error:", err);
+      // Clean up if failed
+      localStorage.removeItem('user');
       setError(err.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);

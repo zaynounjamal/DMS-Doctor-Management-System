@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [redirectPath, setRedirectPath] = useState(null);
 
   // Restore user from localStorage on mount and verify with backend
   useEffect(() => {
@@ -59,7 +60,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   };
 
-  const openLoginModal = () => setIsLoginModalOpen(true);
+  const openLoginModal = (path) => {
+    setRedirectPath(path || null);
+    setIsLoginModalOpen(true);
+  };
   const closeLoginModal = () => setIsLoginModalOpen(false);
 
   return (
@@ -70,7 +74,9 @@ export const AuthProvider = ({ children }) => {
       isLoginModalOpen, 
       openLoginModal, 
       closeLoginModal,
-      loading
+      loading,
+      redirectPath,
+      setRedirectPath
     }}>
       {children}
     </AuthContext.Provider>
