@@ -6,7 +6,7 @@ import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
 import enUS from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { searchAppointments, sendReminder } from '../doctorApi';
+import { searchAppointments, sendReminder, getOffDays } from '../doctorApi';
 
 const locales = {
   'en-US': enUS,
@@ -41,11 +41,7 @@ const CalendarView = () => {
       });
 
       // Load off days
-      const token = JSON.parse(localStorage.getItem('user') || '{}').token;
-      const offDaysResponse = await fetch('http://localhost:5024/api/offdays', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const offDaysData = await offDaysResponse.json();
+      const offDaysData = await getOffDays();
       setOffDays(offDaysData);
 
       // Transform appointments to events

@@ -127,9 +127,9 @@ const BookAppointment = () => {
         // Let's format it to "YYYY-MM-DD" just to be safe and match previous behavior.
         // const dateStr = date.toISOString().split('T')[0]; 
         // Use local date string to avoid timezone shifts if possible, or simple ISO slice.
-        const offset = date.getTimezoneOffset()
-        const dateLocal = new Date(date.getTime() - (offset*60*1000))
-        const dateStr = dateLocal.toISOString().split('T')[0]
+        const offset = date.getTimezoneOffset() * 60000;
+        const dateLocal = new Date(date.getTime() - offset);
+        const dateStr = dateLocal.toISOString().split('T')[0];
 
       const slots = await getTimeSlots(selectedDoctor.id, dateStr);
       setTimeSlots(slots);

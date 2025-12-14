@@ -17,6 +17,7 @@ import {
   bulkCompleteAppointments,
   sendReminder
 } from '../doctorApi';
+import API_URL from '../config';
 
 const DoctorAppointments = () => {
   const [searchParams] = useSearchParams();
@@ -41,7 +42,16 @@ const DoctorAppointments = () => {
   const [searchStatus, setSearchStatus] = useState('');
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [selectedAppointments, setSelectedAppointments] = useState([]);
+
   const [isBulkCompleting, setIsBulkCompleting] = useState(false);
+
+  // Define tabs
+  const tabs = [
+      { id: 'today', label: 'Today', icon: '📅' },
+      { id: 'tomorrow', label: 'Tomorrow', icon: '📆' },
+      { id: 'future', label: 'Upcoming', icon: '🔮' },
+      { id: 'past', label: 'History', icon: '📜' }
+  ];
 
   useEffect(() => {
     loadAppointments(activeTab);
@@ -70,7 +80,12 @@ const DoctorAppointments = () => {
       setAppointments(data);
     } catch (error) {
       console.error('Failed to load appointments:', error);
-      alert('Failed to load appointments');
+      if (error.message.includes('401') || error.message.includes('403')) {
+          alert("Session expired or unauthorized. Please log in again.");
+          // Optional: redirect to login or home
+      } else {
+          alert('Failed to load appointments');
+      }
     } finally {
       setLoading(false);
     }
@@ -81,9 +96,46 @@ const DoctorAppointments = () => {
     setShowMarkAsDoneModal(true);
   };
 
-  const handleSubmitCompletion = async (finalPrice, completionNotes) => {
+  const handleExport = async (format) => {
     try {
-      await completeAppointment(selectedAppointment.id, finalPrice, completionNotes);
+      setLoading(true);
+      const period = document.getElementById('exportPeriod').value;
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      const response = await fetch(`${API_URL}/doctor/appointments/export?format=${format}&period=${period}`, {
+          headers: {
+              'Authorization': `Bearer ${user.token}`
+          }
+      });
+
+      if (!response.ok) throw new Error('Export failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `appointments_${period}_${new Date().toISOString().split('T')[0]}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export appointments');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitCompletion = async (finalPrice, completionNotes, paymentStatus) => {
+    try {
+      // Ensure price is a number
+      const price = parseFloat(finalPrice);
+      if (isNaN(price)) {
+          alert("Please enter a valid price");
+          return;
+      }
+      await completeAppointment(selectedAppointment.id, price, completionNotes, paymentStatus);
       await loadAppointments(activeTab);
       setShowMarkAsDoneModal(false);
     } catch (error) {
@@ -91,63 +143,24 @@ const DoctorAppointments = () => {
     }
   };
 
-  const handleViewNotes = async (appointment) => {
-    try {
-      setSelectedAppointment(appointment);
-      const notes = await getAppointmentNotes(appointment.id);
-      setAppointmentNotes(notes);
-      setShowNotesModal(true);
-    } catch (error) {
-      console.error('Failed to load notes:', error);
-      alert('Failed to load notes');
-    }
-  };
-
-  const handleAddNote = () => {
-    setSelectedNote(null);
-    setShowNotesModal(false);
-    setShowAddNoteModal(true);
-  };
-
-  const handleEditNote = (note) => {
-    setSelectedNote(note);
-    setShowNotesModal(false);
-    setShowAddNoteModal(true);
-  };
-
-  const handleSubmitNote = async (noteText) => {
-    try {
-      if (selectedNote) {
-        await editMedicalNote(selectedNote.id, noteText);
-      } else {
-        await addMedicalNote(selectedAppointment.id, noteText);
-      }
-      const notes = await getAppointmentNotes(selectedAppointment.id);
-      setAppointmentNotes(notes);
-      setShowAddNoteModal(false);
-      setShowNotesModal(true);
-    } catch (error) {
-      throw error;
-    }
-  };
-
+  // --- Search ---
   const handleSearch = async () => {
+    if (!searchQuery && !searchStartDate && !searchEndDate && !searchStatus) return;
+    setIsSearchMode(true);
+    setLoading(true);
     try {
-      setLoading(true);
-      setIsSearchMode(true);
-      const data = await searchAppointments({
-        query: searchQuery,
-        startDate: searchStartDate,
-        endDate: searchEndDate,
-        status: searchStatus
-      });
-      setAppointments(data);
-      setActiveTab('search');
+        const results = await searchAppointments({
+            query: searchQuery,
+            startDate: searchStartDate,
+            endDate: searchEndDate,
+            status: searchStatus
+        });
+        setAppointments(results);
     } catch (error) {
-      console.error('Search failed:', error);
-      alert('Search failed');
+        console.error(error);
+        alert('Search failed');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
@@ -157,73 +170,93 @@ const DoctorAppointments = () => {
     setSearchEndDate('');
     setSearchStatus('');
     setIsSearchMode(false);
-    setActiveTab('today');
-    loadAppointments('today');
+    loadAppointments(activeTab);
   };
 
-  const toggleSelection = (appointmentId) => {
-    setSelectedAppointments(prev => {
-      if (prev.includes(appointmentId)) {
-        return prev.filter(id => id !== appointmentId);
-      } else {
-        return [...prev, appointmentId];
-      }
-    });
-  };
-
-  const selectAll = () => {
-    if (selectedAppointments.length === appointments.length) {
-      setSelectedAppointments([]);
-    } else {
-      setSelectedAppointments(appointments.map(a => a.id));
-    }
+  // --- Bulk Actions ---
+  const toggleSelection = (id) => {
+    setSelectedAppointments(prev => 
+        prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
   };
 
   const handleBulkComplete = async () => {
-    if (!confirm(`Mark ${selectedAppointments.length} appointments as done?`)) return;
-    
-    try {
+      if (!confirm(`Mark ${selectedAppointments.length} appointments as done?`)) return;
       setIsBulkCompleting(true);
-      await bulkCompleteAppointments(selectedAppointments);
-      alert('Appointments marked as done!');
-      setSelectedAppointments([]);
-      if (isSearchMode) {
-        handleSearch();
-      } else {
-        loadAppointments(activeTab);
+      try {
+          await bulkCompleteAppointments(selectedAppointments, 50); // Default price 50? Or prompt.
+          alert('Bulk completion successful');
+          setSelectedAppointments([]);
+          loadAppointments(activeTab);
+      } catch (error) {
+          console.error(error);
+          alert('Bulk action failed');
+      } finally {
+          setIsBulkCompleting(false);
       }
-    } catch (error) {
-      console.error('Bulk complete failed:', error);
-      alert('Failed to complete appointments');
-    } finally {
-      setIsBulkCompleting(false);
-    }
   };
 
   const handleBulkRemind = async () => {
-    if (!confirm(`Send reminders to ${selectedAppointments.length} patients?`)) return;
-    
-    try {
-      // Send sequentially
-      let count = 0;
+      // Loop send reminder
+      let successCount = 0;
       for (const id of selectedAppointments) {
-        await sendReminder(id);
-        count++;
+          try {
+              await sendReminder(id);
+              successCount++;
+          } catch (e) {
+              console.error(e);
+          }
       }
-      alert(`Sent ${count} reminders successfully!`);
+      alert(`Sent ${successCount} reminders.`);
       setSelectedAppointments([]);
-    } catch (error) {
-      console.error('Failed to send reminders:', error);
-      alert('Failed to send some reminders');
-    }
   };
 
-  const tabs = [
-    { id: 'today', label: 'Today', icon: '📅' },
-    { id: 'tomorrow', label: 'Tomorrow', icon: '📆' },
-    { id: 'future', label: 'Future', icon: '🔮' },
-    { id: 'past', label: 'Past', icon: '📜' }
-  ];
+  // --- Notes Management ---
+  const handleViewNotes = async (appointment) => {
+      setSelectedAppointment(appointment);
+      try {
+          // Fetch notes
+          const notes = await getAppointmentNotes(appointment.id);
+          setAppointmentNotes(notes);
+          setShowNotesModal(true);
+      } catch (e) {
+          console.error(e);
+          alert('Failed to load notes');
+      }
+  };
+
+  const handleAddNote = () => {
+      setSelectedNote(null);
+      setShowAddNoteModal(true);
+      setShowNotesModal(false); // Close list modal temporarily
+  };
+
+  const handleEditNote = (note) => {
+      setSelectedNote(note);
+      setShowAddNoteModal(true);
+      setShowNotesModal(false);
+  };
+
+  const handleSubmitNote = async (noteText) => {
+      try {
+          if (selectedNote) {
+              await editMedicalNote(selectedNote.id, noteText);
+          } else {
+              await addMedicalNote(selectedAppointment.id, noteText);
+          }
+          // Refresh notes
+          const notes = await getAppointmentNotes(selectedAppointment.id);
+          setAppointmentNotes(notes);
+          setShowAddNoteModal(false);
+          setShowNotesModal(true); // Reopen list
+          
+          // Refresh appointment list to update counts if needed
+          loadAppointments(activeTab);
+      } catch (e) {
+          console.error(e);
+          alert('Failed to save note');
+      }
+  };
 
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -242,6 +275,7 @@ const DoctorAppointments = () => {
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <select
             id="exportPeriod"
+            defaultValue="month"
             style={{
               padding: '10px 12px',
               fontSize: '14px',
@@ -255,18 +289,13 @@ const DoctorAppointments = () => {
           >
             <option value="today">Today</option>
             <option value="week">This Week</option>
-            <option value="month" selected>This Month</option>
+            <option value="month">This Month</option>
             <option value="year">This Year</option>
             <option value="all">All Time</option>
           </select>
           
           <button
-            onClick={() => {
-              const period = document.getElementById('exportPeriod').value;
-              const user = JSON.parse(localStorage.getItem('user') || '{}');
-              const url = `http://localhost:5024/api/doctor/appointments/export?format=csv&period=${period}`;
-              window.open(url, '_blank');
-            }}
+            onClick={() => handleExport('csv')}
             style={{
               padding: '10px 20px',
               fontSize: '14px',
@@ -288,12 +317,7 @@ const DoctorAppointments = () => {
           </button>
           
           <button
-            onClick={() => {
-              const period = document.getElementById('exportPeriod').value;
-              const user = JSON.parse(localStorage.getItem('user') || '{}');
-              const url = `http://localhost:5024/api/doctor/appointments/export?format=pdf&period=${period}`;
-              window.open(url, '_blank');
-            }}
+            onClick={() => handleExport('pdf')}
             style={{
               padding: '10px 20px',
               fontSize: '14px',

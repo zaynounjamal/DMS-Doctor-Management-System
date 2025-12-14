@@ -50,7 +50,6 @@ public class AppointmentsController : ControllerBase
     {
         var doctor = await _context.Doctors
             .Include(d => d.User)
-            .ThenInclude(u => u.OffDays)
             .FirstOrDefaultAsync(d => d.Id == doctorId);
 
         if (doctor == null)
@@ -61,6 +60,12 @@ public class AppointmentsController : ControllerBase
         var today = DateOnly.FromDateTime(DateTime.Today);
         var endDate = today.AddDays(30);
 
+        // Explicitly fetch off days for this doctor
+        var offDays = await _context.OffDays
+            .Where(od => od.CreatedByUser == doctor.UserId && od.OffDate >= today && od.OffDate <= endDate)
+            .Select(od => od.OffDate)
+            .ToListAsync();
+
         var availableDates = new List<DateOnly>();
 
         for (var date = today; date <= endDate; date = date.AddDays(1))
@@ -70,8 +75,7 @@ public class AppointmentsController : ControllerBase
                 continue;
 
             // Check if doctor has this day off
-            var isOffDay = doctor.User.OffDays.Any(od => od.OffDate == date);
-            if (isOffDay)
+            if (offDays.Contains(date))
                 continue;
 
             availableDates.Add(date);
@@ -187,8 +191,8 @@ public class AppointmentsController : ControllerBase
         }
 
         // Validate doctor exists
-        var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == model.DoctorId);
-        if (!doctorExists)
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.Id == model.DoctorId);
+        if (doctor == null)
         {
             return NotFound("Doctor not found");
         }
@@ -209,6 +213,15 @@ public class AppointmentsController : ControllerBase
         if (slotTaken)
         {
             return BadRequest("This time slot is already booked");
+        }
+
+        // Check if it's an off day for the doctor
+        var isOffDay = await _context.OffDays
+            .AnyAsync(od => od.CreatedByUser == doctor.UserId && od.OffDate == model.AppointmentDate);
+
+        if (isOffDay)
+        {
+            return BadRequest("The doctor is not available on this date.");
         }
 
         // Create appointment
@@ -584,10 +597,54 @@ public class AppointmentsController : ControllerBase
         appointment.CompletedAt = DateTime.UtcNow;
         appointment.FinalPrice = model.FinalPrice;
         appointment.CompletionNotes = model.CompletionNotes;
+        appointment.PaymentStatus = model.PaymentStatus; // Updated to save payment status
         appointment.Status = "done";
 
         await _context.SaveChangesAsync();
 
-        return Ok(new { Message = "Appointment marked as done", Appointment = appointment });
+        return Ok(new 
+        { 
+            Message = "Appointment marked as done", 
+            AppointmentId = appointment.Id,
+            appointment.Status,
+            appointment.IsCompleted,
+            appointment.PaymentStatus, // Return the status
+            appointment.FinalPrice
+        });
+    }
+    /// <summary>
+    /// Update payment status independent of completion
+    /// </summary>
+    [HttpPut("{id}/payment-status")]
+    [Authorize(Policy = "DoctorOnly")]
+    public async Task<ActionResult> UpdatePaymentStatus(int id, [FromBody] string status)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (doctor == null) return NotFound("Doctor not found");
+
+        var appointment = await _context.Appointments.FindAsync(id);
+        if (appointment == null) return NotFound("Appointment not found");
+
+        if (appointment.DoctorId != doctor.Id)
+        {
+            return Forbid("You can only update your own appointments");
+        }
+
+        // Validate status
+        if (status != "paid" && status != "unpaid")
+        {
+            return BadRequest("Invalid status. Must be 'paid' or 'unpaid'.");
+        }
+
+        appointment.PaymentStatus = status;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { Message = "Payment status updated", appointment.PaymentStatus });
     }
 }

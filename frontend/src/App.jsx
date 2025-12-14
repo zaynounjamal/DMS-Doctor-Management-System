@@ -4,6 +4,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/layout/Header';
 import LoginModal from './components/auth/LoginModal';
+import ProtectedRoute from './components/layout/ProtectedRoute';
 import Footer from './components/layout/Footer';
 import BookAppointment from './pages/BookAppointment';
 import MyAppointments from './pages/MyAppointments';
@@ -46,23 +47,30 @@ const AppContent = () => {
         
         <main className="relative" style={{ paddingTop: '56px' }}>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/treatments" element={<TreatmentsPage />} />
             <Route path="/book-appointment" element={<BookAppointment />} />
-            <Route path="/profile" element={user ? <Profile /> : <Navigate to="/" />} />
-            <Route path="/my-appointments" element={user ? <MyAppointments /> : <Navigate to="/" />} />
-            <Route path="/financial-summary" element={user ? <FinancialSummary /> : <Navigate to="/" />} />
-            <Route path="/edit-profile" element={user ? <EditProfile /> : <Navigate to="/" />} />
-            <Route path="/change-password" element={user ? <ChangePassword /> : <Navigate to="/" />} />
+
+            {/* Protected Routes (Any Authenticated User) */}
+            <Route element={<ProtectedRoute />}>
+               <Route path="/profile" element={<Profile />} />
+               <Route path="/my-appointments" element={<MyAppointments />} />
+               <Route path="/financial-summary" element={<FinancialSummary />} />
+               <Route path="/edit-profile" element={<EditProfile />} />
+               <Route path="/change-password" element={<ChangePassword />} />
+            </Route>
             
-            {/* Doctor Routes */}
-            <Route path="/doctor/dashboard" element={user?.role?.toLowerCase() === 'doctor' ? <DoctorDashboard /> : <Navigate to="/" />} />
-            <Route path="/doctor/appointments" element={user?.role?.toLowerCase() === 'doctor' ? <DoctorAppointments /> : <Navigate to="/" />} />
-            <Route path="/doctor/patients" element={user?.role?.toLowerCase() === 'doctor' ? <DoctorPatients /> : <Navigate to="/" />} />
-            <Route path="/doctor/patients/:patientId" element={user?.role?.toLowerCase() === 'doctor' ? <DoctorPatientView /> : <Navigate to="/" />} />
-            <Route path="/doctor/profit" element={user?.role?.toLowerCase() === 'doctor' ? <DoctorProfitAnalytics /> : <Navigate to="/" />} />
-            <Route path="/doctor/offdays" element={user?.role?.toLowerCase() === 'doctor' ? <OffDaysManager /> : <Navigate to="/" />} />
-            <Route path="/doctor/calendar" element={user?.role?.toLowerCase() === 'doctor' ? <CalendarView /> : <Navigate to="/" />} />
+            {/* Doctor Routes Only */}
+            <Route element={<ProtectedRoute allowedRoles={['doctor']} />}>
+                <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+                <Route path="/doctor/appointments" element={<DoctorAppointments />} />
+                <Route path="/doctor/patients" element={<DoctorPatients />} />
+                <Route path="/doctor/patients/:patientId" element={<DoctorPatientView />} />
+                <Route path="/doctor/profit" element={<DoctorProfitAnalytics />} />
+                <Route path="/doctor/offdays" element={<OffDaysManager />} />
+                <Route path="/doctor/calendar" element={<CalendarView />} />
+            </Route>
           </Routes>
         </main>
         

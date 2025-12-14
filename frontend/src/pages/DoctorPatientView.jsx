@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MedicalNotesList from '../components/MedicalNotesList';
-import { getPatientDetails, getPatientNotes } from '../doctorApi';
+import { getPatientDetails, getPatientNotes, updatePaymentStatus } from '../doctorApi';
 
 const DoctorPatientView = () => {
   const { patientId } = useParams();
@@ -253,19 +253,53 @@ const DoctorPatientView = () => {
                         </div>
                       </div>
                     )}
+                      </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                     {apt.completionNotes && (
+                        <div style={{
+                          backgroundColor: '#f9fafb',
+                          padding: '12px',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          color: '#666',
+                          flex: 1,
+                          marginRight: '16px'
+                        }}>
+                          {apt.completionNotes}
+                        </div>
+                      )}
+                      
+                      {/* Payment Toggle Button */}
+                      {apt.isCompleted && apt.paymentStatus === 'unpaid' && (
+                         <button
+                            onClick={async () => {
+                               if(!confirm('Mark this appointment as Paid?')) return;
+                               try {
+                                   await updatePaymentStatus(apt.id, 'paid');
+                                   // Refresh data
+                                   loadPatientData(); 
+                               } catch(e) {
+                                   alert('Failed to update status');
+                                   console.error(e);
+                               }
+                            }}
+                            style={{
+                               padding: '6px 12px',
+                               fontSize: '12px',
+                               fontWeight: 'bold',
+                               color: 'white',
+                               backgroundColor: '#10b981',
+                               border: 'none',
+                               borderRadius: '6px',
+                               cursor: 'pointer',
+                               whiteSpace: 'nowrap'
+                            }}
+                         >
+                            Mark as Paid
+                         </button>
+                      )}
                   </div>
-                  {apt.completionNotes && (
-                    <div style={{
-                      backgroundColor: '#f9fafb',
-                      padding: '12px',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      color: '#666',
-                      marginTop: '8px'
-                    }}>
-                      {apt.completionNotes}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

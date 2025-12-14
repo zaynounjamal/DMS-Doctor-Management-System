@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5024/api';
+import API_URL from './config';
 
 // Get token from localStorage
 const getAuthHeader = () => {
@@ -14,7 +14,9 @@ export const getDoctorDashboard = async () => {
     const response = await fetch(`${API_URL}/doctor/dashboard`, {
         headers: getAuthHeader()
     });
-    if (!response.ok) throw new Error('Failed to fetch dashboard');
+    if (!response.ok) {
+        throw new Error(`Failed to fetch dashboard: ${response.status} ${response.statusText}`);
+    }
     return response.json();
 };
 
@@ -86,13 +88,30 @@ export const getPastAppointments = async () => {
     return response.json();
 };
 
-export const completeAppointment = async (appointmentId, finalPrice, completionNotes) => {
+export const completeAppointment = async (appointmentId, finalPrice, completionNotes, paymentStatus) => {
     const response = await fetch(`${API_URL}/appointments/${appointmentId}/complete`, {
         method: 'PUT',
         headers: getAuthHeader(),
-        body: JSON.stringify({ finalPrice, completionNotes })
+        body: JSON.stringify({ finalPrice, completionNotes, paymentStatus })
     });
     if (!response.ok) throw new Error('Failed to complete appointment');
+
+    const text = await response.text();
+    try {
+        return text ? JSON.parse(text) : {};
+    } catch (e) {
+        console.warn("API returned non-JSON success response", text);
+        return { message: "Success" };
+    }
+};
+
+export const updatePaymentStatus = async (appointmentId, status) => {
+    const response = await fetch(`${API_URL}/appointments/${appointmentId}/payment-status`, {
+        method: 'PUT',
+        headers: getAuthHeader(),
+        body: JSON.stringify(status)
+    });
+    if (!response.ok) throw new Error('Failed to update payment status');
     return response.json();
 };
 
@@ -104,7 +123,15 @@ export const addMedicalNote = async (appointmentId, note) => {
         body: JSON.stringify({ appointmentId, note })
     });
     if (!response.ok) throw new Error('Failed to add medical note');
-    return response.json();
+
+    // Safely parse JSON
+    const text = await response.text();
+    try {
+        return text ? JSON.parse(text) : {};
+    } catch (e) {
+        console.warn("API returned non-JSON success response", text);
+        return { message: "Success" };
+    }
 };
 
 export const editMedicalNote = async (noteId, note) => {
@@ -114,7 +141,14 @@ export const editMedicalNote = async (noteId, note) => {
         body: JSON.stringify({ note })
     });
     if (!response.ok) throw new Error('Failed to edit medical note');
-    return response.json();
+
+    const text = await response.text();
+    try {
+        return text ? JSON.parse(text) : {};
+    } catch (e) {
+        console.warn("API returned non-JSON success response", text);
+        return { message: "Success" };
+    }
 };
 
 export const getAppointmentNotes = async (appointmentId) => {

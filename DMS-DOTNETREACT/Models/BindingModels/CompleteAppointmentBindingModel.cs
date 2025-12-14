@@ -9,4 +9,8 @@ public class CompleteAppointmentBindingModel
     
     [MaxLength(1000)]
     public string? CompletionNotes { get; set; }
+
+    [Required]
+    [RegularExpression("^(paid|unpaid)$", ErrorMessage = "Payment status must be 'paid' or 'unpaid'")]
+    public string PaymentStatus { get; set; } = "unpaid";
 }

@@ -59,7 +59,7 @@ public class OffDaysController : ControllerBase
     /// Add a new off day
     /// </summary>
     [HttpPost("add")]
-    public async Task<ActionResult> AddOffDay([FromBody] AddOffDayModel model)
+    public async Task<ActionResult> AddOffDay([FromBody] DMS_DOTNETREACT.Models.BindingModels.AddOffDayDto model)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
@@ -76,15 +76,21 @@ public class OffDaysController : ControllerBase
             return NotFound("Doctor not found");
         }
 
-        // Check if date is in the past
-        if (model.OffDate < DateOnly.FromDateTime(DateTime.Today))
+        DateOnly offDate;
+        if (!DateOnly.TryParse(model.OffDate, out offDate))
+        {
+             return BadRequest($"Invalid date format: {model.OffDate}. Use yyyy-MM-dd");
+        }
+
+        // Check if date is in the past (Allow today)
+        if (offDate < DateOnly.FromDateTime(DateTime.Today))
         {
             return BadRequest("Cannot add off days in the past");
         }
 
         // Check if already exists
         var exists = await _context.OffDays
-            .AnyAsync(od => od.CreatedByUser == doctor.UserId && od.OffDate == model.OffDate);
+            .AnyAsync(od => od.CreatedByUser == doctor.UserId && od.OffDate == offDate);
 
         if (exists)
         {
@@ -93,7 +99,7 @@ public class OffDaysController : ControllerBase
 
         // Check if there are appointments on this day
         var hasAppointments = await _context.Appointments
-            .AnyAsync(a => a.DoctorId == doctor.Id && a.AppointmentDate == model.OffDate && a.Status != "Cancelled");
+            .AnyAsync(a => a.DoctorId == doctor.Id && a.AppointmentDate == offDate && a.Status != "Cancelled");
 
         if (hasAppointments)
         {
@@ -102,7 +108,7 @@ public class OffDaysController : ControllerBase
 
         var offDay = new OffDay
         {
-            OffDate = model.OffDate,
+            OffDate = offDate,
             Reason = model.Reason,
             CreatedByUser = doctor.UserId,
             CreatedAt = DateTime.UtcNow
@@ -111,7 +117,17 @@ public class OffDaysController : ControllerBase
         _context.OffDays.Add(offDay);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Off day added successfully", offDay });
+        return Ok(new 
+        { 
+            message = "Off day added successfully", 
+            offDay = new {
+                offDay.Id,
+                offDay.Reason,
+                offDay.CreatedByUser,
+                OffDate = offDay.OffDate.ToString("yyyy-MM-dd"), // Return string to avoid serialization issues
+                offDay.CreatedAt
+            }
+        });
     }
 
     /// <summary>
@@ -162,8 +178,4 @@ public class OffDaysController : ControllerBase
     }
 }
 
-public class AddOffDayModel
-{
-    public DateOnly OffDate { get; set; }
-    public string? Reason { get; set; }
-}
+
