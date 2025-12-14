@@ -31,10 +31,13 @@ const Profile = () => {
     return path.startsWith('http') ? path : `${BASE_URL}${path}`;
   };
 
+  // Determine back button destination based on user role
+  const backButtonDestination = user.role?.toLowerCase() === 'doctor' ? '/doctor/dashboard' : '/';
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <BackButton to="/" />
+        <BackButton to={backButtonDestination} />
         <div className="flex items-center justify-between">
            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
         </div>
