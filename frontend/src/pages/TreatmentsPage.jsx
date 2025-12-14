@@ -27,7 +27,7 @@ const TreatmentsPage = () => {
     <div style={{ padding: '40px 20px', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ marginBottom: '20px' }}>
-           <BackButton />
+           <BackButton to="/" />
         </div>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '50px' }}>
