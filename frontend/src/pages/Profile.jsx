@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Mail, Phone, Calendar, Shield, LogOut, AlertTriangle, X } from 'lucide-react';
 import BackButton from '../components/ui/BackButton';
+import { BASE_URL } from '../config';
 
 const Profile = () => {
   const { user, logout } = useAuth();
@@ -27,7 +28,7 @@ const Profile = () => {
   // Helper to get image URL
   const getImageUrl = (path) => {
     if (!path) return null;
-    return path.startsWith('http') ? path : `http://localhost:5024${path}`;
+    return path.startsWith('http') ? path : `${BASE_URL}${path}`;
   };
 
   return (
@@ -127,33 +128,37 @@ const Profile = () => {
 
         {/* Action Tiles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link
-            to="/my-appointments"
-            className="group flex flex-col p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
-          >
-             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Calendar className="w-24 h-24 text-primary-light" />
-             </div>
-             <div className="w-14 h-14 mb-4 rounded-xl bg-primary-light/10 dark:bg-primary-dark/20 flex items-center justify-center text-primary-light dark:text-primary-dark group-hover:scale-110 transition-transform duration-300">
-               <Calendar className="w-7 h-7" />
-             </div>
-             <h3 className="font-bold text-lg mb-1 group-hover:text-primary-light transition-colors">My Appointments</h3>
-             <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">View upcoming visits and history.</p>
-          </Link>
+          {user.role?.toLowerCase() !== 'doctor' && (
+           <>
+              <Link
+                to="/my-appointments"
+                className="group flex flex-col p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+              >
+                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Calendar className="w-24 h-24 text-primary-light" />
+                 </div>
+                 <div className="w-14 h-14 mb-4 rounded-xl bg-primary-light/10 dark:bg-primary-dark/20 flex items-center justify-center text-primary-light dark:text-primary-dark group-hover:scale-110 transition-transform duration-300">
+                   <Calendar className="w-7 h-7" />
+                 </div>
+                 <h3 className="font-bold text-lg mb-1 group-hover:text-primary-light transition-colors">My Appointments</h3>
+                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">View upcoming visits and history.</p>
+              </Link>
 
-          <Link
-            to="/financial-summary"
-            className="group flex flex-col p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-               <Shield className="w-24 h-24 text-green-600" />
-            </div>
-            <div className="w-14 h-14 mb-4 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform duration-300">
-              <Shield className="w-7 h-7" />
-            </div>
-            <h3 className="font-bold text-lg mb-1 group-hover:text-green-600 transition-colors">Financial Summary</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Check billing, invoices, and payments.</p>
-          </Link>
+              <Link
+                to="/financial-summary"
+                className="group flex flex-col p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                   <Shield className="w-24 h-24 text-green-600" />
+                </div>
+                <div className="w-14 h-14 mb-4 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform duration-300">
+                  <Shield className="w-7 h-7" />
+                </div>
+                <h3 className="font-bold text-lg mb-1 group-hover:text-green-600 transition-colors">Financial Summary</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Check billing, invoices, and payments.</p>
+              </Link>
+           </>
+          )}
 
           <Link
             to="/edit-profile"

@@ -59,7 +59,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("PatientOnly", policy => policy.RequireRole("patient"));
-    options.AddPolicy("DoctorOnly", policy => policy.RequireRole("doctor"));
+    options.AddPolicy("DoctorOnly", policy => policy.RequireRole("doctor", "Doctor"));
     options.AddPolicy("SecretaryOnly", policy => policy.RequireRole("secretary"));
     options.AddPolicy("DoctorOrSecretary", policy => policy.RequireRole("doctor", "secretary"));
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
@@ -187,7 +187,7 @@ using (var scope = app.Services.CreateScope())
         var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
         
         // For development: delete and recreate database
-        context.Database.EnsureDeleted();
+        // context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
         Console.WriteLine("Database created successfully!");
         

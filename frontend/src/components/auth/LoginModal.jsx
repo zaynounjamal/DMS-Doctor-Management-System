@@ -173,6 +173,20 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
     }
   }, [isOpen]);
 
+  // Auto-redirect if already logged in (Fix for "Back button shows login")
+  useEffect(() => {
+    if (isOpen && isLogin && localStorage.getItem('user')) {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.token) {
+            onClose(); // Just close the modal if we are already valid
+            // Or redirect?
+            if (user.role && user.role.toLowerCase() === 'doctor') {
+               // navigate('/doctor/dashboard'); // Optional enforce
+            }
+        }
+    }
+  }, [isOpen, isLogin]);
+
   const validateField = (name, value) => {
     // Optional fields check
     if (!value && (name === 'dateOfBirth' || name === 'gender')) return '';
@@ -272,34 +286,59 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
       const profileResponse = await getProfile();
       
       // 4. Merge Data
+      // IMPORTANT: Spreading profileResponse first ensuring we get root properties like 'role'
+      // Then spreading profile which might overwrite some user props if names collide (usually fine)
+      // 4. Merge Data
+      console.log('DEBUG: authData', authData);
+      console.log('DEBUG: profileResponse', profileResponse);
+
       const completeUser = {
-        ...authData,
-        ...profileResponse.profile,
+        ...authData, 
+        ...profileResponse, 
+        ...profileResponse.profile, 
         token: authData.token
       };
+      
+      // Normalize to ensure core properties are consistent (handle PascalCase vs camelCase)
+      const normalizedUser = {
+        ...completeUser,
+        role: (completeUser.role || completeUser.Role || '').toLowerCase(),
+        id: completeUser.id || completeUser.Id,
+        username: completeUser.username || completeUser.Username
+      };
+
+      console.log('DEBUG: normalizedUser', normalizedUser);
 
       // 5. Update Context & Close Modal
-      console.log("Login successful, full user object:", completeUser);
-      onLogin(completeUser);
+      onLogin(normalizedUser);
       onClose();
       
       // 6. Redirect Logic
-      if (redirectPath) {
-        console.log("Redirecting to saved path:", redirectPath);
-        navigate(redirectPath);
-        setRedirectPath(null); // Clear redirection
-      } else {
-         const userRole = completeUser.role?.toLowerCase();
-         console.log("Redirecting based on role:", userRole);
-         if (userRole === 'doctor') {
-            console.log("Reviewing doctor dashboard route...");
-            navigate('/doctor/dashboard');
-         } else if (userRole === 'secretary') {
-            navigate('/');
-         } else {
-            navigate('/');
-         }
-      }
+      // Wrap in setTimeout to ensure state update propagates in App.jsx before route change
+      setTimeout(() => {
+        // Validate redirectPath is a string (and not an Event object)
+        if (redirectPath && typeof redirectPath === 'string') {
+            console.log("Redirecting to saved path:", redirectPath);
+            navigate(redirectPath, { replace: true });
+            setRedirectPath(null); 
+        } else {
+            // Fallback to Role-based redirection
+            const userRole = normalizedUser.role;
+            console.log("Redirecting based on role:", userRole);
+            
+            if (userRole === 'doctor') {
+                // Use navigate with replace + reload if needed, but since we have protected routes now, navigate should be enough.
+                // However, to ensure fresh state, window.location.href is safest for dashboard entry.
+                // But user wanted "back press remove it". window.location.replace is akin to navigate replace.
+                navigate('/doctor/dashboard', { replace: true });
+                 // window.location.href = '/doctor/dashboard'; // Removing full reload unless necessary
+            } else if (userRole === 'secretary') {
+                navigate('/', { replace: true });
+            } else {
+                navigate('/', { replace: true });
+            }
+        }
+      }, 100);
 
     } catch (err) {
       console.error("Authentication error:", err);

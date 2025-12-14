@@ -61,7 +61,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const openLoginModal = (path) => {
-    setRedirectPath(path || null);
+    // Ensure path is a string, otherwise set to null (handles event objects from onClick)
+    setRedirectPath(typeof path === 'string' ? path : null);
     setIsLoginModalOpen(true);
   };
   const closeLoginModal = () => setIsLoginModalOpen(false);

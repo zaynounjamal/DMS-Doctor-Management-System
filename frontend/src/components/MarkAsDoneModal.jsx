@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 const MarkAsDoneModal = ({ appointment, onClose, onSubmit }) => {
   const [finalPrice, setFinalPrice] = useState(appointment?.price || '');
   const [completionNotes, setCompletionNotes] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('unpaid');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -15,7 +16,7 @@ const MarkAsDoneModal = ({ appointment, onClose, onSubmit }) => {
 
     setLoading(true);
     try {
-      await onSubmit(parseFloat(finalPrice), completionNotes);
+      await onSubmit(parseFloat(finalPrice), completionNotes, paymentStatus);
       onClose();
     } catch (error) {
       alert('Failed to mark appointment as done: ' + error.message);
@@ -98,9 +99,38 @@ const MarkAsDoneModal = ({ appointment, onClose, onSubmit }) => {
                 placeholder="0.00"
               />
             </div>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#999' }}>
-              ⚠️ Price will be locked after submission
-            </p>
+
+          </div>
+
+          {/* Payment Status */}
+          <div style={{ marginBottom: '20px' }}>
+             <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', color: '#333', marginBottom: '8px' }}>
+                Payment Status <span style={{ color: '#ef4444' }}>*</span>
+             </label>
+             <div style={{ display: 'flex', gap: '16px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                   <input 
+                      type="radio" 
+                      name="paymentStatus" 
+                      value="unpaid" 
+                      checked={paymentStatus === 'unpaid'} 
+                      onChange={(e) => setPaymentStatus(e.target.value)}
+                      style={{ marginRight: '8px', width: '18px', height: '18px' }}
+                   />
+                   <span style={{ color: '#ef4444', fontWeight: '500' }}>Unpaid</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                   <input 
+                      type="radio" 
+                      name="paymentStatus" 
+                      value="paid" 
+                      checked={paymentStatus === 'paid'} 
+                      onChange={(e) => setPaymentStatus(e.target.value)}
+                      style={{ marginRight: '8px', width: '18px', height: '18px' }}
+                   />
+                   <span style={{ color: '#10b981', fontWeight: '500' }}>Paid</span>
+                </label>
+             </div>
           </div>
 
           {/* Completion Notes */}

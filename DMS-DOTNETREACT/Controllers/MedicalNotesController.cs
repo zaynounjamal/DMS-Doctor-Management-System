@@ -23,7 +23,7 @@ public class MedicalNotesController : ControllerBase
     /// Add a medical note to an appointment
     /// </summary>
     [HttpPost]
-    public async Task<ActionResult> AddNote([FromBody] MedicalNote model)
+    public async Task<ActionResult> AddNote([FromBody] DMS_DOTNETREACT.Models.BindingModels.AddMedicalNoteDto model)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
@@ -62,14 +62,22 @@ public class MedicalNotesController : ControllerBase
         _context.MedicalNotes.Add(note);
         await _context.SaveChangesAsync();
 
-        return Ok(note);
+        return Ok(new 
+        {
+            note.Id,
+            note.AppointmentId,
+            note.DoctorId,
+            note.Note,
+            note.CreatedAt,
+            note.IsEdited
+        });
     }
 
     /// <summary>
     /// Edit an existing medical note (notes can be edited but not deleted)
     /// </summary>
     [HttpPut("{id}")]
-    public async Task<ActionResult> EditNote(int id, [FromBody] MedicalNote model)
+    public async Task<ActionResult> EditNote(int id, [FromBody] DMS_DOTNETREACT.Models.BindingModels.EditMedicalNoteDto model)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
@@ -102,7 +110,15 @@ public class MedicalNotesController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(note);
+        return Ok(new 
+        {
+            note.Id,
+            note.AppointmentId,
+            note.DoctorId,
+            note.Note,
+            note.CreatedAt,
+            note.IsEdited
+        });
     }
 
     /// <summary>

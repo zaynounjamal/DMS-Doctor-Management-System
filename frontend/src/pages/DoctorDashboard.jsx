@@ -28,7 +28,12 @@ const DoctorDashboard = () => {
       setTodayAppointments(appointments);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
-      alert('Failed to load dashboard data');
+      if (error.message.includes('401') || error.message.includes('403')) {
+          alert("Session expired or unauthorized. Please log in again.");
+          navigate('/');
+      } else {
+          alert(`Failed to load dashboard data: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }

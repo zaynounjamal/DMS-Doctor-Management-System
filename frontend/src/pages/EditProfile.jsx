@@ -3,6 +3,7 @@ import { getProfile, updateProfile, updateDoctorProfile, uploadProfilePhoto } fr
 import { useAuth } from '../contexts/AuthContext';
 import { Camera, User, Phone, Calendar, Save, AlertCircle, CheckCircle } from 'lucide-react';
 import BackButton from '../components/ui/BackButton';
+import { BASE_URL } from '../config';
 
 const EditProfile = () => {
   const { user, login } = useAuth(); // Get user and login (to update context)
@@ -126,8 +127,9 @@ const EditProfile = () => {
            fullName: formData.fullName,
            phone: formData.phone,
            specialty: formData.specialty,
-           startHour: formData.startHour,
-           endHour: formData.endHour,
+           // Ensure TimeOnly format HH:mm:00
+           startHour: formData.startHour && formData.startHour.length === 5 ? `${formData.startHour}:00` : formData.startHour,
+           endHour: formData.endHour && formData.endHour.length === 5 ? `${formData.endHour}:00` : formData.endHour,
            profilePhoto: formData.profilePhoto
         };
         updatedDataResponse = await updateDoctorProfile(doctorData);
@@ -155,7 +157,7 @@ const EditProfile = () => {
 
   const getImageUrl = (path) => {
     if (!path) return null;
-    return path.startsWith('http') ? path : `http://localhost:5024${path}`;
+    return path.startsWith('http') ? path : `${BASE_URL}${path}`;
   };
 
   if (loading) {
@@ -169,7 +171,7 @@ const EditProfile = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 md:p-8">
       <div className="max-w-3xl mx-auto space-y-8">
-        <BackButton to="/profile" />
+        <BackButton to={role === 'doctor' ? '/doctor/dashboard' : '/profile'} />
         <div>
            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Edit Profile</h1>
            <p className="text-gray-500 dark:text-gray-400 mt-1">Update your personal information and profile picture.</p>
@@ -279,36 +281,80 @@ const EditProfile = () => {
                   </div>
                </div>
 
-               <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Gender</label>
-                  <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none appearance-none"
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-               </div>
 
-               <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Date of Birth</label>
-                  <div className="relative">
-                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <Calendar size={18} />
+               
+               {/* Doctor Specific Fields */}
+               {role === 'doctor' && (
+                 <>
+                   <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Specialty</label>
+                      <input
+                        type="text"
+                        name="specialty"
+                        value={formData.specialty || ''}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light outline-none"
+                        placeholder="e.g. Cardiology"
+                      />
+                   </div>
+                   <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Start Hour</label>
+                        <input
+                          type="time"
+                          name="startHour"
+                          value={formData.startHour || ''}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none"
+                        />
                      </div>
-                     <input
-                       type="date"
-                       name="birthDate"
-                       value={formData.birthDate || ''}
-                       onChange={handleChange}
-                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
-                     />
-                  </div>
-               </div>
+                     <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">End Hour</label>
+                        <input
+                          type="time"
+                          name="endHour"
+                          value={formData.endHour || ''}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none"
+                        />
+                     </div>
+                   </div>
+                 </>
+               )}
+
+               {/* Patient Specific / Shared Fields */}
+               {role !== 'doctor' && (
+                <>
+                 <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Gender</label>
+                    <select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Date of Birth</label>
+                    <div className="relative">
+                       <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                          <Calendar size={18} />
+                       </div>
+                       <input
+                         type="date"
+                         name="birthDate"
+                         value={formData.birthDate || ''}
+                         onChange={handleChange}
+                         className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none"
+                       />
+                    </div>
+                 </div>
+                </>
+               )}
             </div>
 
             <div className="pt-4">

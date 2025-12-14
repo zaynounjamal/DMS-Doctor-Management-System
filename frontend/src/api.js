@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5024/api";
+import API_URL from './config';
 
 // Helper function to get auth token from localStorage
 const getAuthToken = () => {
