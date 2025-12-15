@@ -82,7 +82,7 @@ const Header = ({ onLoginClick, user, onLogout }) => {
               </AnimatePresence>
               {/* Hamburger menu - always in same position */}
               <button
-                onClick={() => setIsSidebarOpen(true)}
+                onClick={() => setIsSidebarOpen(prev => !prev)}
                 className="p-2 rounded-full hover:bg-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 flex-shrink-0"
                 aria-label="Open navigation menu"
                 style={{ minWidth: '40px', minHeight: '40px' }}
