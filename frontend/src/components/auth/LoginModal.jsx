@@ -333,7 +333,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
                 navigate('/doctor/dashboard', { replace: true });
                  // window.location.href = '/doctor/dashboard'; // Removing full reload unless necessary
             } else if (userRole === 'secretary') {
-                navigate('/', { replace: true });
+                navigate('/secretary-dashboard', { replace: true });
             } else {
                 navigate('/', { replace: true });
             }
