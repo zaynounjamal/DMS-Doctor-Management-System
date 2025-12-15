@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import Header from './components/layout/Header';
 import LoginModal from './components/auth/LoginModal';
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -24,6 +25,10 @@ import DoctorProfitAnalytics from './pages/DoctorProfitAnalytics';
 import OffDaysManager from './pages/OffDaysManager';
 import CalendarView from './pages/CalendarView';
 import Profile from './pages/Profile';
+import SecretaryDashboard from './pages/SecretaryDashboard';
+import SecretaryProfile from './pages/SecretaryProfile';
+import PaymentReports from './pages/PaymentReports';
+import DailySchedule from './pages/DailySchedule';
 import './App.css';
 
 const AppContent = () => {
@@ -41,18 +46,23 @@ const AppContent = () => {
     );
   }
 
-  // Don't show footer on profile page
-  const showFooter = location.pathname !== '/profile';
+  // Don't show footer on profile page or secretary pages
+  const showFooter = location.pathname !== '/profile' && !location.pathname.startsWith('/secretary');
+  
+  // Don't show header on secretary pages
+  const showHeader = !location.pathname.startsWith('/secretary');
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
-      <Header 
-        onLoginClick={openLoginModal}
-        user={user}
-        onLogout={logout}
-      />
+      {showHeader && (
+        <Header 
+          onLoginClick={openLoginModal}
+          user={user}
+          onLogout={logout}
+        />
+      )}
       
-      <main className="relative" style={{ paddingTop: '56px' }}>
+      <main className="relative" style={{ paddingTop: showHeader ? '56px' : '0' }}>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
@@ -78,6 +88,14 @@ const AppContent = () => {
               <Route path="/doctor/offdays" element={<OffDaysManager />} />
               <Route path="/doctor/calendar" element={<CalendarView />} />
           </Route>
+
+          {/* Secretary Routes Only */}
+          <Route element={<ProtectedRoute allowedRoles={['secretary']} />}>
+              <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
+              <Route path="/secretary/profile" element={<SecretaryProfile />} />
+              <Route path="/secretary/payments" element={<PaymentReports />} />
+              <Route path="/secretary/schedule" element={<DailySchedule />} />
+          </Route>
         </Routes>
       </main>
       
@@ -96,9 +114,11 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
-          <AppContent />
-        </Router>
+        <ToastProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
   );
