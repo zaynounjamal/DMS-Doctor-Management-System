@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import StatCard from '../components/StatCard';
 import AppointmentCard from '../components/AppointmentCard';
 import MarkAsDoneModal from '../components/MarkAsDoneModal';
+import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import { getDoctorDashboard, getTodayAppointments, completeAppointment } from '../doctorApi';
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const { error: toastError } = useToast();
   const [stats, setStats] = useState(null);
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,10 +33,10 @@ const DoctorDashboard = () => {
     } catch (error) {
       console.error('Failed to load dashboard:', error);
       if (error.message.includes('401') || error.message.includes('403')) {
-          alert("Session expired or unauthorized. Please log in again.");
+          toastError("Session expired. Please log in again.");
           navigate('/');
       } else {
-          alert(`Failed to load dashboard data: ${error.message}`);
+          toastError(`Failed to load dashboard data: ${error.message}`);
       }
     } finally {
       setLoading(false);
@@ -63,24 +67,19 @@ const DoctorDashboard = () => {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className={`p-6 max-w-[1400px] mx-auto ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
       {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#333' }}>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight mb-2">
           Doctor Dashboard
         </h1>
-        <p style={{ margin: '8px 0 0 0', fontSize: '16px', color: '#666' }}>
+        <p className={`text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           Welcome back! Here's your overview for today.
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '20px',
-        marginBottom: '32px'
-      }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Today's Appointments"
           value={stats?.todayAppointments || 0}
@@ -112,80 +111,32 @@ const DoctorDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div style={{ marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#333', marginBottom: '16px' }}>
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4">
           Quick Actions
         </h2>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="flex gap-4 flex-wrap">
           <button
             onClick={() => navigate('/doctor/appointments')}
-            style={{
-              padding: '12px 24px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              border: 'none',
-              borderRadius: '8px',
-              backgroundColor: '#667eea',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5568d3'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#667eea'}
+            className="px-6 py-3 text-sm font-bold rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100"
           >
             📅 View All Appointments
           </button>
           <button
             onClick={() => navigate('/doctor/patients')}
-            style={{
-              padding: '12px 24px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              border: 'none',
-              borderRadius: '8px',
-              backgroundColor: '#10b981',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+            className="px-6 py-3 text-sm font-bold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100"
           >
             👥 View Patients
           </button>
           <button
             onClick={() => navigate('/doctor/profit')}
-            style={{
-              padding: '12px 24px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              border: 'none',
-              borderRadius: '8px',
-              backgroundColor: '#f59e0b',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}
+            className="px-6 py-3 text-sm font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100"
           >
             📊 Profit Analytics
           </button>
           <button
             onClick={() => navigate('/doctor/offdays')}
-            style={{
-              padding: '12px 24px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              border: 'none',
-              borderRadius: '8px',
-              backgroundColor: '#ef4444',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
+            className="px-6 py-3 text-sm font-bold rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100"
           >
             🚫 Manage Off Days
           </button>

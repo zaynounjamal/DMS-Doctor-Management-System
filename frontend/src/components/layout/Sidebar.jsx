@@ -1,15 +1,30 @@
 import React from 'react';
-import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { X, LayoutDashboard, Calendar, Users, DollarSign, Coffee, Home, Activity, FileText } from 'lucide-react';
 
-const Sidebar = ({ isOpen, onClose, navItems }) => {
+const iconMap = {
+  'Dashboard': LayoutDashboard,
+  'Appointments': Calendar,
+  'Calendar': Calendar,
+  'Patients': Users,
+  'Profit Analytics': DollarSign,
+  'Off Days': Coffee,
+  'Home': Home,
+  'Treatments': Activity,
+  'Book Appointment': FileText
+};
+
+const Sidebar = ({ isOpen, onClose, navItems, variant = 'mobile' }) => {
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   
+  const isMobile = variant === 'mobile';
+
   const handleNavClick = (href) => {
-    onClose();
+    if (isMobile) onClose();
     navigate(href);
   };
 
@@ -49,214 +64,85 @@ const Sidebar = ({ isOpen, onClose, navItems }) => {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[45] bg-black/30 dark:bg-black/50 backdrop-blur-sm"
-          />
+          {/* Backdrop - Mobile Only */}
+          {isMobile && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={onClose}
+              className="fixed inset-0 z-20 bg-black/30 dark:bg-black/50 backdrop-blur-sm md:hidden"
+            />
+          )}
 
-          {/* Sidebar - Full Screen */}
+          {/* Sidebar - Drawer */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            className={`fixed inset-0 z-[50] backdrop-blur-xl ${
+            className={`${
+              isMobile 
+                ? 'fixed top-16 left-0 bottom-0 z-30 shadow-2xl border-r w-64' 
+                : 'relative w-full h-full' 
+            } ${
               theme === 'light'
-                ? 'bg-primary-light/60 text-white'
-                : 'bg-primary-dark/60 text-white'
+                ? 'bg-white/95 border-gray-200 text-gray-800'
+                : 'bg-gray-900/95 border-gray-800 text-white'
             }`}
           >
-            {/* Close Button - Top Right */}
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.2 }}
-              onClick={onClose}
-              className="absolute top-6 right-6 p-3 rounded-full hover:bg-white/20 transition-all duration-300 hover:scale-110 hover:rotate-90 focus:outline-none focus:ring-2 focus:ring-white/50"
-              aria-label="Close menu"
-            >
-              <X size={28} className="text-white" />
-            </motion.button>
+            {/* Close Button - Mobile Only */}
+            {isMobile && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.2 }}
+                onClick={onClose}
+                className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all md:hidden"
+                aria-label="Close menu"
+              >
+                <X size={20} className="text-gray-500" />
+              </motion.button>
+            )}
 
-            {/* Navigation Items - Centered */}
-            <nav className="flex items-center justify-center h-full">
-              <ul className="space-y-6">
-                {navItems.map((item, index) => (
-                  <motion.li
-                    key={item.name}
-                    variants={itemVariants}
-                    className="relative"
-                  >
-                    <motion.button
-                      onClick={() => handleNavClick(item.href)}
-                      className="block px-8 py-4 text-2xl font-semibold text-white/90 rounded-xl relative overflow-hidden group cursor-pointer"
-                      whileHover={{
-                        scale: 1.08,
-                        x: 15,
-                        rotateY: 5,
-                      }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 400,
-                        damping: 17,
-                      }}
+            {/* Navigation Items */}
+            <nav className="h-full overflow-y-auto py-6 px-3">
+              <ul className="space-y-1">
+                {navItems.map((item, index) => {
+                  const Icon = iconMap[item.name] || FileText;
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <motion.li
+                      key={item.name}
+                      variants={itemVariants}
+                      className="relative"
                     >
-                      {/* Pulsing background on hover */}
-                      <motion.div
-                        className={`absolute inset-0 rounded-xl ${
-                          theme === 'light'
-                            ? 'bg-white/15'
-                            : 'bg-white/15'
+                      <motion.button
+                        onClick={() => handleNavClick(item.href)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative overflow-hidden ${
+                               theme === 'light' 
+                                 ? (isActive ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900')
+                                 : (isActive ? 'bg-purple-900/40 text-purple-300' : 'text-gray-400 hover:bg-gray-800 hover:text-white')
                         }`}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        whileHover={{
-                          scale: 1,
-                          opacity: 1,
-                        }}
-                        transition={{
-                          duration: 0.4,
-                          ease: [0.4, 0, 0.2, 1],
-                        }}
-                      />
-                      
-                      {/* Ripple/pulse effect */}
-                      <motion.div
-                        className={`absolute inset-0 rounded-xl ${
-                          theme === 'light'
-                            ? 'bg-white/20'
-                            : 'bg-white/20'
-                        }`}
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        whileHover={{
-                          scale: [1, 1.2, 1],
-                          opacity: [0.5, 0.8, 0.3],
-                        }}
-                        transition={{
-                          duration: 1.5,
-                          ease: 'easeInOut',
-                          repeat: Infinity,
-                          repeatType: 'reverse',
-                        }}
-                      />
-                      
-                      {/* Enhanced glow effect on hover */}
-                      <motion.div
-                        className={`absolute -inset-2 rounded-xl ${
-                          theme === 'light'
-                            ? 'bg-white/30'
-                            : 'bg-white/30'
-                        } blur-2xl`}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        whileHover={{
-                          opacity: [0.5, 1, 0.7],
-                          scale: [1, 1.1, 1],
-                        }}
-                        transition={{
-                          duration: 1.2,
-                          ease: 'easeInOut',
-                          repeat: Infinity,
-                          repeatType: 'reverse',
-                        }}
-                      />
-
-                      {/* Shimmer effect */}
-                      <motion.div
-                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                        initial={{ x: '-100%', skewX: -20 }}
-                        whileHover={{
-                          x: ['200%', '200%'],
-                        }}
-                        transition={{
-                          duration: 1.5,
-                          ease: 'easeInOut',
-                          repeat: Infinity,
-                          repeatDelay: 2,
-                        }}
-                      />
-
-                      {/* Animated text with bounce effect */}
-                      <motion.span
-                        className="relative z-10 block"
-                        whileHover={{
-                          color: '#ffffff',
-                          letterSpacing: '2px',
-                          textShadow: '0 0 20px rgba(255, 255, 255, 0.5)',
-                        }}
-                        transition={{
-                          duration: 0.3,
-                          ease: [0.4, 0, 0.2, 1],
-                        }}
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        {item.name.split('').map((char, i) => (
-                          <motion.span
-                            key={i}
-                            className="inline-block"
-                            whileHover={{
-                              y: [0, -5, 0],
-                              rotate: [0, 5, -5, 0],
-                            }}
-                            transition={{
-                              duration: 0.5,
-                              delay: i * 0.03,
-                              ease: 'easeInOut',
-                            }}
-                          >
-                            {char === ' ' ? '\u00A0' : char}
-                          </motion.span>
-                        ))}
-                      </motion.span>
-
-                      {/* Animated underline with gradient */}
-                      <motion.div
-                        className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-white via-white/80 to-white rounded-full"
-                        initial={{ scaleX: 0, width: '0%' }}
-                        whileHover={{
-                          scaleX: 1,
-                          width: '100%',
-                        }}
-                        transition={{
-                          duration: 0.4,
-                          ease: [0.4, 0, 0.2, 1],
-                        }}
-                        style={{ originX: 0 }}
-                      />
-
-                      {/* Left border accent */}
-                      <motion.div
-                        className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-l-xl"
-                        initial={{ scaleY: 0 }}
-                        whileHover={{
-                          scaleY: 1,
-                        }}
-                        transition={{
-                          duration: 0.3,
-                          ease: [0.4, 0, 0.2, 1],
-                        }}
-                        style={{ originY: 0 }}
-                      />
-
-                      {/* Shadow effect */}
-                      <motion.div
-                        className="absolute inset-0 rounded-xl shadow-2xl"
-                        initial={{ opacity: 0, boxShadow: '0 0 0px rgba(255, 255, 255, 0)' }}
-                        whileHover={{
-                          opacity: 1,
-                          boxShadow: '0 10px 40px rgba(255, 255, 255, 0.3)',
-                        }}
-                        transition={{
-                          duration: 0.3,
-                          ease: [0.4, 0, 0.2, 1],
-                        }}
-                      />
-                    </motion.button>
-                  </motion.li>
-                ))}
+                         {isActive && (
+                            <motion.div
+                                layoutId="activeNavIndicator"
+                                className={`absolute left-0 top-0 bottom-0 w-1 ${theme === 'light' ? 'bg-purple-600' : 'bg-purple-400'}`}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                            />
+                         )}
+                         <Icon size={18} className={`transition-opacity ${isActive ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}`} />
+                         <span>{item.name}</span>
+                      </motion.button>
+                    </motion.li>
+                  );
+                })}
               </ul>
             </nav>
           </motion.div>

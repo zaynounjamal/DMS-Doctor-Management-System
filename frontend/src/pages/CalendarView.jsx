@@ -6,6 +6,9 @@ import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
 import enUS from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
+import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { searchAppointments, sendReminder, getOffDays } from '../doctorApi';
 
 const locales = {
@@ -21,10 +24,14 @@ const localizer = dateFnsLocalizer({
 });
 
 const CalendarView = () => {
+  const { theme } = useTheme();
+  const { success, error: toastError } = useToast();
+  
   const [events, setEvents] = useState([]);
   const [offDays, setOffDays] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showReminderModal, setShowReminderModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -102,15 +109,19 @@ const CalendarView = () => {
     }
   };
 
-  const handleSendReminder = async () => {
-    if (!selectedEvent || !confirm(`Send reminder to ${selectedEvent.patient.fullName}?`)) return;
-    
+  const handleRequestReminder = () => {
+    if (!selectedEvent) return;
+    setShowReminderModal(true);
+  };
+
+  const executeSendReminder = async () => {
     try {
       await sendReminder(selectedEvent.id);
-      alert('Reminder sent successfully!');
+      success('Reminder sent successfully!');
+      setShowReminderModal(false);
     } catch (error) {
       console.error('Failed to send reminder:', error);
-      alert('Failed to send reminder');
+      toastError('Failed to send reminder');
     }
   };
 
@@ -177,7 +188,7 @@ const CalendarView = () => {
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button
-                onClick={handleSendReminder}
+                onClick={handleRequestReminder}
                 style={{
                   padding: '8px 16px',
                   backgroundColor: '#3b82f6',
@@ -206,6 +217,16 @@ const CalendarView = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={showReminderModal}
+        title="Send Appointment Reminder"
+        message={`Are you sure you want to send a reminder to ${selectedEvent?.patient?.fullName}?`}
+        confirmText="Send Reminder"
+        onConfirm={executeSendReminder}
+        onCancel={() => setShowReminderModal(false)}
+        type="info"
+      />
     </div>
   );
 };

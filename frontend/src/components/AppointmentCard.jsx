@@ -1,6 +1,9 @@
 import React from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, showActions = true }) => {
+  const { theme } = useTheme();
+
   const getStatusColor = (status, isCompleted) => {
     if (isCompleted) return '#10b981'; // green
     if (status === 'cancelled') return '#ef4444'; // red
@@ -11,66 +14,75 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, showActions =
     return status === 'paid' ? '#10b981' : '#ef4444';
   };
 
+  const statusColors = {
+    completed: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20',
+    cancelled: 'text-red-500 bg-red-50 dark:bg-red-900/20',
+    scheduled: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20'
+  };
+
+  const getStatusClass = (status, isCompleted) => {
+    if (isCompleted) return statusColors.completed;
+    if (status === 'cancelled') return statusColors.cancelled;
+    return statusColors.scheduled;
+  };
+
+  const paymentColors = {
+    paid: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/40',
+    unpaid: 'text-red-600 bg-red-100 dark:bg-red-900/40'
+  };
+
   return (
-    <div style={{
-      backgroundColor: 'white',
-      borderRadius: '12px',
-      padding: '20px',
-      marginBottom: '16px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: `2px solid ${appointment.isCompleted ? '#10b98120' : '#f59e0b20'}`,
-      transition: 'all 0.2s ease'
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-    }}>
+    <div className={`
+      relative p-6 rounded-xl border transition-all duration-300 group
+      ${theme === 'dark' 
+        ? 'bg-gray-800 border-gray-700 hover:border-gray-600 hover:bg-gray-750' 
+        : 'bg-white border-gray-100 hover:border-purple-200 hover:shadow-lg'
+      }
+      ${appointment.isCompleted ? 'opacity-75 hover:opacity-100' : ''}
+    `}>
+      {/* Status Bar */}
+      <div className={`
+        absolute left-0 top-6 bottom-6 w-1 rounded-r
+        ${appointment.isCompleted ? 'bg-emerald-500' : (appointment.status === 'cancelled' ? 'bg-red-500' : 'bg-amber-500')}
+      `} />
+
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+      <div className="flex justify-between items-start mb-4 pl-4">
         <div>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
+          <h3 className={`text-lg font-bold mb-1 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
             {appointment.patient?.fullName || 'Unknown Patient'}
           </h3>
-          <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
-            📞 {appointment.patient?.phone || 'N/A'}
+          <div className={`text-sm flex items-center gap-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            <span>📞</span> {appointment.patient?.phone || 'N/A'}
           </div>
         </div>
         
-        <div style={{ textAlign: 'right' }}>
-          <div style={{
-            display: 'inline-block',
-            padding: '4px 12px',
-            borderRadius: '20px',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            backgroundColor: `${getStatusColor(appointment.status, appointment.isCompleted)}20`,
-            color: getStatusColor(appointment.status, appointment.isCompleted)
-          }}>
-            {appointment.isCompleted ? '✓ Completed' : appointment.status}
-          </div>
+        <div className={`
+          px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
+          ${getStatusClass(appointment.status, appointment.isCompleted)}
+        `}>
+          {appointment.isCompleted ? '✓ Completed' : appointment.status}
         </div>
       </div>
 
       {/* Time and Date */}
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '12px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '16px' }}>📅</span>
-          <span style={{ fontSize: '14px', color: '#666' }}>
+      <div className="flex flex-wrap gap-4 mb-4 pl-4">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📅</span>
+          <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             {new Date(appointment.appointmentDate).toLocaleDateString()}
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '16px' }}>🕐</span>
-          <span style={{ fontSize: '14px', color: '#666' }}>
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🕐</span>
+          <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             {appointment.appointmentTime}
           </span>
         </div>
         {appointment.medicalNotesCount > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '16px' }}>📝</span>
-            <span style={{ fontSize: '14px', color: '#666' }}>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📝</span>
+            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               {appointment.medicalNotesCount} note{appointment.medicalNotesCount > 1 ? 's' : ''}
             </span>
           </div>
@@ -79,82 +91,51 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, showActions =
 
       {/* Price and Payment */}
       {appointment.finalPrice && (
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '12px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '16px' }}>💰</span>
-            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+        <div className="flex flex-wrap gap-4 mb-4 pl-4 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">💰</span>
+            <span className={`text-base font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
               ${appointment.finalPrice.toFixed(2)}
             </span>
           </div>
-          <div style={{
-            display: 'inline-block',
-            padding: '2px 8px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            backgroundColor: `${getPaymentStatusColor(appointment.paymentStatus)}20`,
-            color: getPaymentStatusColor(appointment.paymentStatus)
-          }}>
-            {appointment.paymentStatus === 'paid' ? '✓ Paid' : '⏳ Unpaid'}
+          <div className={`
+            px-2.5 py-0.5 rounded-md text-xs font-bold uppercase
+            ${appointment.paymentStatus === 'paid' ? paymentColors.paid : paymentColors.unpaid}
+          `}>
+            {appointment.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
           </div>
         </div>
       )}
 
       {/* Patient Notes */}
       {appointment.notes && (
-        <div style={{
-          backgroundColor: '#f9fafb',
-          padding: '12px',
-          borderRadius: '8px',
-          marginBottom: '12px',
-          borderLeft: '3px solid #667eea'
-        }}>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>
-            Patient Notes:
-          </div>
-          <div style={{ fontSize: '14px', color: '#333' }}>
-            {appointment.notes}
-          </div>
+        <div className={`
+          ml-4 p-3 rounded-lg border-l-4 mb-3 text-sm
+          ${theme === 'dark' ? 'bg-gray-900 border-indigo-500 text-gray-300' : 'bg-indigo-50 border-indigo-500 text-gray-700'}
+        `}>
+          <div className="font-bold text-xs uppercase mb-1 opacity-70">Patient Notes</div>
+          {appointment.notes}
         </div>
       )}
 
       {/* Completion Notes */}
       {appointment.completionNotes && (
-        <div style={{
-          backgroundColor: '#f0fdf4',
-          padding: '12px',
-          borderRadius: '8px',
-          marginBottom: '12px',
-          borderLeft: '3px solid #10b981'
-        }}>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>
-            Completion Notes:
-          </div>
-          <div style={{ fontSize: '14px', color: '#333' }}>
-            {appointment.completionNotes}
-          </div>
+        <div className={`
+          ml-4 p-3 rounded-lg border-l-4 mb-3 text-sm
+          ${theme === 'dark' ? 'bg-gray-900 border-emerald-500 text-gray-300' : 'bg-emerald-50 border-emerald-500 text-gray-700'}
+        `}>
+          <div className="font-bold text-xs uppercase mb-1 opacity-70">Completion Notes</div>
+          {appointment.completionNotes}
         </div>
       )}
 
       {/* Actions */}
       {showActions && (
-        <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
+        <div className="flex gap-3 mt-4 pt-4 border-t pl-4 border-gray-100 dark:border-gray-700">
           {!appointment.isCompleted && (
             <button
               onClick={() => onMarkAsDone(appointment)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-bold transition-colors shadow-sm active:transform active:scale-95"
             >
               ✓ Mark as Done
             </button>
@@ -162,19 +143,7 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, showActions =
           
           <button
             onClick={() => onViewNotes(appointment)}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#667eea',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5568d3'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#667eea'}
+            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-bold transition-colors shadow-sm active:transform active:scale-95"
           >
             📝 View Notes
           </button>
