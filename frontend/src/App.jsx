@@ -121,10 +121,6 @@ const AppContent = () => {
   );
 };
 
-import { ToastProvider } from './contexts/ToastContext';
-
-// ...
-
 function App() {
   return (
     <ThemeProvider>
