@@ -1,25 +1,35 @@
 import React, { useState, useEffect } from 'react';
+import { Calendar as CalendarIcon, Trash2, Plus, AlertCircle } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { getOffDays, addOffDay, deleteOffDay } from '../doctorApi';
 
 const OffDaysManager = () => {
+  const { theme } = useTheme();
+  const { user } = useAuth();
+  const { success, error: toastError } = useToast();
+  
   const [offDays, setOffDays] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [reason, setReason] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [newDate, setNewDate] = useState('');
+  const [loading, setLoading] = useState(true);
+  
+  // Modal State
+  const [deleteId, setDeleteId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    loadOffDays();
+    fetchOffDays();
   }, []);
 
-  const loadOffDays = async () => {
+  const fetchOffDays = async () => {
     try {
-      setLoading(true);
       const data = await getOffDays();
       setOffDays(data);
     } catch (error) {
-      console.error('Failed to load off days:', error);
-      alert('Failed to load off days');
+      console.error('Error fetching off days:', error);
+      toastError('Failed to load off days');
     } finally {
       setLoading(false);
     }
@@ -27,205 +37,135 @@ const OffDaysManager = () => {
 
   const handleAddOffDay = async (e) => {
     e.preventDefault();
+    if (!newDate) return;
+
     try {
-      await addOffDay(selectedDate, reason);
-      
-      await loadOffDays();
-      setSelectedDate('');
-      setReason('');
-      setShowAddForm(false);
-      alert('Off day added successfully!');
+      const response = await addOffDay(newDate, "Manual Entry");
+      setOffDays([...offDays, response.offDay]);
+      setNewDate('');
+      success('Off day added successfully!');
     } catch (error) {
-      console.error('Failed to add off day:', error);
-      alert(error.message || 'Failed to add off day');
+      console.error('Error adding off day:', error);
+      toastError(error.response?.data?.message || 'Failed to add off day');
     }
   };
 
-  const handleDeleteOffDay = async (id) => {
-    if (!confirm('Are you sure you want to remove this off day?')) return;
+  const promptDelete = (id) => {
+    setDeleteId(id);
+    setIsModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
     
     try {
-      await deleteOffDay(id);
-      
-      await loadOffDays();
-      alert('Off day removed successfully!');
+      await deleteOffDay(deleteId);
+      setOffDays(offDays.filter(day => day.id !== deleteId));
+      success('Off day removed successfully');
     } catch (error) {
-      console.error('Failed to delete off day:', error);
-      alert('Failed to delete off day');
+      console.error('Error deleting off day:', error);
+      toastError('Failed to delete off day');
+    } finally {
+      setIsModalOpen(false);
+      setDeleteId(null);
     }
   };
 
-  const today = new Date().toISOString().split('T')[0];
-  const futureOffDays = offDays.filter(o => o.offDate >= today);
-  const pastOffDays = offDays.filter(o => o.offDate < today);
-
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className={`space-y-6 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+      
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#333' }}>
-            Off Days Management
-          </h1>
-          <p style={{ margin: '8px 0 0 0', fontSize: '16px', color: '#666' }}>
-            Manage your unavailable dates
+          <h1 className="text-2xl font-bold tracking-tight">Off Days Manager</h1>
+          <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            Manage your unavailable dates and holidays
           </p>
         </div>
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          style={{
-            padding: '12px 24px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            border: 'none',
-            borderRadius: '8px',
-            backgroundColor: '#667eea',
-            color: 'white',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5568d3'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#667eea'}
-        >
-          {showAddForm ? '✕ Cancel' : '➕ Add Off Day'}
-        </button>
       </div>
 
-      {/* Add Form */}
-      {showAddForm && (
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          marginBottom: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: 'bold' }}>Add New Off Day</h3>
-          <form onSubmit={handleAddOffDay}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 'bold', color: '#666' }}>
-                Date *
-              </label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                min={today}
-                required
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  fontSize: '14px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '6px',
-                  outline: 'none'
-                }}
-              />
-            </div>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 'bold', color: '#666' }}>
-                Reason (Optional)
-              </label>
-              <input
-                type="text"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g., Vacation, Conference, Personal"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  fontSize: '14px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '6px',
-                  outline: 'none'
-                }}
-              />
-            </div>
-            <button
-              type="submit"
-              style={{
-                padding: '10px 20px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '6px',
-                backgroundColor: '#10b981',
-                color: 'white',
-                cursor: 'pointer'
-              }}
-            >
-              Add Off Day
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Future Off Days */}
-      <div style={{ marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px', color: '#333' }}>
-          Upcoming Off Days ({futureOffDays.length})
+      {/* Add New Off Day Card */}
+      <div className={`p-6 rounded-xl border shadow-sm ${
+        theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+      }`}>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Plus size={20} className="text-purple-500" />
+          Add New Off Day
         </h2>
+        
+        <form onSubmit={handleAddOffDay} className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="w-full sm:w-auto flex-1">
+            <label className={`block text-sm font-medium mb-1.5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              Select Date
+            </label>
+            <input
+              type="date"
+              value={newDate}
+              onChange={(e) => setNewDate(e.target.value)}
+              className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none ${
+                theme === 'dark' 
+                  ? 'bg-gray-900 border-gray-600 text-white placeholder-gray-500' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full sm:w-auto px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
+          >
+            <Plus size={18} />
+            <span>Add Date</span>
+          </button>
+        </form>
+      </div>
+
+      {/* Off Days List */}
+      <div className={`rounded-xl border shadow-sm overflow-hidden ${
+        theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+      }`}>
+        <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <CalendarIcon size={20} className="text-purple-500" />
+            Scheduled Off Days
+          </h2>
+        </div>
+        
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Loading...</div>
-        ) : futureOffDays.length === 0 ? (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '40px',
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
-            <p style={{ fontSize: '16px', color: '#666' }}>No upcoming off days scheduled</p>
+           <div className="p-8 text-center text-gray-500">Loading...</div>
+        ) : offDays.length === 0 ? (
+          <div className="p-12 text-center flex flex-col items-center justify-center text-gray-500">
+             <CalendarIcon size={48} className="mb-3 opacity-20" />
+             <p>No off days scheduled yet.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: '12px' }}>
-            {futureOffDays.map((offDay) => (
-              <div
-                key={offDay.id}
-                style={{
-                  backgroundColor: 'white',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {offDays.map((day) => (
+              <div 
+                key={day.id} 
+                className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                role="row"
               >
-                <div>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>
-                    {new Date(offDay.offDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                <div className="flex items-center gap-4">
+                  <div className={`
+                    w-10 h-10 rounded-full flex items-center justify-center 
+                    ${theme === 'dark' ? 'bg-gray-700 text-purple-400' : 'bg-purple-50 text-purple-600'}
+                  `}>
+                    <CalendarIcon size={18} />
                   </div>
-                  {offDay.reason && (
-                    <div style={{ fontSize: '14px', color: '#666' }}>
-                      Reason: {offDay.reason}
-                    </div>
-                  )}
+                  <div>
+                    <p className={`font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+                      {new Date(day.offDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  </div>
                 </div>
+                
                 <button
-                  onClick={() => handleDeleteOffDay(offDay.id)}
-                  style={{
-                    padding: '8px 16px',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    border: '2px solid #ef4444',
-                    borderRadius: '6px',
-                    backgroundColor: 'white',
-                    color: '#ef4444',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#ef4444';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'white';
-                    e.currentTarget.style.color = '#ef4444';
-                  }}
+                  onClick={() => promptDelete(day.id)}
+                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  title="Remove off day"
                 >
-                  Remove
+                  <Trash2 size={18} />
                 </button>
               </div>
             ))}
@@ -233,36 +173,15 @@ const OffDaysManager = () => {
         )}
       </div>
 
-      {/* Past Off Days */}
-      {pastOffDays.length > 0 && (
-        <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px', color: '#333' }}>
-            Past Off Days ({pastOffDays.length})
-          </h2>
-          <div style={{ display: 'grid', gap: '12px' }}>
-            {pastOffDays.map((offDay) => (
-              <div
-                key={offDay.id}
-                style={{
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  opacity: 0.7
-                }}
-              >
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#666', marginBottom: '4px' }}>
-                  {new Date(offDay.offDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                </div>
-                {offDay.reason && (
-                  <div style={{ fontSize: '14px', color: '#999' }}>
-                    Reason: {offDay.reason}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        title="Remove Off Day"
+        message="Are you sure you want to remove this off day? Doctors will be able to book appointments on this date again."
+        confirmText="Remove"
+        onConfirm={confirmDelete}
+        onCancel={() => setIsModalOpen(false)}
+        type="danger"
+      />
     </div>
   );
 };

@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import { getProfitAnalytics, getDoctorStatistics } from '../doctorApi';
 import StatCard from '../components/StatCard';
 
 const DoctorProfitAnalytics = () => {
+  const { theme } = useTheme();
+  const { error: toastError } = useToast();
   const [period, setPeriod] = useState('month');
   const [profitData, setProfitData] = useState(null);
   const [stats, setStats] = useState(null);
@@ -23,7 +27,7 @@ const DoctorProfitAnalytics = () => {
       setStats(statistics);
     } catch (error) {
       console.error('Failed to load profit data:', error);
-      alert('Failed to load profit analytics');
+      toastError('Failed to load profit analytics');
     } finally {
       setLoading(false);
     }
@@ -45,49 +49,30 @@ const DoctorProfitAnalytics = () => {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className={`p-8 max-w-[1400px] mx-auto ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
       {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#333' }}>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight mb-2">
           Profit Analytics
         </h1>
-        <p style={{ margin: '8px 0 0 0', fontSize: '16px', color: '#666' }}>
+        <p className={`text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           Track your earnings and performance metrics
         </p>
       </div>
 
       {/* Period Selector */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        marginBottom: '32px',
-        flexWrap: 'wrap'
-      }}>
+      <div className="flex gap-2 mb-8 flex-wrap">
         {periods.map((p) => (
           <button
             key={p.id}
             onClick={() => setPeriod(p.id)}
-            style={{
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              border: period === p.id ? 'none' : '2px solid #e5e7eb',
-              borderRadius: '8px',
-              backgroundColor: period === p.id ? '#667eea' : 'white',
-              color: period === p.id ? 'white' : '#666',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              if (period !== p.id) {
-                e.currentTarget.style.backgroundColor = '#f9fafb';
+            className={`
+              px-5 py-2.5 text-sm font-bold rounded-lg transition-all duration-200
+              ${period === p.id 
+                ? 'bg-purple-600 text-white shadow-md' 
+                : (theme === 'dark' ? 'bg-gray-800 text-gray-400 hover:bg-gray-700' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50')
               }
-            }}
-            onMouseLeave={(e) => {
-              if (period !== p.id) {
-                e.currentTarget.style.backgroundColor = 'white';
-              }
-            }}
+            `}
           >
             {p.label}
           </button>
@@ -95,12 +80,7 @@ const DoctorProfitAnalytics = () => {
       </div>
 
       {/* Profit Stats */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '20px',
-        marginBottom: '32px'
-      }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Actual Profit"
           value={`$${(profitData?.actualProfit || 0).toFixed(2)}`}
@@ -133,46 +113,39 @@ const DoctorProfitAnalytics = () => {
 
       {/* Statistics */}
       {stats && (
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          marginBottom: '32px'
-        }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '20px' }}>
+        <div className={`
+          p-6 rounded-xl shadow-sm mb-8
+          ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border text-gray-900 border-gray-100'}
+        `}>
+          <h2 className="text-xl font-bold mb-6">
             Performance Metrics
           </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '20px'
-          }}>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             <div>
-              <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Total Appointments</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#333' }}>{stats.totalAppointments}</div>
+              <div className={`text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Total Appointments</div>
+              <div className="text-2xl font-bold">{stats.totalAppointments}</div>
             </div>
             <div>
-              <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Completed</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>{stats.completedAppointments}</div>
+              <div className={`text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Completed</div>
+              <div className="text-2xl font-bold text-emerald-500">{stats.completedAppointments}</div>
             </div>
             <div>
-              <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Cancelled</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>{stats.cancelledAppointments}</div>
+              <div className={`text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Cancelled</div>
+              <div className="text-2xl font-bold text-red-500">{stats.cancelledAppointments}</div>
             </div>
             <div>
-              <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Unique Patients</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#667eea' }}>{stats.uniquePatients}</div>
+              <div className={`text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Unique Patients</div>
+              <div className="text-2xl font-bold text-indigo-500">{stats.uniquePatients}</div>
             </div>
             <div>
-              <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Avg. Appointment Value</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b' }}>
+              <div className={`text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Avg. Value</div>
+              <div className="text-2xl font-bold text-amber-500">
                 ${(stats.averageAppointmentValue || 0).toFixed(2)}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Completion Rate</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#8b5cf6' }}>
+              <div className={`text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Completion Rate</div>
+              <div className="text-2xl font-bold text-purple-500">
                 {(stats.completionRate || 0).toFixed(1)}%
               </div>
             </div>
@@ -182,34 +155,32 @@ const DoctorProfitAnalytics = () => {
 
       {/* Daily Chart Data */}
       {profitData?.dailyData && profitData.dailyData.length > 0 && (
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '20px' }}>
+        <div className={`
+          p-6 rounded-xl shadow-sm overflow-hidden
+          ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border border-gray-100'}
+        `}>
+          <h2 className="text-xl font-bold marginBottom-6 mb-6">
             Daily Breakdown
           </h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-                  <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', color: '#666' }}>Date</th>
-                  <th style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#666' }}>Actual Profit</th>
-                  <th style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#666' }}>Expected Profit</th>
+                <tr className={`border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <th className={`p-4 font-semibold text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Date</th>
+                  <th className={`p-4 font-semibold text-sm text-right ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Actual Profit</th>
+                  <th className={`p-4 font-semibold text-sm text-right ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Expected Profit</th>
                 </tr>
               </thead>
               <tbody>
                 {profitData.dailyData.map((day, index) => (
-                  <tr key={index} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                    <td style={{ padding: '12px', fontSize: '14px', color: '#333' }}>
+                  <tr key={index} className={`border-b last:border-0 hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+                    <td className={`p-4 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                       {new Date(day.date).toLocaleDateString()}
                     </td>
-                    <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold', color: '#10b981' }}>
+                    <td className="p-4 text-right font-mono font-medium text-emerald-500">
                       ${day.actualProfit.toFixed(2)}
                     </td>
-                    <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold', color: '#667eea' }}>
+                    <td className="p-4 text-right font-mono font-medium text-purple-500">
                       ${day.expectedProfit.toFixed(2)}
                     </td>
                   </tr>

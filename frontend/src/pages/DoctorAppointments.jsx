@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import AppointmentCard from '../components/AppointmentCard';
-import MarkAsDoneModal from '../components/MarkAsDoneModal';
-import AddNoteModal from '../components/AddNoteModal';
-import MedicalNotesList from '../components/MedicalNotesList';
+import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
+import ConfirmationModal from '../components/ui/ConfirmationModal';
 import {
   getTodayAppointments,
   getTomorrowAppointments,
@@ -19,8 +17,19 @@ import {
 } from '../doctorApi';
 import API_URL from '../config';
 
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import AppointmentCard from '../components/AppointmentCard';
+import MarkAsDoneModal from '../components/MarkAsDoneModal';
+import AddNoteModal from '../components/AddNoteModal';
+import MedicalNotesList from '../components/MedicalNotesList';
+
 const DoctorAppointments = () => {
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const { theme } = useTheme();
+  const { success, error: toastError, info } = useToast();
+  
   const [activeTab, setActiveTab] = useState('today');
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -42,6 +51,7 @@ const DoctorAppointments = () => {
   const [searchStatus, setSearchStatus] = useState('');
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [selectedAppointments, setSelectedAppointments] = useState([]);
+  const [showBulkCompleteModal, setShowBulkCompleteModal] = useState(false);
 
   const [isBulkCompleting, setIsBulkCompleting] = useState(false);
 
@@ -81,10 +91,9 @@ const DoctorAppointments = () => {
     } catch (error) {
       console.error('Failed to load appointments:', error);
       if (error.message.includes('401') || error.message.includes('403')) {
-          alert("Session expired or unauthorized. Please log in again.");
-          // Optional: redirect to login or home
+          toastError("Session expired. Please log in again.");
       } else {
-          alert('Failed to load appointments');
+          toastError('Failed to load appointments');
       }
     } finally {
       setLoading(false);
@@ -121,7 +130,7 @@ const DoctorAppointments = () => {
       document.body.removeChild(a);
     } catch (error) {
       console.error('Export error:', error);
-      alert('Failed to export appointments');
+      toastError('Failed to export appointments');
     } finally {
       setLoading(false);
     }
@@ -132,7 +141,7 @@ const DoctorAppointments = () => {
       // Ensure price is a number
       const price = parseFloat(finalPrice);
       if (isNaN(price)) {
-          alert("Please enter a valid price");
+          toastError("Please enter a valid price");
           return;
       }
       await completeAppointment(selectedAppointment.id, price, completionNotes, paymentStatus);
@@ -158,7 +167,7 @@ const DoctorAppointments = () => {
         setAppointments(results);
     } catch (error) {
         console.error(error);
-        alert('Search failed');
+        toastError('Search failed');
     } finally {
         setLoading(false);
     }
@@ -174,25 +183,30 @@ const DoctorAppointments = () => {
   };
 
   // --- Bulk Actions ---
+  const handleRequestBulkComplete = () => {
+    if (selectedAppointments.length === 0) return;
+    setShowBulkCompleteModal(true);
+  };
+   
   const toggleSelection = (id) => {
     setSelectedAppointments(prev => 
         prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
   };
 
-  const handleBulkComplete = async () => {
-      if (!confirm(`Mark ${selectedAppointments.length} appointments as done?`)) return;
+  const executeBulkComplete = async () => {
       setIsBulkCompleting(true);
       try {
-          await bulkCompleteAppointments(selectedAppointments, 50); // Default price 50? Or prompt.
-          alert('Bulk completion successful');
+          await bulkCompleteAppointments(selectedAppointments, 50); 
+          success('Bulk completion successful');
           setSelectedAppointments([]);
           loadAppointments(activeTab);
       } catch (error) {
           console.error(error);
-          alert('Bulk action failed');
+          toastError('Bulk action failed');
       } finally {
           setIsBulkCompleting(false);
+          setShowBulkCompleteModal(false);
       }
   };
 
@@ -207,7 +221,7 @@ const DoctorAppointments = () => {
               console.error(e);
           }
       }
-      alert(`Sent ${successCount} reminders.`);
+      success(`Sent ${successCount} reminders.`);
       setSelectedAppointments([]);
   };
 
@@ -221,7 +235,7 @@ const DoctorAppointments = () => {
           setShowNotesModal(true);
       } catch (e) {
           console.error(e);
-          alert('Failed to load notes');
+          toastError('Failed to load notes');
       }
   };
 
@@ -254,7 +268,7 @@ const DoctorAppointments = () => {
           loadAppointments(activeTab);
       } catch (e) {
           console.error(e);
-          alert('Failed to save note');
+          toastError('Failed to save note');
       }
   };
 
@@ -624,7 +638,7 @@ const DoctorAppointments = () => {
           </div>
           <div style={{ height: '24px', width: '1px', backgroundColor: '#475569' }}></div>
           <button
-            onClick={handleBulkComplete}
+            onClick={handleRequestBulkComplete}
             disabled={isBulkCompleting}
             style={{
               backgroundColor: '#10b981',
@@ -769,6 +783,16 @@ const DoctorAppointments = () => {
           onSubmit={handleSubmitNote}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={showBulkCompleteModal}
+        title="Complete Multiple Appointments"
+        message={`Are you sure you want to mark ${selectedAppointments.length} appointments as completed? This will set them as done with the default consultation price.`}
+        confirmText={isBulkCompleting ? "Completing..." : "Complete All"}
+        onConfirm={executeBulkComplete}
+        onCancel={() => setShowBulkCompleteModal(false)}
+        type="info"
+      />
     </div>
   );
 };

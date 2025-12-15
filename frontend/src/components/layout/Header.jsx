@@ -114,13 +114,6 @@ const Header = ({ onLoginClick, user, onLogout }) => {
           </div>
         </nav>
       </header>
-
-      {/* Sidebar Navigation */}
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        navItems={navItems}
-      />
     </>
   );
 };

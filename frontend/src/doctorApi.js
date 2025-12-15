@@ -216,9 +216,13 @@ export const addOffDay = async (offDate, reason) => {
     const response = await fetch(`${API_URL}/doctor/offdays/add`, {
         method: 'POST',
         headers: getAuthHeader(),
-        body: JSON.stringify({ offDate, reason })
+        body: JSON.stringify({ OffDate: offDate, Reason: reason })
     });
-    if (!response.ok) throw new Error('Failed to add off day');
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error adding off day:", errorText);
+        throw new Error(errorText || 'Failed to add off day');
+    }
     return response.json();
 };
 
