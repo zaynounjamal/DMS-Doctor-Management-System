@@ -77,7 +77,7 @@ const OffDaysManager = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Off Days Manager</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-purple-600 dark:text-purple-400">Off Days Manager</h1>
           <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
             Manage your unavailable dates and holidays
           </p>

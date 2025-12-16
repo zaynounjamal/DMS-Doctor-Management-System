@@ -1,4 +1,5 @@
 import React from 'react';
+import { Phone, Calendar, Clock, FileText, DollarSign, CheckCircle } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, showActions = true }) => {
@@ -53,35 +54,43 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, showActions =
             {appointment.patient?.fullName || 'Unknown Patient'}
           </h3>
           <div className={`text-sm flex items-center gap-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-            <span>📞</span> {appointment.patient?.phone || 'N/A'}
+            <Phone size={16} className="flex-shrink-0" />
+            {appointment.patient?.phone || 'N/A'}
           </div>
         </div>
         
         <div className={`
-          px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
+          px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1.5
           ${getStatusClass(appointment.status, appointment.isCompleted)}
         `}>
-          {appointment.isCompleted ? '✓ Completed' : appointment.status}
+          {appointment.isCompleted ? (
+            <>
+              <CheckCircle size={12} />
+              Completed
+            </>
+          ) : (
+            appointment.status
+          )}
         </div>
       </div>
 
       {/* Time and Date */}
       <div className="flex flex-wrap gap-4 mb-4 pl-4">
         <div className="flex items-center gap-2">
-          <span className="text-lg">📅</span>
+          <Calendar size={16} className="flex-shrink-0" />
           <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             {new Date(appointment.appointmentDate).toLocaleDateString()}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-lg">🕐</span>
+          <Clock size={16} className="flex-shrink-0" />
           <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             {appointment.appointmentTime}
           </span>
         </div>
         {appointment.medicalNotesCount > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-lg">📝</span>
+            <FileText size={16} className="flex-shrink-0" />
             <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               {appointment.medicalNotesCount} note{appointment.medicalNotesCount > 1 ? 's' : ''}
             </span>
@@ -93,7 +102,7 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, showActions =
       {appointment.finalPrice && (
         <div className="flex flex-wrap gap-4 mb-4 pl-4 items-center">
           <div className="flex items-center gap-2">
-            <span className="text-lg">💰</span>
+            <DollarSign size={16} className="flex-shrink-0" />
             <span className={`text-base font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
               ${appointment.finalPrice.toFixed(2)}
             </span>
@@ -135,17 +144,19 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, showActions =
           {!appointment.isCompleted && (
             <button
               onClick={() => onMarkAsDone(appointment)}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-bold transition-colors shadow-sm active:transform active:scale-95"
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-bold transition-colors shadow-sm active:transform active:scale-95 flex items-center gap-2"
             >
-              ✓ Mark as Done
+              <CheckCircle size={16} />
+              Mark as Done
             </button>
           )}
           
           <button
             onClick={() => onViewNotes(appointment)}
-            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-bold transition-colors shadow-sm active:transform active:scale-95"
+            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-bold transition-colors shadow-sm active:transform active:scale-95 flex items-center gap-2"
           >
-            📝 View Notes
+            <FileText size={16} />
+            View Notes
           </button>
         </div>
       )}
