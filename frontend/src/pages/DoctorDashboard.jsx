@@ -7,6 +7,7 @@ import MarkAsDoneModal from '../components/MarkAsDoneModal';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { getDoctorDashboard, getTodayAppointments, completeAppointment } from '../doctorApi';
+import DoctorWaitingRoom from '../components/doctor/DoctorWaitingRoom';
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -77,6 +78,11 @@ const DoctorDashboard = () => {
         <p className={`text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           Welcome back! Here's your overview for today.
         </p>
+      </div>
+
+      {/* Waiting Room - Priority View */}
+      <div className="mb-8">
+         <DoctorWaitingRoom />
       </div>
 
       {/* Stats Grid */}

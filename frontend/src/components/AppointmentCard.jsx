@@ -1,8 +1,8 @@
 import React from 'react';
-import { Phone, Calendar, Clock, FileText, DollarSign, CheckCircle } from 'lucide-react';
+import { Phone, Calendar, Clock, FileText, DollarSign, CheckCircle, Mail, MessageSquare } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
-const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, showActions = true }) => {
+const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, showActions = true }) => {
   const { theme } = useTheme();
 
   const getStatusColor = (status, isCompleted) => {
@@ -158,6 +158,31 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, showActions =
             <FileText size={16} />
             View Notes
           </button>
+
+          {!appointment.isCompleted && (
+            <div className="flex gap-2 border-l pl-3 dark:border-gray-700">
+               <button
+                onClick={() => onRemind && onRemind(appointment, 'email')}
+                className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Send Email Reminder"
+              >
+                <div className="flex gap-1 items-center">
+                    <Mail size={18} />
+                    <span className="text-xs">Email</span>
+                </div>
+              </button>
+              <button
+                onClick={() => onRemind && onRemind(appointment, 'whatsapp')}
+                className="p-2 text-gray-500 hover:text-green-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Send WhatsApp Reminder"
+              >
+                 <div className="flex gap-1 items-center">
+                    <MessageSquare size={18} />
+                    <span className="text-xs">WhatsApp</span>
+                </div>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

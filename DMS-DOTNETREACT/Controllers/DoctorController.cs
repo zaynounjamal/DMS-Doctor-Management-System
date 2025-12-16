@@ -14,11 +14,51 @@ public class DoctorController : ControllerBase
 {
     private readonly ClinicDbContext _context;
     private readonly ExportService _exportService;
+    private readonly AuditService _auditService;
 
-    public DoctorController(ClinicDbContext context, ExportService exportService)
+    public DoctorController(ClinicDbContext context, ExportService exportService, AuditService auditService)
     {
         _context = context;
         _exportService = exportService;
+        _auditService = auditService;
+    }
+
+    /// <summary>
+    /// Get checked-in patients (Waiting Room)
+    /// </summary>
+    [HttpGet("waiting-room")]
+    public async Task<ActionResult> GetWaitingRoom()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (doctor == null) return NotFound("Doctor not found");
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var waitingList = await _context.Appointments
+            .Include(a => a.Patient)
+            .Where(a => a.DoctorId == doctor.Id && 
+                        a.AppointmentDate == today && 
+                        a.Status == "checked-in")
+            .OrderBy(a => a.AppointmentTime)
+            .Select(a => new
+            {
+                a.Id,
+                a.AppointmentTime,
+                PatientName = a.Patient.FullName,
+                PatientId = a.Patient.Id,
+                Gender = a.Patient.Gender,
+                Phone = a.Patient.Phone,
+                a.Status
+            })
+            .ToListAsync();
+
+        return Ok(waitingList);
     }
 
     /// <summary>
@@ -539,6 +579,10 @@ public class DoctorController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+
+
+
+        await _auditService.LogActionAsync(userId, "BULK_COMPLETE", $"Doctor {doctor.FullName} completed {appointments.Count} appointments.");
 
         return Ok(new { 
             message = $"Successfully completed {appointments.Count} appointment(s)",

@@ -52,15 +52,63 @@ export const updateAppointmentStatus = async (id, status, reason) => {
     return response.json();
 };
 
-export const markAsPaid = async (id) => {
+export const markAsPaid = async (id, paymentMethod = 'Cash') => {
     const response = await fetch(`${API_URL}/secretary/appointments/${id}/pay`, {
         method: 'PUT',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ paymentMethod })
     });
     if (!response.ok) {
         const error = await response.text();
         throw new Error(error || 'Failed to mark as paid');
     }
+    return response.json();
+};
+
+export const changeSecretaryPassword = async (oldPassword, newPassword) => {
+    const response = await fetch(`${API_URL}/secretary/profile/change-password`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ oldPassword, newPassword })
+    });
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to change password');
+    }
+    return response.json();
+};
+
+export const resetPatientPassword = async (patientId, newPassword) => {
+    const response = await fetch(`${API_URL}/secretary/patients/${patientId}/password`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ newPassword })
+    });
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to reset password');
+    }
+    return response.json();
+};
+
+export const addPatientBalance = async (patientId, amount) => {
+    const response = await fetch(`${API_URL}/secretary/patients/${patientId}/balance`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ amount })
+    });
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to add funds');
+    }
+    return response.json();
+};
+
+export const getPatientTransactions = async (patientId) => {
+    const response = await fetch(`${API_URL}/secretary/patients/${patientId}/transactions`, {
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch transactions');
     return response.json();
 };
 

@@ -11,7 +11,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
+builder.Services.AddHttpContextAccessor();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 // builder.Services.AddOpenApi();
 
@@ -24,6 +29,8 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<PasswordHasher>();
 builder.Services.AddScoped<ExportService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<AuditService>();
+builder.Services.AddHostedService<NotificationBackgroundService>();
 
 // JWT Authentication with validation
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"] 
@@ -191,7 +198,7 @@ using (var scope = app.Services.CreateScope())
         context.Database.EnsureCreated();
         Console.WriteLine("Database created successfully!");
         
-        DMS_DOTNETREACT.Helpers.DatabaseSeeder.SeedDatabase(context, passwordHasher);
+        await DMS_DOTNETREACT.Helpers.DatabaseSeeder.SeedDatabase(context, passwordHasher);
         Console.WriteLine("Database seeded successfully!");
     }
     catch (Exception ex)

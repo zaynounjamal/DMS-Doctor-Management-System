@@ -16,6 +16,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
     phoneNumber: '',
     username: '',
     fullName: '',
+    email: '',
     dateOfBirth: '',
     gender: '',
     password: '',
@@ -79,6 +80,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
     phoneNumber: /^\d{8,}$/, // At least 8 digits
     username: /^[a-zA-Z0-9._-]{3,30}$/,
     fullName: /^[a-zA-Z\s]{2,50}$/,
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   };
 
   const validationMessages = {
@@ -86,6 +88,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
     username: 'Username must be 3-30 characters (letters, numbers, dot, underscore, hyphen)',
     password: 'Password does not meet all requirements',
     fullName: 'Full name must be 2-50 characters (letters and spaces only)',
+    email: 'Please enter a valid email address',
     dateOfBirth: 'Please select a valid date of birth',
     gender: 'Please select your gender',
     confirmPassword: 'Passwords do not match',
@@ -160,6 +163,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
         phoneNumber: '',
         username: '',
         fullName: '',
+        email: '',
         dateOfBirth: '',
         gender: '',
         password: '',
@@ -243,7 +247,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
     const newErrors = {};
     const fieldsToValidate = isLogin 
       ? ['username', 'password']
-      : ['fullName', 'username', 'phoneNumber', 'password', 'confirmPassword'];
+      : ['fullName', 'email', 'username', 'phoneNumber', 'password', 'confirmPassword'];
 
     fieldsToValidate.forEach(field => {
       const errorMsg = validateField(field, formData[field]);
@@ -327,13 +331,11 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
             console.log("Redirecting based on role:", userRole);
             
             if (userRole === 'doctor') {
-                // Use navigate with replace + reload if needed, but since we have protected routes now, navigate should be enough.
-                // However, to ensure fresh state, window.location.href is safest for dashboard entry.
-                // But user wanted "back press remove it". window.location.replace is akin to navigate replace.
                 navigate('/doctor/dashboard', { replace: true });
-                 // window.location.href = '/doctor/dashboard'; // Removing full reload unless necessary
             } else if (userRole === 'secretary') {
                 navigate('/secretary-dashboard', { replace: true });
+            } else if (userRole === 'admin') {
+                navigate('/admin/dashboard', { replace: true });
             } else {
                 navigate('/', { replace: true });
             }
@@ -576,6 +578,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
                 {currentView === 'signup' && (
                   <form onSubmit={handleSubmit} className="space-y-5">
                     {renderInput('fullName', 'Full Name', 'text', <UserCircle size={18} />, 'John Doe')}
+                    {renderInput('email', 'Email Address', 'email', <Mail size={18} />, 'john@example.com')}
                     {renderInput('username', 'Username', 'text', <User size={18} />, 'johndoe123')}
                     {renderInput('phoneNumber', 'Phone Number', 'number', <Phone size={18} />, '70123456')}
                     

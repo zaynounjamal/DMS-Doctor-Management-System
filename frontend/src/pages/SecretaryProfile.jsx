@@ -1,18 +1,21 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSecretaryProfile, updateSecretaryProfile } from '../secretaryApi';
+import { getSecretaryProfile, updateSecretaryProfile, changeSecretaryPassword } from '../secretaryApi';
 import { useToast } from '../contexts/ToastContext';
-import { User, Phone, Save, ArrowLeft } from 'lucide-react';
+import { User, Phone, Save, ChevronLeft } from 'lucide-react';
 
 const SecretaryProfile = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [profile, setProfile] = useState({
+    const [formData, setFormData] = useState({
         fullName: '',
         phone: '',
-        username: ''
+        username: '', // Keep username for display
+        oldPassword: '',
+        newPassword: ''
     });
 
     useEffect(() => {
@@ -23,7 +26,13 @@ const SecretaryProfile = () => {
         setLoading(true);
         try {
             const data = await getSecretaryProfile();
-            setProfile(data);
+            setFormData({
+                fullName: data.fullName,
+                phone: data.phone,
+                username: data.username, // Set username from loaded data
+                oldPassword: '',
+                newPassword: ''
+            });
         } catch (error) {
             showToast('Failed to load profile', 'error');
         } finally {
@@ -31,15 +40,42 @@ const SecretaryProfile = () => {
         }
     };
 
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
         try {
+            // Update Profile Info
             await updateSecretaryProfile({
-                fullName: profile.fullName,
-                phone: profile.phone
+                fullName: formData.fullName,
+                phone: formData.phone
             });
-            showToast('Profile updated successfully!', 'success');
+
+            let passwordChanged = false;
+            // Change Password if provided
+            if (formData.newPassword) {
+                if (!formData.oldPassword) {
+                    showToast('Please enter current password to change it', 'error');
+                    setSaving(false); // Ensure saving state is reset
+                    return;
+                }
+                await changeSecretaryPassword(formData.oldPassword, formData.newPassword);
+                passwordChanged = true;
+                // Clear password fields
+                setFormData(prev => ({ ...prev, oldPassword: '', newPassword: '' }));
+            }
+
+            if (passwordChanged) {
+                showToast('Profile and password updated successfully!', 'success');
+            } else {
+                showToast('Profile updated successfully!', 'success');
+            }
         } catch (error) {
             showToast(error.message || 'Failed to update profile', 'error');
         } finally {
@@ -64,7 +100,7 @@ const SecretaryProfile = () => {
                         onClick={() => navigate('/secretary-dashboard')}
                         className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
                     >
-                        <ArrowLeft className="w-5 h-5 mr-2" />
+                        <ChevronLeft className="w-5 h-5 mr-2" />
                         Back to Dashboard
                     </button>
                     <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
@@ -83,7 +119,7 @@ const SecretaryProfile = () => {
                                 </label>
                                 <input
                                     type="text"
-                                    value={profile.username}
+                                    value={formData.username}
                                     disabled
                                     className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
                                 />
@@ -97,8 +133,9 @@ const SecretaryProfile = () => {
                                 </label>
                                 <input
                                     type="text"
-                                    value={profile.fullName}
-                                    onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
+                                    name="fullName"
+                                    value={formData.fullName}
+                                    onChange={handleChange}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                 />
@@ -112,11 +149,41 @@ const SecretaryProfile = () => {
                                 </label>
                                 <input
                                     type="tel"
-                                    value={profile.phone}
-                                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleChange}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                 />
+                            </div>
+
+                             {/* Change Password Section */}
+                            <div className="pt-6 border-t border-gray-200 mt-6">
+                                <h3 className="text-lg font-medium text-gray-900 mb-4">Change Password</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Current Password</label>
+                                        <input
+                                            type="password"
+                                            name="oldPassword"
+                                            value={formData.oldPassword || ''}
+                                            onChange={handleChange}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                                            placeholder="Enter current password"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">New Password</label>
+                                        <input
+                                            type="password"
+                                            name="newPassword"
+                                            value={formData.newPassword || ''}
+                                            onChange={handleChange}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                                            placeholder="Enter new password"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -141,19 +208,7 @@ const SecretaryProfile = () => {
                     </form>
                 </div>
 
-                {/* Change Password Section */}
-                <div className="mt-6 bg-white shadow rounded-lg px-6 py-6">
-                    <h2 className="text-lg font-medium text-gray-900 mb-4">Change Password</h2>
-                    <p className="text-sm text-gray-500 mb-4">
-                        To change your password, please contact the system administrator.
-                    </p>
-                    <button
-                        onClick={() => showToast('Please contact admin to change password', 'info')}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
-                    >
-                        Request Password Change
-                    </button>
-                </div>
+
             </div>
         </div>
     );

@@ -8,6 +8,9 @@ public class UpdateDoctorProfileBindingModel
     [StringLength(100)]
     public string FullName { get; set; } = string.Empty;
 
+    [EmailAddress]
+    public string? Email { get; set; }
+
     [Required]
     [StringLength(50)]
     public string Specialty { get; set; } = string.Empty;

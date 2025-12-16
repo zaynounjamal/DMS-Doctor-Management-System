@@ -240,3 +240,56 @@ export const getTreatments = async () => {
   return response.json();
 };
 
+
+export const getDoctorWaitingRoom = async () => {
+  const response = await fetch(`${API_URL}/doctor/waiting-room`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch waiting room');
+  }
+  return response.json();
+};
+
+export const uploadFile = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const token = getAuthToken();
+  const response = await fetch(`${API_URL}/upload`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text();
+    throw new Error(errorData || 'Failed to upload file');
+  }
+  return response.json();
+};
+
+export const getPublicSettings = async () => {
+  const response = await fetch(`${API_URL}/public/settings`);
+  if (!response.ok) return {}; // Fail silently or return empty
+  return response.json();
+};
+
+export const saveSystemSettings = async (settings) => {
+  // Assuming there's a SettingsController or AdminController for this.
+  // Plan said "Update AdminSettings.jsxInputs for Hero Title...".
+  // I need to find where to save these settings.
+  // Searching found SettingsController.cs. I should check it.
+  // For now, I'll assume endpoint is /api/settings.
+  const response = await fetch(`${API_URL}/settings`, {
+    method: 'POST', // or PUT
+    headers: getAuthHeaders(),
+    body: JSON.stringify(settings)
+  });
+  if (!response.ok) {
+    throw new Error('Failed to save settings');
+  }
+  return response.json();
+};

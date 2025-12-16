@@ -72,4 +72,43 @@ public class UploadController : ControllerBase
             return StatusCode(500, $"Error uploading file: {ex.Message}");
         }
     }
+
+    [HttpPost]
+    public async Task<ActionResult> UploadFile(IFormFile file)
+    {
+        if (file == null || file.Length == 0) return BadRequest("No file uploaded");
+
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".svg", ".webp" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowedExtensions.Contains(extension)) return BadRequest("Invalid file type");
+
+        if (file.Length > 10 * 1024 * 1024) return BadRequest("File size max 10MB");
+
+        try
+        {
+            var webRootPath = _environment.WebRootPath;
+            if (string.IsNullOrEmpty(webRootPath))
+            {
+                webRootPath = Path.Combine(_environment.ContentRootPath, "wwwroot");
+                Directory.CreateDirectory(webRootPath);
+            }
+
+            var uploadsPath = Path.Combine(webRootPath, "uploads"); // Root uploads folder
+            Directory.CreateDirectory(uploadsPath);
+
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var filePath = Path.Combine(uploadsPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return Ok(new { Url = $"/uploads/{fileName}" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Upload failed: {ex.Message}");
+        }
+    }
 }

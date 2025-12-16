@@ -21,6 +21,9 @@ public class SignupBindingModel
     [ValidPhone]
     public string Phone { get; set; } = string.Empty;
 
+    [EmailAddress]
+    public string? Email { get; set; }
+
     [RegularExpression("^(Male|Female|Other)$", ErrorMessage = "Gender must be Male, Female, or Other")]
     public string? Gender { get; set; }
 
