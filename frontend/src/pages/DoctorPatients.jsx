@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Mail, Phone, Calendar, User, Search, Users } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { getDoctorPatients } from '../doctorApi';
@@ -46,7 +47,7 @@ const DoctorPatients = () => {
     <div className={`p-8 max-w-[1200px] mx-auto ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">My Patients</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2 text-purple-600 dark:text-purple-400">My Patients</h1>
           <p className={`text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             Manage and view your patient records
           </p>
@@ -64,8 +65,8 @@ const DoctorPatients = () => {
               }
             `}
           />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">
-            🔍
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <Search size={20} />
           </div>
         </div>
       </div>
@@ -79,7 +80,9 @@ const DoctorPatients = () => {
           textAlign: 'center',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ fontSize: '64px', marginBottom: '16px' }}>👥</div>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <Users size={64} className="text-gray-400" />
+          </div>
           <h3 style={{ fontSize: '20px', color: '#333', marginBottom: '8px' }}>
             {searchTerm ? 'No patients found' : 'No patients yet'}
           </h3>
@@ -121,16 +124,20 @@ const DoctorPatients = () => {
                 </h3>
                 <div className="space-y-1">
                   <p className={`text-sm flex items-center gap-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                    📧 <span className="truncate">{patient.email}</span>
+                    <Mail size={16} className="flex-shrink-0" />
+                    <span className="truncate">{patient.email}</span>
                   </p>
                   <p className={`text-sm flex items-center gap-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                    📱 {patient.phoneNumber || 'N/A'}
+                    <Phone size={16} className="flex-shrink-0" />
+                    {patient.phoneNumber || 'N/A'}
                   </p>
                   <p className={`text-sm flex items-center gap-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                    🎂 {patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A'}
+                    <Calendar size={16} className="flex-shrink-0" />
+                    {patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A'}
                   </p>
                   <p className={`text-sm flex items-center gap-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                    🩸 {patient.bloodType || 'N/A'}
+                    <User size={16} className="flex-shrink-0" />
+                    {patient.gender || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -138,14 +145,6 @@ const DoctorPatients = () => {
           </div>
         ))}
         
-        {filteredPatients.length === 0 && (
-          <div className="col-span-full py-12 text-center">
-            <div className={`text-6xl mb-4 opacity-50`}>👥</div>
-            <p className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-              No patients found
-            </p>
-          </div>
-        )}
       </div>
       )}
     </div>

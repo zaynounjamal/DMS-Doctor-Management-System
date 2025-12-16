@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Calendar, DollarSign, BarChart3, Users, XCircle, ArrowRight } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import AppointmentCard from '../components/AppointmentCard';
 import MarkAsDoneModal from '../components/MarkAsDoneModal';
@@ -70,7 +71,7 @@ const DoctorDashboard = () => {
     <div className={`p-6 max-w-[1400px] mx-auto ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">
+        <h1 className="text-3xl font-bold tracking-tight mb-2 text-purple-600 dark:text-purple-400">
           Doctor Dashboard
         </h1>
         <p className={`text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -84,61 +85,65 @@ const DoctorDashboard = () => {
           title="Today's Appointments"
           value={stats?.todayAppointments || 0}
           subtitle={`${stats?.completedToday || 0} completed, ${stats?.pendingToday || 0} pending`}
-          icon="📅"
+          icon={Calendar}
           color="#667eea"
         />
         <StatCard
           title="Actual Profit Today"
           value={`$${(stats?.actualProfitToday || 0).toFixed(2)}`}
           subtitle="Completed & Paid"
-          icon="💰"
+          icon={DollarSign}
           color="#10b981"
         />
         <StatCard
           title="Expected Profit Today"
           value={`$${(stats?.expectedProfitToday || 0).toFixed(2)}`}
           subtitle="All Completed"
-          icon="📊"
+          icon={BarChart3}
           color="#f59e0b"
         />
         <StatCard
           title="Total Patients"
           value={stats?.totalPatients || 0}
           subtitle="Lifetime"
-          icon="👥"
+          icon={Users}
           color="#8b5cf6"
         />
       </div>
 
       {/* Quick Actions */}
       <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4">
+        <h2 className="text-xl font-bold mb-4 text-purple-600 dark:text-purple-400">
           Quick Actions
         </h2>
         <div className="flex gap-4 flex-wrap">
           <button
             onClick={() => navigate('/doctor/appointments')}
-            className="px-6 py-3 text-sm font-bold rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100"
+            className="px-6 py-3 text-sm font-bold rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100 flex items-center gap-2"
           >
-            📅 View All Appointments
+            <Calendar size={18} />
+            View All Appointments
           </button>
           <button
             onClick={() => navigate('/doctor/patients')}
-            className="px-6 py-3 text-sm font-bold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100"
+            className="px-6 py-3 text-sm font-bold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100 flex items-center gap-2"
           >
-            👥 View Patients
+            <Users size={18} />
+            View Patients
           </button>
           <button
             onClick={() => navigate('/doctor/profit')}
-            className="px-6 py-3 text-sm font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100"
+            className="px-6 py-3 text-sm font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100 flex items-center gap-2"
           >
-            📊 Profit Analytics
+            <BarChart3 size={18} />
+            Profit Analytics
           </button>
           <button
             onClick={() => navigate('/doctor/offdays')}
-            className="px-6 py-3 text-sm font-bold rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100"
+            className="px-6 py-3 text-sm font-bold rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors shadow-sm active:scale-95 transform duration-100 flex items-center gap-2"
           >
-            🚫 Manage Off Days
+            <XCircle size={18} />
+            Manage Off Days
           </button>
         </div>
       </div>
@@ -172,7 +177,7 @@ const DoctorDashboard = () => {
                 e.currentTarget.style.color = '#667eea';
               }}
             >
-              View All →
+              View All <ArrowRight size={16} style={{ display: 'inline', marginLeft: '4px' }} />
             </button>
           )}
         </div>
@@ -185,7 +190,9 @@ const DoctorDashboard = () => {
             textAlign: 'center',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ fontSize: '64px', marginBottom: '16px' }}>📅</div>
+            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+              <Calendar size={64} style={{ color: '#999' }} />
+            </div>
             <h3 style={{ fontSize: '20px', color: '#333', marginBottom: '8px' }}>No appointments today</h3>
             <p style={{ fontSize: '14px', color: '#666' }}>Enjoy your free time!</p>
           </div>

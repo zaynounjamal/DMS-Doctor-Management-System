@@ -36,7 +36,7 @@ import DoctorLayout from './components/layout/DoctorLayout';
 const AppContent = () => {
   const { user, login, logout, isLoginModalOpen, openLoginModal, closeLoginModal, loading } = useAuth();
   const location = useLocation();
-  
+
   // Prevent browser back/forward navigation
   usePreventNavigation(true);
 
@@ -50,13 +50,13 @@ const AppContent = () => {
 
   // Don't show footer on profile page or secretary pages
   const showFooter = location.pathname !== '/profile' && !location.pathname.startsWith('/secretary');
-  
+
   // Don't show header on secretary pages
   const showHeader = !location.pathname.startsWith('/secretary');
 
   const PublicLayout = () => (
     <>
-      <Header 
+      <Header
         onLoginClick={openLoginModal}
         user={user}
         onLogout={logout}
@@ -71,7 +71,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
 
-      
+
       <Routes>
         {/* Public & Patient Routes - Wrapped in PublicLayout */}
         <Route element={<PublicLayout />}>
@@ -81,40 +81,40 @@ const AppContent = () => {
 
           {/* Protected Routes (Any Authenticated User) */}
           <Route element={<ProtectedRoute />}>
-             <Route path="/profile" element={<Profile />} />
-             <Route path="/my-appointments" element={<MyAppointments />} />
-             <Route path="/financial-summary" element={<FinancialSummary />} />
-             <Route path="/edit-profile" element={<EditProfile />} />
-             <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/my-appointments" element={<MyAppointments />} />
+            <Route path="/financial-summary" element={<FinancialSummary />} />
+            <Route path="/edit-profile" element={<EditProfile />} />
+            <Route path="/change-password" element={<ChangePassword />} />
           </Route>
         </Route>
-        
+
         {/* Doctor Routes Only - Wrapped in DoctorLayout */}
         <Route element={<ProtectedRoute allowedRoles={['doctor']} />}>
           <Route element={<DoctorLayout />}>
-              <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-              <Route path="/doctor/appointments" element={<DoctorAppointments />} />
-              <Route path="/doctor/patients" element={<DoctorPatients />} />
-              <Route path="/doctor/patients/:patientId" element={<DoctorPatientView />} />
-              <Route path="/doctor/profit" element={<DoctorProfitAnalytics />} />
-              <Route path="/doctor/offdays" element={<OffDaysManager />} />
-              <Route path="/doctor/calendar" element={<CalendarView />} />
+            <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+            <Route path="/doctor/appointments" element={<DoctorAppointments />} />
+            <Route path="/doctor/patients" element={<DoctorPatients />} />
+            <Route path="/doctor/patients/:patientId" element={<DoctorPatientView />} />
+            <Route path="/doctor/profit" element={<DoctorProfitAnalytics />} />
+            <Route path="/doctor/offdays" element={<OffDaysManager />} />
+            <Route path="/doctor/calendar" element={<CalendarView />} />
           </Route>
         </Route>
 
         {/* Secretary Routes Only */}
         <Route element={<ProtectedRoute allowedRoles={['secretary']} />}>
-            <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
-            <Route path="/secretary/profile" element={<SecretaryProfile />} />
-            <Route path="/secretary/payments" element={<PaymentReports />} />
-            <Route path="/secretary/schedule" element={<DailySchedule />} />
+          <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
+          <Route path="/secretary/profile" element={<SecretaryProfile />} />
+          <Route path="/secretary/payments" element={<PaymentReports />} />
+          <Route path="/secretary/schedule" element={<DailySchedule />} />
         </Route>
-        
+
       </Routes>
 
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={closeLoginModal} 
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={closeLoginModal}
         onLogin={login}
       />
     </div>
@@ -126,9 +126,9 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <ToastProvider>
-           <Router>
-             <AppContent />
-           </Router>
+          <Router>
+            <AppContent />
+          </Router>
         </ToastProvider>
       </AuthProvider>
     </ThemeProvider>

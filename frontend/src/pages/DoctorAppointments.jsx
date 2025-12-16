@@ -1,3 +1,4 @@
+import { Calendar, CalendarDays, CalendarRange, History, BarChart3, FileText, Mail, X, Plus, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
@@ -29,7 +30,7 @@ const DoctorAppointments = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
   const { success, error: toastError, info } = useToast();
-  
+
   const [activeTab, setActiveTab] = useState('today');
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,11 +40,11 @@ const DoctorAppointments = () => {
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const [appointmentNotes, setAppointmentNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
-  
+
   // Filter states
   const [completionFilter, setCompletionFilter] = useState('all'); // 'all', 'completed', 'not-completed'
   const [paymentFilter, setPaymentFilter] = useState('all'); // 'all', 'paid', 'unpaid'
-  
+
   // Search & Bulk Action states
   const [searchQuery, setSearchQuery] = useState('');
   const [searchStartDate, setSearchStartDate] = useState('');
@@ -55,12 +56,12 @@ const DoctorAppointments = () => {
 
   const [isBulkCompleting, setIsBulkCompleting] = useState(false);
 
-  // Define tabs
+  // Define tabs with icon render functions
   const tabs = [
-      { id: 'today', label: 'Today', icon: '📅' },
-      { id: 'tomorrow', label: 'Tomorrow', icon: '📆' },
-      { id: 'future', label: 'Upcoming', icon: '🔮' },
-      { id: 'past', label: 'History', icon: '📜' }
+    { id: 'today', label: 'Today', IconComponent: Calendar },
+    { id: 'tomorrow', label: 'Tomorrow', IconComponent: CalendarDays },
+    { id: 'future', label: 'Upcoming', IconComponent: CalendarRange },
+    { id: 'past', label: 'History', IconComponent: History }
   ];
 
   useEffect(() => {
@@ -91,9 +92,9 @@ const DoctorAppointments = () => {
     } catch (error) {
       console.error('Failed to load appointments:', error);
       if (error.message.includes('401') || error.message.includes('403')) {
-          toastError("Session expired. Please log in again.");
+        toastError("Session expired. Please log in again.");
       } else {
-          toastError('Failed to load appointments');
+        toastError('Failed to load appointments');
       }
     } finally {
       setLoading(false);
@@ -110,11 +111,11 @@ const DoctorAppointments = () => {
       setLoading(true);
       const period = document.getElementById('exportPeriod').value;
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
+
       const response = await fetch(`${API_URL}/doctor/appointments/export?format=${format}&period=${period}`, {
-          headers: {
-              'Authorization': `Bearer ${user.token}`
-          }
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
       });
 
       if (!response.ok) throw new Error('Export failed');
@@ -141,8 +142,8 @@ const DoctorAppointments = () => {
       // Ensure price is a number
       const price = parseFloat(finalPrice);
       if (isNaN(price)) {
-          toastError("Please enter a valid price");
-          return;
+        toastError("Please enter a valid price");
+        return;
       }
       await completeAppointment(selectedAppointment.id, price, completionNotes, paymentStatus);
       await loadAppointments(activeTab);
@@ -158,18 +159,18 @@ const DoctorAppointments = () => {
     setIsSearchMode(true);
     setLoading(true);
     try {
-        const results = await searchAppointments({
-            query: searchQuery,
-            startDate: searchStartDate,
-            endDate: searchEndDate,
-            status: searchStatus
-        });
-        setAppointments(results);
+      const results = await searchAppointments({
+        query: searchQuery,
+        startDate: searchStartDate,
+        endDate: searchEndDate,
+        status: searchStatus
+      });
+      setAppointments(results);
     } catch (error) {
-        console.error(error);
-        toastError('Search failed');
+      console.error(error);
+      toastError('Search failed');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -187,89 +188,89 @@ const DoctorAppointments = () => {
     if (selectedAppointments.length === 0) return;
     setShowBulkCompleteModal(true);
   };
-   
+
   const toggleSelection = (id) => {
-    setSelectedAppointments(prev => 
-        prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    setSelectedAppointments(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
   };
 
   const executeBulkComplete = async () => {
-      setIsBulkCompleting(true);
-      try {
-          await bulkCompleteAppointments(selectedAppointments, 50); 
-          success('Bulk completion successful');
-          setSelectedAppointments([]);
-          loadAppointments(activeTab);
-      } catch (error) {
-          console.error(error);
-          toastError('Bulk action failed');
-      } finally {
-          setIsBulkCompleting(false);
-          setShowBulkCompleteModal(false);
-      }
+    setIsBulkCompleting(true);
+    try {
+      await bulkCompleteAppointments(selectedAppointments, 50);
+      success('Bulk completion successful');
+      setSelectedAppointments([]);
+      loadAppointments(activeTab);
+    } catch (error) {
+      console.error(error);
+      toastError('Bulk action failed');
+    } finally {
+      setIsBulkCompleting(false);
+      setShowBulkCompleteModal(false);
+    }
   };
 
   const handleBulkRemind = async () => {
-      // Loop send reminder
-      let successCount = 0;
-      for (const id of selectedAppointments) {
-          try {
-              await sendReminder(id);
-              successCount++;
-          } catch (e) {
-              console.error(e);
-          }
+    // Loop send reminder
+    let successCount = 0;
+    for (const id of selectedAppointments) {
+      try {
+        await sendReminder(id);
+        successCount++;
+      } catch (e) {
+        console.error(e);
       }
-      success(`Sent ${successCount} reminders.`);
-      setSelectedAppointments([]);
+    }
+    success(`Sent ${successCount} reminders.`);
+    setSelectedAppointments([]);
   };
 
   // --- Notes Management ---
   const handleViewNotes = async (appointment) => {
-      setSelectedAppointment(appointment);
-      try {
-          // Fetch notes
-          const notes = await getAppointmentNotes(appointment.id);
-          setAppointmentNotes(notes);
-          setShowNotesModal(true);
-      } catch (e) {
-          console.error(e);
-          toastError('Failed to load notes');
-      }
+    setSelectedAppointment(appointment);
+    try {
+      // Fetch notes
+      const notes = await getAppointmentNotes(appointment.id);
+      setAppointmentNotes(notes);
+      setShowNotesModal(true);
+    } catch (e) {
+      console.error(e);
+      toastError('Failed to load notes');
+    }
   };
 
   const handleAddNote = () => {
-      setSelectedNote(null);
-      setShowAddNoteModal(true);
-      setShowNotesModal(false); // Close list modal temporarily
+    setSelectedNote(null);
+    setShowAddNoteModal(true);
+    setShowNotesModal(false); // Close list modal temporarily
   };
 
   const handleEditNote = (note) => {
-      setSelectedNote(note);
-      setShowAddNoteModal(true);
-      setShowNotesModal(false);
+    setSelectedNote(note);
+    setShowAddNoteModal(true);
+    setShowNotesModal(false);
   };
 
   const handleSubmitNote = async (noteText) => {
-      try {
-          if (selectedNote) {
-              await editMedicalNote(selectedNote.id, noteText);
-          } else {
-              await addMedicalNote(selectedAppointment.id, noteText);
-          }
-          // Refresh notes
-          const notes = await getAppointmentNotes(selectedAppointment.id);
-          setAppointmentNotes(notes);
-          setShowAddNoteModal(false);
-          setShowNotesModal(true); // Reopen list
-          
-          // Refresh appointment list to update counts if needed
-          loadAppointments(activeTab);
-      } catch (e) {
-          console.error(e);
-          toastError('Failed to save note');
+    try {
+      if (selectedNote) {
+        await editMedicalNote(selectedNote.id, noteText);
+      } else {
+        await addMedicalNote(selectedAppointment.id, noteText);
       }
+      // Refresh notes
+      const notes = await getAppointmentNotes(selectedAppointment.id);
+      setAppointmentNotes(notes);
+      setShowAddNoteModal(false);
+      setShowNotesModal(true); // Reopen list
+
+      // Refresh appointment list to update counts if needed
+      loadAppointments(activeTab);
+    } catch (e) {
+      console.error(e);
+      toastError('Failed to save note');
+    }
   };
 
   return (
@@ -277,14 +278,14 @@ const DoctorAppointments = () => {
       {/* Header */}
       <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#333' }}>
+          <h1 className="text-3xl font-bold tracking-tight mb-2 text-purple-600 dark:text-purple-400" style={{ margin: 0 }}>
             Appointments
           </h1>
           <p style={{ margin: '8px 0 0 0', fontSize: '16px', color: '#666' }}>
             Manage your appointments across different time periods
           </p>
         </div>
-        
+
         {/* Export Button */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <select
@@ -307,7 +308,7 @@ const DoctorAppointments = () => {
             <option value="year">This Year</option>
             <option value="all">All Time</option>
           </select>
-          
+
           <button
             onClick={() => handleExport('csv')}
             style={{
@@ -327,9 +328,9 @@ const DoctorAppointments = () => {
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
           >
-            📊 Export CSV
+            <BarChart3 size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Export CSV
           </button>
-          
+
           <button
             onClick={() => handleExport('pdf')}
             style={{
@@ -349,65 +350,187 @@ const DoctorAppointments = () => {
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
           >
-            📄 Export PDF
+            <FileText size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Export PDF
           </button>
         </div>
       </div>
 
       {/* Search Bar */}
-      <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+      <div style={{
+        marginBottom: '24px',
+        padding: '24px',
+        background: '#000000',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderRadius: '16px',
+        border: '1px solid rgba(155, 89, 182, 0.3)',
+        boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)'
+      }}>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'end' }}>
           <div style={{ flex: 1, minWidth: '200px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginBottom: '4px' }}>Search</label>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#9333ea',
+              marginBottom: '8px',
+              letterSpacing: '0.5px'
+            }}>Search</label>
             <input
               type="text"
               placeholder="Patient name or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                border: '1px solid rgba(155, 89, 182, 0.3)',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#ffffff',
+                fontSize: '14px',
+                outline: 'none',
+                transition: 'all 0.3s ease'
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.border = '1px solid #9333ea';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(155, 89, 182, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.border = '1px solid rgba(155, 89, 182, 0.3)';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginBottom: '4px' }}>From</label>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#9333ea',
+              marginBottom: '8px',
+              letterSpacing: '0.5px'
+            }}>From</label>
             <input
               type="date"
               value={searchStartDate}
               onChange={(e) => setSearchStartDate(e.target.value)}
-              style={{ padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+              style={{
+                padding: '12px 16px',
+                borderRadius: '10px',
+                border: '1px solid rgba(155, 89, 182, 0.3)',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#ffffff',
+                fontSize: '14px',
+                outline: 'none',
+                colorScheme: 'dark'
+              }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginBottom: '4px' }}>To</label>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#9333ea',
+              marginBottom: '8px',
+              letterSpacing: '0.5px'
+            }}>To</label>
             <input
               type="date"
               value={searchEndDate}
               onChange={(e) => setSearchEndDate(e.target.value)}
-              style={{ padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+              style={{
+                padding: '12px 16px',
+                borderRadius: '10px',
+                border: '1px solid rgba(155, 89, 182, 0.3)',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#ffffff',
+                fontSize: '14px',
+                outline: 'none',
+                colorScheme: 'dark'
+              }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginBottom: '4px' }}>Status</label>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#9333ea',
+              marginBottom: '8px',
+              letterSpacing: '0.5px'
+            }}>Status</label>
             <select
               value={searchStatus}
               onChange={(e) => setSearchStatus(e.target.value)}
-              style={{ padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', minWidth: '120px' }}
+              style={{
+                padding: '12px 16px',
+                borderRadius: '10px',
+                border: '1px solid rgba(155, 89, 182, 0.3)',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#ffffff',
+                fontSize: '14px',
+                minWidth: '140px',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
             >
-              <option value="">All</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="" style={{ background: '#1a1a1a', color: '#ffffff' }}>All</option>
+              <option value="pending" style={{ background: '#1a1a1a', color: '#ffffff' }}>Pending</option>
+              <option value="completed" style={{ background: '#1a1a1a', color: '#ffffff' }}>Completed</option>
+              <option value="cancelled" style={{ background: '#1a1a1a', color: '#ffffff' }}>Cancelled</option>
             </select>
           </div>
           <button
             onClick={handleSearch}
-            style={{ padding: '10px 20px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+            style={{
+              padding: '12px 24px',
+              background: 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              fontSize: '14px',
+              boxShadow: '0 4px 15px rgba(155, 89, 182, 0.3)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(155, 89, 182, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(155, 89, 182, 0.3)';
+            }}
           >
             Search
           </button>
           {isSearchMode && (
             <button
               onClick={clearSearch}
-              style={{ padding: '10px 20px', backgroundColor: '#94a3b8', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+              style={{
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%)',
+                color: '#ffffff',
+                border: '1px solid rgba(155, 89, 182, 0.3)',
+                borderRadius: '10px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                fontSize: '14px',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.borderColor = 'rgba(155, 89, 182, 0.6)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.borderColor = 'rgba(155, 89, 182, 0.3)';
+              }}
             >
               Clear
             </button>
@@ -432,9 +555,9 @@ const DoctorAppointments = () => {
               fontSize: '14px',
               fontWeight: 'bold',
               border: 'none',
-              borderBottom: activeTab === tab.id ? '3px solid #667eea' : '3px solid transparent',
+              borderBottom: activeTab === tab.id ? '3px solid #9333ea' : '3px solid transparent',
               backgroundColor: 'transparent',
-              color: activeTab === tab.id ? '#667eea' : '#666',
+              color: activeTab === tab.id ? '#9333ea' : '#666',
               cursor: 'pointer',
               transition: 'all 0.2s',
               whiteSpace: 'nowrap'
@@ -450,7 +573,8 @@ const DoctorAppointments = () => {
               }
             }}
           >
-            {tab.icon} {tab.label}
+            <tab.IconComponent size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+            {tab.label}
           </button>
         ))}
       </div>
@@ -552,13 +676,13 @@ const DoctorAppointments = () => {
           // Completion filter
           if (completionFilter === 'completed' && !apt.isCompleted) return false;
           if (completionFilter === 'not-completed' && apt.isCompleted) return false;
-          
+
           // Payment filter (only for completed appointments)
           if (paymentFilter !== 'all' && apt.isCompleted) {
             if (paymentFilter === 'paid' && apt.paymentStatus !== 'paid') return false;
             if (paymentFilter === 'unpaid' && apt.paymentStatus !== 'unpaid') return false;
           }
-          
+
           return true;
         });
 
@@ -570,11 +694,14 @@ const DoctorAppointments = () => {
             textAlign: 'center',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ fontSize: '64px', marginBottom: '16px' }}>
-              {activeTab === 'today' ? '📅' : activeTab === 'tomorrow' ? '📆' : activeTab === 'future' ? '🔮' : '📜'}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', color: '#9333ea' }}>
+              {activeTab === 'today' && <Calendar size={64} />}
+              {activeTab === 'tomorrow' && <CalendarDays size={64} />}
+              {activeTab === 'future' && <CalendarRange size={64} />}
+              {activeTab === 'past' && <History size={64} />}
             </div>
             <h3 style={{ fontSize: '20px', color: '#333', marginBottom: '8px' }}>
-              {appointments.length === 0 
+              {appointments.length === 0
                 ? `No appointments ${activeTab === 'past' ? 'in the past' : `for ${activeTab}`}`
                 : 'No appointments match your filters'
               }
@@ -651,7 +778,7 @@ const DoctorAppointments = () => {
               transition: 'transform 0.1s'
             }}
           >
-            {isBulkCompleting ? 'Processing...' : '✓ Mark as Done'}
+            {isBulkCompleting ? 'Processing...' : <><Check size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Mark as Done</>}
           </button>
           <button
             onClick={handleBulkRemind}
@@ -666,7 +793,7 @@ const DoctorAppointments = () => {
               transition: 'transform 0.1s'
             }}
           >
-            📧 Send Reminders
+            <Mail size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Send Reminders
           </button>
           <button
             onClick={() => setSelectedAppointments([])}
@@ -679,7 +806,7 @@ const DoctorAppointments = () => {
               padding: '4px'
             }}
           >
-            ✕
+            <X size={20} />
           </button>
         </div>
       )}
@@ -741,7 +868,7 @@ const DoctorAppointments = () => {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                ✕
+                <X size={20} />
               </button>
             </div>
 
@@ -762,7 +889,7 @@ const DoctorAppointments = () => {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5568d3'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#667eea'}
               >
-                ➕ Add New Note
+                <Plus size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Add New Note
               </button>
             </div>
 

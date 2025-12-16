@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { User, DollarSign, Calendar, FileText, Mail, Phone, CheckCircle, Clock } from 'lucide-react';
 import MedicalNotesList from '../components/MedicalNotesList';
 import { getPatientDetails, getPatientNotes, updatePaymentStatus } from '../doctorApi';
 
@@ -54,10 +55,10 @@ const DoctorPatientView = () => {
   }
 
   const tabs = [
-    { id: 'info', label: 'Basic Info', icon: '👤' },
-    { id: 'financial', label: 'Financial', icon: '💰' },
-    { id: 'appointments', label: 'Appointments', icon: '📅' },
-    { id: 'notes', label: 'Medical Notes', icon: '📝' }
+    { id: 'info', label: 'Basic Info', icon: User },
+    { id: 'financial', label: 'Financial', icon: DollarSign },
+    { id: 'appointments', label: 'Appointments', icon: Calendar },
+    { id: 'notes', label: 'Medical Notes', icon: FileText }
   ];
 
   return (
@@ -112,7 +113,10 @@ const DoctorPatientView = () => {
               whiteSpace: 'nowrap'
             }}
           >
-            {tab.icon} {tab.label}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              {React.createElement(tab.icon, { size: 18 })}
+              {tab.label}
+            </span>
           </button>
         ))}
       </div>
@@ -128,18 +132,35 @@ const DoctorPatientView = () => {
           <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '20px' }}>Basic Information</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
             <div>
-              <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Phone</div>
-              <div style={{ fontSize: '16px', color: '#333' }}>{patient.phone || 'N/A'}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Gender</div>
-              <div style={{ fontSize: '16px', color: '#333' }}>{patient.gender || 'N/A'}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Birth Date</div>
-              <div style={{ fontSize: '16px', color: '#333' }}>
-                {patient.birthDate ? new Date(patient.birthDate).toLocaleDateString() : 'N/A'}
+              <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Mail size={14} />
+                Email
               </div>
+              <div style={{ fontSize: '16px', color: '#333' }}>{patient.email || 'N/A'}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Phone size={14} />
+                Phone
+              </div>
+              <div style={{ fontSize: '16px', color: '#333' }}>{patient.phoneNumber || patient.phone || 'N/A'}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Calendar size={14} />
+                Date of Birth
+              </div>
+              <div style={{ fontSize: '16px', color: '#333' }}>
+                {patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 
+                 patient.birthDate ? new Date(patient.birthDate).toLocaleDateString() : 'N/A'}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <User size={14} />
+                Gender
+              </div>
+              <div style={{ fontSize: '16px', color: '#333' }}>{patient.gender || 'N/A'}</div>
             </div>
           </div>
         </div>
@@ -215,7 +236,7 @@ const DoctorPatientView = () => {
               textAlign: 'center',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
+              <Calendar size={48} style={{ marginBottom: '16px', color: '#999', margin: '0 auto' }} />
               <p style={{ color: '#666' }}>No appointments yet</p>
             </div>
           ) : (
@@ -237,7 +258,17 @@ const DoctorPatientView = () => {
                         {new Date(apt.appointmentDate).toLocaleDateString()} at {apt.appointmentTime}
                       </div>
                       <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
-                        Status: {apt.isCompleted ? '✓ Completed' : apt.status}
+                        Status: {apt.isCompleted ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle size={14} style={{ color: '#10b981' }} />
+                            Completed
+                          </span>
+                        ) : (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={14} style={{ color: '#f59e0b' }} />
+                            {apt.status}
+                          </span>
+                        )}
                       </div>
                     </div>
                     {apt.finalPrice && (
@@ -249,7 +280,17 @@ const DoctorPatientView = () => {
                           fontSize: '12px',
                           color: apt.paymentStatus === 'paid' ? '#10b981' : '#ef4444'
                         }}>
-                          {apt.paymentStatus === 'paid' ? '✓ Paid' : '⏳ Unpaid'}
+                          {apt.paymentStatus === 'paid' ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <CheckCircle size={12} style={{ color: '#10b981' }} />
+                              Paid
+                            </span>
+                          ) : (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <Clock size={12} style={{ color: '#ef4444' }} />
+                              Unpaid
+                            </span>
+                          )}
                         </div>
                       </div>
                     )}
@@ -320,3 +361,4 @@ const DoctorPatientView = () => {
 };
 
 export default DoctorPatientView;
+

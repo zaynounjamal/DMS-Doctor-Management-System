@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DollarSign, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { getProfitAnalytics, getDoctorStatistics } from '../doctorApi';
@@ -52,7 +53,7 @@ const DoctorProfitAnalytics = () => {
     <div className={`p-8 max-w-[1400px] mx-auto ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">
+        <h1 className="text-3xl font-bold tracking-tight mb-2 text-purple-600 dark:text-purple-400">
           Profit Analytics
         </h1>
         <p className={`text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -68,8 +69,8 @@ const DoctorProfitAnalytics = () => {
             onClick={() => setPeriod(p.id)}
             className={`
               px-5 py-2.5 text-sm font-bold rounded-lg transition-all duration-200
-              ${period === p.id 
-                ? 'bg-purple-600 text-white shadow-md' 
+              ${period === p.id
+                ? 'bg-purple-600 text-white shadow-md'
                 : (theme === 'dark' ? 'bg-gray-800 text-gray-400 hover:bg-gray-700' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50')
               }
             `}
@@ -85,28 +86,28 @@ const DoctorProfitAnalytics = () => {
           title="Actual Profit"
           value={`$${(profitData?.actualProfit || 0).toFixed(2)}`}
           subtitle="Completed & Paid"
-          icon="💰"
+          icon={DollarSign}
           color="#10b981"
         />
         <StatCard
           title="Expected Profit"
           value={`$${(profitData?.expectedProfit || 0).toFixed(2)}`}
           subtitle="All Completed"
-          icon="📊"
+          icon={TrendingUp}
           color="#667eea"
         />
         <StatCard
           title="Unpaid Amount"
           value={`$${(profitData?.unpaidAmount || 0).toFixed(2)}`}
           subtitle={`${profitData?.unpaidAppointments || 0} appointments`}
-          icon="⏳"
+          icon={Clock}
           color="#ef4444"
         />
         <StatCard
           title="Completed Appointments"
           value={profitData?.completedAppointments || 0}
           subtitle={`${profitData?.paidAppointments || 0} paid`}
-          icon="✓"
+          icon={CheckCircle}
           color="#8b5cf6"
         />
       </div>

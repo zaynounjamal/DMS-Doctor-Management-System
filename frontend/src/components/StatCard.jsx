@@ -1,6 +1,6 @@
 import React from 'react';
 
-const StatCard = ({ title, value, subtitle, icon, color = '#667eea' }) => {
+const StatCard = ({ title, value, subtitle, icon: Icon, color = '#667eea' }) => {
   return (
     <div style={{
       backgroundColor: 'white',
@@ -37,13 +37,18 @@ const StatCard = ({ title, value, subtitle, icon, color = '#667eea' }) => {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Icon */}
-        {icon && (
+        {Icon && (
           <div style={{
-            fontSize: '32px',
             marginBottom: '12px',
             color: color
           }}>
-            {icon}
+            {typeof Icon === 'string' ? (
+              <span style={{ fontSize: '32px' }}>{Icon}</span>
+            ) : React.isValidElement(Icon) ? (
+              Icon
+            ) : (
+              <Icon size={32} />
+            )}
           </div>
         )}
 
