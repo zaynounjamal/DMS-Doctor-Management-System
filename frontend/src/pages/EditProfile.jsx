@@ -9,6 +9,7 @@ const EditProfile = () => {
   const { user, login } = useAuth(); // Get user and login (to update context)
   const [formData, setFormData] = useState({
     fullName: '',
+    email: '',
     phone: '',
     gender: '',
     birthDate: '',
@@ -29,6 +30,7 @@ const EditProfile = () => {
       setRole(user.role?.toLowerCase() || '');
       setFormData({
         fullName: user.fullName || '',
+        email: user.email || '',
         phone: user.phone || '',
         gender: user.gender || '',
         birthDate: user.birthDate ? user.birthDate.split('T')[0] : '',
@@ -55,12 +57,20 @@ const EditProfile = () => {
       // but typical pattern is load once. 
       // Since user dependency controls this, valid.
       
+      if (data) {
+          setRole(data.role?.toLowerCase() || '');
+          // Update base user data (email) regardless of profile existence
+          setFormData(prev => ({
+              ...prev,
+              email: data.email || prev.email
+          }));
+      }
+
       if (profile) {
-         // Only update role/form if not already set or to ensure freshness
-         setRole(data.role?.toLowerCase() || '');
          setFormData(prev => ({
            ...prev,
            fullName: profile.fullName || prev.fullName,
+           // Email is already handled above, but no harm ensuring consistency if it was in profile too (it's not)
            phone: profile.phone || prev.phone,
            gender: profile.gender || prev.gender,
            birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : (prev.birthDate || ''),
@@ -125,6 +135,7 @@ const EditProfile = () => {
       if (role === 'doctor') {
         const doctorData = {
            fullName: formData.fullName,
+           email: formData.email,
            phone: formData.phone,
            specialty: formData.specialty,
            // Ensure TimeOnly format HH:mm:00
@@ -137,6 +148,7 @@ const EditProfile = () => {
         // Patient update
         const patientData = {
           fullName: formData.fullName,
+          email: formData.email,
           phone: formData.phone,
           gender: formData.gender,
           birthDate: formData.birthDate || null,
@@ -259,6 +271,24 @@ const EditProfile = () => {
                        required
                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
                        placeholder="Enter your full name"
+                     />
+                  </div>
+               </div>
+
+               <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+                  <div className="relative">
+                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        {/* We use generic user icon or maybe mail if imported */}
+                        <User size={18} /> 
+                     </div>
+                     <input
+                       type="email"
+                       name="email"
+                       value={formData.email}
+                       onChange={handleChange}
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                       placeholder="Enter your email"
                      />
                   </div>
                </div>

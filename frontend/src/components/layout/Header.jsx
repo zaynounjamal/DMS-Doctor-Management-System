@@ -1,15 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, Stethoscope } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import Sidebar from './Sidebar';
+
+import { getPublicSettings } from '../../api';
 
 const Header = ({ onLoginClick, user, onLogout }) => {
   const { theme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showLogo, setShowLogo] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+         try {
+             const data = await getPublicSettings();
+             if (data.LogoUrl) setLogoUrl(data.LogoUrl);
+         } catch(e) {
+             console.error("Failed to load logo", e);
+         }
+    };
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -72,11 +88,19 @@ const Header = ({ onLoginClick, user, onLogout }) => {
                     animate={{ opacity: 1, scale: 1, width: '40px', marginRight: '12px' }}
                     exit={{ opacity: 0, scale: 0.8, width: 0, marginRight: 0 }}
                     transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    className="h-10 w-10 flex items-center justify-center rounded-lg border-2 border-white/30 bg-white/10 backdrop-blur-sm flex-shrink-0"
+                    className="h-10 w-10 flex items-center justify-center rounded-lg border-2 border-white/30 bg-white/10 backdrop-blur-sm flex-shrink-0 overflow-hidden"
                   >
-                    <Stethoscope 
-                      className="w-6 h-6 text-white"
-                    />
+                    {logoUrl ? (
+                         logoUrl.startsWith('icon:') ? (
+                             React.createElement(Icons[logoUrl.split(':')[1]] || Stethoscope, { className: "w-6 h-6 text-white" })
+                         ) : (
+                             <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                         )
+                    ) : (
+                        <Stethoscope 
+                          className="w-6 h-6 text-white"
+                        />
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

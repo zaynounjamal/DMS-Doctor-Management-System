@@ -20,9 +20,10 @@ public class Patient
     public string? Gender { get; set; }
 
     public DateOnly? BirthDate { get; set; }
+    
+    public decimal Balance { get; set; } = 0; // Wallet balance
 
     public User User { get; set; } = null!;
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public ICollection<PatientTreatment> PatientTreatments { get; set; } = new List<PatientTreatment>();
 }
-

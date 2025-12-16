@@ -50,6 +50,7 @@ public class FinancialController : ControllerBase
                 a.AppointmentTime,
                 a.Status,
                 a.Price,
+                a.FinalPrice,
                 a.PaymentStatus,
                 Doctor = new
                 {
@@ -62,12 +63,12 @@ public class FinancialController : ControllerBase
 
         // Calculate financial summary
         var totalPaid = appointments
-            .Where(a => a.PaymentStatus == "paid" && a.Price.HasValue)
-            .Sum(a => a.Price.Value);
+            .Where(a => a.PaymentStatus == "paid")
+            .Sum(a => a.FinalPrice ?? a.Price ?? 0);
 
         var totalUnpaid = appointments
-            .Where(a => a.PaymentStatus == "unpaid" && a.Price.HasValue)
-            .Sum(a => a.Price.Value);
+            .Where(a => a.PaymentStatus != "paid") // Count anything not paid (null, pending, unpaid) as unpaid
+            .Sum(a => a.FinalPrice ?? a.Price ?? 0);
 
         var remainingBalance = totalUnpaid;
 
@@ -81,7 +82,7 @@ public class FinancialController : ControllerBase
                 TotalPaid = totalPaid,
                 TotalUnpaid = totalUnpaid,
                 RemainingBalance = remainingBalance,
-                OverpaidAmount = overpaid
+                OverpaidAmount = patient.Balance // Show actual wallet balance
             },
             Appointments = appointments
         });

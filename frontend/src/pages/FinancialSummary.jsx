@@ -102,7 +102,7 @@ const FinancialSummary = () => {
               borderClass="border-orange-100 dark:border-orange-900/30"
            />
            <StatCard 
-              title="Overpaid" 
+              title="Wallet Balance" 
               amount={summary.overpaidAmount} 
               icon={DollarSign} 
               colorClass="text-cyan-600"

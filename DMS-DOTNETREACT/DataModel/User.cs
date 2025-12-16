@@ -13,6 +13,10 @@ public class User
     [Required, MaxLength(255)]
     public string PasswordHash { get; set; } = string.Empty;
 
+    [EmailAddress]
+    [MaxLength(100)]
+    public string? Email { get; set; }
+
     [Required, MaxLength(20)]
     public string Role { get; set; } = string.Empty; // patient, doctor, secretary
 

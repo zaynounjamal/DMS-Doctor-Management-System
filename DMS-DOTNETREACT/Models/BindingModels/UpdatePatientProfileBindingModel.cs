@@ -7,6 +7,9 @@ public class UpdatePatientProfileBindingModel
     [Required, MaxLength(100)]
     public string FullName { get; set; } = string.Empty;
 
+    [EmailAddress]
+    public string? Email { get; set; }
+
     [Required, MaxLength(20)]
     public string Phone { get; set; } = string.Empty;
 

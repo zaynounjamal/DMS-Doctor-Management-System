@@ -30,6 +30,16 @@ import SecretaryDashboard from './pages/SecretaryDashboard';
 import SecretaryProfile from './pages/SecretaryProfile';
 import PaymentReports from './pages/PaymentReports';
 import DailySchedule from './pages/DailySchedule';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminUsers from './pages/AdminUsers';
+import AdminAuditLogs from './pages/AdminAuditLogs';
+import AdminReports from './pages/AdminReports';
+import AdminSchedule from './pages/AdminSchedule';
+import AdminPatients from './pages/AdminPatients';
+import AdminTreatments from './pages/AdminTreatments';
+import AdminSettings from './pages/AdminSettings';
+import AdminEmailTemplates from './pages/AdminEmailTemplates';
+import AdminLayout from './components/layout/AdminLayout';
 import './App.css';
 import DoctorLayout from './components/layout/DoctorLayout';
 
@@ -108,6 +118,22 @@ const AppContent = () => {
           <Route path="/secretary/profile" element={<SecretaryProfile />} />
           <Route path="/secretary/payments" element={<PaymentReports />} />
           <Route path="/secretary/schedule" element={<DailySchedule />} />
+        </Route>
+
+
+        {/* Admin Routes */}
+        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+            <Route path="/admin/reports" element={<AdminReports />} />
+            <Route path="/admin/schedule" element={<AdminSchedule />} />
+            <Route path="/admin/patients" element={<AdminPatients />} />
+            <Route path="/admin/treatments" element={<AdminTreatments />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
+          </Route>
         </Route>
 
       </Routes>

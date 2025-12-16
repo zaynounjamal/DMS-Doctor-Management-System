@@ -1,7 +1,9 @@
+using System.Text.Json.Serialization;
 using DMS_DOTNETREACT.Data;
 using DMS_DOTNETREACT.DataModel;
 using DMS_DOTNETREACT.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -15,11 +17,13 @@ public class SecretaryController : ControllerBase
 {
     private readonly ClinicDbContext _context;
     private readonly PasswordHasher _passwordHasher;
+    private readonly AuditService _auditService;
 
-    public SecretaryController(ClinicDbContext context, PasswordHasher passwordHasher)
+    public SecretaryController(ClinicDbContext context, PasswordHasher passwordHasher, AuditService auditService)
     {
         _context = context;
         _passwordHasher = passwordHasher;
+        _auditService = auditService;
     }
 
     /// <summary>
@@ -147,50 +151,11 @@ public class SecretaryController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)), "APPOINTMENT_STATUS_UPDATE", $"Appointment #{id} status updated to {model.Status}");
         return Ok(new { message = "Status updated", status = appt.Status });
     }
 
-    /// <summary>
-    /// Mark Appointment as Paid
-    /// </summary>
-    [HttpPut("appointments/{id}/pay")]
-    public async Task<ActionResult> MarkAsPaid(int id)
-    {
-        var appt = await _context.Appointments
-            .Include(a => a.Payment)
-            .FirstOrDefaultAsync(a => a.Id == id);
-            
-        if (appt == null) return NotFound();
 
-        if (appt.PaymentStatus == "paid")
-            return BadRequest("Already paid");
-
-        // Logic: Secretary marks as paid, but cannot change price.
-        // Use FinalPrice if set, else Price, else 0.
-        decimal amount = appt.FinalPrice ?? appt.Price ?? 0;
-
-        appt.PaymentStatus = "paid";
-        
-        // Create Payment record
-        if (appt.Payment == null)
-        {
-            var payment = new Payment
-            {
-                AppointmentId = id,
-                Amount = amount,
-                PaymentDate = DateTime.UtcNow,
-                PaymentMethod = "cash"
-            };
-            _context.Payments.Add(payment);
-        }
-
-        // If not completed yet, ensure we don't accidentally "complete" it medically.
-        // Doctor completes it. Secretary just takes money. 
-        // But commonly you pay AFTER. If paying BEFORE, that's fine too.
-
-        await _context.SaveChangesAsync();
-        return Ok(new { message = "Marked as paid", amount });
-    }
 
     /// <summary>
     /// Reschedule Appointment
@@ -250,6 +215,7 @@ public class SecretaryController : ControllerBase
 
         _context.Appointments.Add(appt);
         await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)), "APPOINTMENT_CREATED", $"Appointment created for patient {model.PatientId} with doctor {model.DoctorId} on {model.Date}");
 
         return Ok(new { message = "Appointment created", id = appt.Id });
     }
@@ -337,6 +303,7 @@ public class SecretaryController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)), "PATIENT_UPDATED", $"Patient {patient.FullName} profile updated.");
         return Ok(new { message = "Patient updated" });
     }
 
@@ -351,6 +318,7 @@ public class SecretaryController : ControllerBase
 
         patient.User.IsActive = false; // Soft delete
         await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)), "PATIENT_DELETED", $"Patient {patient.FullName} deactivated.");
         return Ok(new { message = "Patient deactivated" });
     }
 
@@ -519,6 +487,190 @@ public class SecretaryController : ControllerBase
             }
         });
     }
+    /// <summary>
+    /// Mark Appointment as Paid (and optionally use balance)
+    /// </summary>
+    [HttpPut("appointments/{id}/pay")]
+    public async Task<ActionResult> MarkAsPaid(int id, [FromBody] PayAppointmentModel model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+        var secretary = await _context.Secretaries.FirstOrDefaultAsync(s => s.UserId == int.Parse(userId));
+        if (secretary == null) return Unauthorized("Secretary not found");
+
+        var appt = await _context.Appointments
+            .Include(a => a.Patient)
+            .FirstOrDefaultAsync(a => a.Id == id);
+            
+        if (appt == null) return NotFound("Appointment not found");
+
+        if (appt.PaymentStatus == "paid")
+            return BadRequest("Appointment is already paid");
+
+        // Safety check & Retry Logic
+        var existingPayment = await _context.Payments.FirstOrDefaultAsync(p => p.AppointmentId == id);
+        if (existingPayment != null)
+        {
+             // Case 1: User wants to Pay with Balance, but existing payment is NOT Balance (e.g. failed earlier or null).
+             // We should allow this retry to go through and actually deduct balance.
+             if (model.PaymentMethod == "Balance" && existingPayment.PaymentMethod != "Balance")
+             {
+                 _context.Payments.Remove(existingPayment);
+                 // Fall through to normal logic to deduct balance and create new payment
+             }
+             // Case 2: Duplicate request (Same method or just checking)
+             else 
+             {
+                 if (appt.PaymentStatus != "paid")
+                 {
+                     appt.PaymentStatus = "paid";
+                     await _context.SaveChangesAsync();
+                 }
+                 return Ok(new { message = "Payment record found. Status updated to Paid.", balance = appt.Patient.Balance });
+             }
+        }
+
+        decimal amountToPay = appt.FinalPrice ?? appt.Price ?? 0;
+        
+        // Handle Balance Payment
+        if (model.PaymentMethod == "Balance")
+        {
+            if (appt.Patient.Balance < amountToPay)
+            {
+                return BadRequest($"Insufficient balance. Current balance: ${appt.Patient.Balance}");
+            }
+
+            // Deduct from balance
+            appt.Patient.Balance -= amountToPay;
+            
+            // Record Transaction
+            var transaction = new Transaction
+            {
+                PatientId = appt.PatientId,
+                Amount = -amountToPay,
+                Type = "Payment",
+                Description = $"Payment for Appointment #{appt.Id}",
+                CreatedByUserId = secretary.UserId,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Transactions.Add(transaction);
+        }
+
+        // Record Payment
+        var payment = new Payment
+        {
+            AppointmentId = appt.Id,
+            SecretaryId = secretary.Id,
+            Amount = amountToPay,
+            PaymentMethod = model.PaymentMethod,
+            PaymentDate = DateTime.UtcNow,
+            PaidAt = DateTime.UtcNow
+        };
+
+        appt.PaymentStatus = "paid";
+        
+        _context.Payments.Add(payment);
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(secretary.UserId, "PAYMENT_PROCESSED", $"Payment of ${amountToPay} processed for Appointment #{appt.Id} via {model.PaymentMethod}");
+
+        return Ok(new { message = "Payment successful", balance = appt.Patient.Balance });
+    }
+
+    /// <summary>
+    /// Add Funds to Patient Balance
+    /// </summary>
+    [HttpPost("patients/{id}/balance")]
+    public async Task<ActionResult> AddBalance(int id, [FromBody] AddBalanceModel model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var patient = await _context.Patients.FindAsync(id);
+        if (patient == null) return NotFound("Patient not found");
+
+        if (model.Amount <= 0) return BadRequest("Amount must be positive");
+
+        patient.Balance += model.Amount;
+
+        var transaction = new Transaction
+        {
+            PatientId = patient.Id,
+            Amount = model.Amount,
+            Type = "Deposit",
+            Description = "Funds added by secretary",
+            CreatedByUserId = int.Parse(userId),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(int.Parse(userId), "BALANCE_ADDED", $"Added ${model.Amount} to patient {patient.Id} balance");
+
+        return Ok(new { message = "Funds added successfully", balance = patient.Balance });
+    }
+
+    /// <summary>
+    /// Get Patient Transactions
+    /// </summary>
+    [HttpGet("patients/{id}/transactions")]
+    public async Task<ActionResult> GetTransactions(int id)
+    {
+        var transactions = await _context.Transactions
+            .Where(t => t.PatientId == id)
+            .OrderByDescending(t => t.CreatedAt)
+            .Select(t => new
+            {
+                t.Id,
+                t.Amount,
+                t.Type,
+                t.Description,
+                t.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(transactions);
+    }
+    /// <summary>
+    /// Update Secretary Password
+    /// </summary>
+    [HttpPut("profile/change-password")]
+    public async Task<ActionResult> UpdateSecretaryPassword([FromBody] ChangePasswordModel model)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var secretary = await _context.Secretaries.Include(s => s.User).FirstOrDefaultAsync(s => s.UserId == int.Parse(userId));
+        if (secretary == null) return NotFound("Secretary not found");
+
+        // Verify old password
+        if (!_passwordHasher.VerifyPassword(model.OldPassword, secretary.User.PasswordHash))
+        {
+            return BadRequest("Incorrect old password");
+        }
+
+        // Update password
+        secretary.User.PasswordHash = _passwordHasher.HashPassword(model.NewPassword);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Password updated successfully" });
+    }
+
+    /// <summary>
+    /// Reset Patient Password
+    /// </summary>
+    [HttpPut("patients/{id}/password")]
+    public async Task<ActionResult> ResetPatientPassword(int id, [FromBody] ResetPasswordModel model)
+    {
+        var patient = await _context.Patients.Include(p => p.User).FirstOrDefaultAsync(p => p.Id == id);
+        if (patient == null) return NotFound("Patient not found");
+
+        patient.User.PasswordHash = _passwordHasher.HashPassword(model.NewPassword);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Patient password reset successfully" });
+    }
 }
 
 public class UpdateStatusModel
@@ -563,4 +715,33 @@ public class UpdateSecretaryProfileModel
 {
     public string FullName { get; set; }
     public string Phone { get; set; }
+}
+
+
+
+// ... (keep existing imports)
+
+// ... (inside namespace)
+
+public class PayAppointmentModel
+{
+    [JsonPropertyName("paymentMethod")]
+    public string PaymentMethod { get; set; }
+}
+
+
+public class AddBalanceModel
+{
+    public decimal Amount { get; set; }
+}
+
+public class ChangePasswordModel
+{
+    public string OldPassword { get; set; }
+    public string NewPassword { get; set; }
+}
+
+public class ResetPasswordModel
+{
+    public string NewPassword { get; set; }
 }

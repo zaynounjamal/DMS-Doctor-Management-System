@@ -9,6 +9,7 @@ const AppointmentManager = ({ selectedDoctor }) => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [rescheduleData, setRescheduleData] = useState(null);
+  const [paymentData, setPaymentData] = useState(null);
   
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,16 +43,7 @@ const AppointmentManager = ({ selectedDoctor }) => {
     }
   };
 
-  const handlePayment = async (id) => {
-    if (!window.confirm('Mark this appointment as PAID? Cannot be undone.')) return;
-    try {
-      await markAsPaid(id);
-      showToast('Payment marked successfully!', 'success');
-      fetchAppointments();
-    } catch (error) {
-      showToast(error.message || 'Failed to mark as paid', 'error');
-    }
-  };
+
 
   const handleRescheduleSubmit = async (e) => {
     e.preventDefault();
@@ -62,6 +54,27 @@ const AppointmentManager = ({ selectedDoctor }) => {
       fetchAppointments();
     } catch (error) {
       showToast(error.message || 'Failed to reschedule', 'error');
+    }
+  };
+
+  const handlePaymentClick = (appt) => {
+      setPaymentData({
+          id: appt.id,
+          price: appt.finalPrice ?? appt.price ?? 0,
+          patientName: appt.patient.fullName,
+          patientBalance: appt.patient.balance || 0
+      });
+  };
+
+  const processPayment = async (method) => {
+    if (!paymentData) return;
+    try {
+      await markAsPaid(paymentData.id, method);
+      showToast('Payment successful', 'success');
+      setPaymentData(null);
+      fetchAppointments(); // Fixed: was loadAppointments which is undefined, used fetchAppointments
+    } catch (error) {
+        showToast(error.message, 'error');
     }
   };
 
@@ -201,12 +214,12 @@ const AppointmentManager = ({ selectedDoctor }) => {
                            (${appt.finalPrice ?? appt.price ?? '?'})
                          </span>
                          {appt.paymentStatus !== 'paid' && appt.status !== 'cancelled' && (
-                           <button 
-                             onClick={() => handlePayment(appt.id)}
-                             className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
-                           >
-                             Pay
-                           </button>
+                             <button 
+                               onClick={() => handlePaymentClick(appt)}
+                               className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
+                             >
+                               Pay
+                             </button>
                          )}
                       </div>
                     </td>
@@ -242,6 +255,54 @@ const AppointmentManager = ({ selectedDoctor }) => {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+
+
+
+
+  
+
+      {/* Payment Modal */}
+      {paymentData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+            <h3 className="text-lg font-bold mb-4">Process Payment</h3>
+            <p className="mb-4 text-gray-600">
+                Patient: <span className="font-medium">{paymentData.patientName}</span><br/>
+                Amount Due: <span className="font-bold text-green-600">${paymentData.price}</span>
+            </p>
+            
+            <div className="space-y-3">
+                <button
+                    onClick={() => processPayment('Cash')}
+                    className="w-full py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+                >
+                    Pay with Cash
+                </button>
+                <button
+                    onClick={() => processPayment('Card')}
+                    className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+                >
+                    Pay with Card
+                </button>
+                 <button
+                    onClick={() => processPayment('Balance')}
+                    className="w-full py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={false /* Front-end can't verify balance easily without refetch, let backend handle error */}
+                >
+                    Pay with Balance
+                </button>
+            </div>
+
+            <button
+               onClick={() => setPaymentData(null)}
+               className="mt-4 w-full py-2 px-4 border border-gray-300 text-gray-700 rounded hover:bg-gray-100"
+            >
+               Cancel
+            </button>
+          </div>
         </div>
       )}
 

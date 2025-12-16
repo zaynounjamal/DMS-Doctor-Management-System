@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { getTreatments } from '../api';
 import BackButton from '../components/ui/BackButton';
+import { IconFromEmoji } from '../lib/iconMapper';
 
 const TreatmentsPage = () => {
   const [treatments, setTreatments] = useState([]);
@@ -13,137 +16,212 @@ const TreatmentsPage = () => {
   const loadTreatments = async () => {
     try {
       const data = await getTreatments();
-      setTreatments(data);
+      if (data && Array.isArray(data)) {
+        setTreatments(data);
+      } else {
+        setTreatments([]);
+      }
     } catch (error) {
       console.error('Failed to load treatments:', error);
+      setTreatments([]);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '40px' }}>Loading treatments...</div>;
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.3,
+        ease: [0.4, 0, 0.2, 1],
+      },
+    },
+  };
+
+  if (loading) {
+    return (
+      <section className="min-h-screen py-16 px-4 sm:px-6 lg:px-8 bg-secondary-light dark:bg-secondary-dark flex items-center justify-center">
+        <div className="text-gray-600 dark:text-gray-400">Loading treatments...</div>
+      </section>
+    );
+  }
 
   return (
-    <div style={{ padding: '40px 20px', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '20px' }}>
-           <BackButton to="/" />
-        </div>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-          <h1 style={{ 
-            fontSize: '42px', 
-            marginBottom: '15px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 'bold'
-          }}>
-            Our <span style={{ color: '#764ba2' }}>Treatments</span>
-          </h1>
-          <p style={{ fontSize: '18px', color: '#666', maxWidth: '600px', margin: '0 auto' }}>
-            Comprehensive dental care tailored to your needs
-          </p>
+    <section className="min-h-screen py-16 px-4 sm:px-6 lg:px-8 bg-secondary-light dark:bg-secondary-dark">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+            <BackButton to="/" />
         </div>
 
-        {/* Treatment Cards Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '30px'
-        }}>
-          {treatments.map((treatment) => (
-            <div
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            Our Treatments
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Comprehensive healthcare services tailored to meet all your medical needs
+          </p>
+        </motion.div>
+
+        {/* Treatments Grid */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-100px' }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
+        >
+          {treatments.map((treatment, index) => (
+            <motion.div
               key={treatment.id}
-              style={{
-                backgroundColor: 'white',
-                borderRadius: '15px',
-                padding: '30px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                cursor: 'pointer',
-                border: '2px solid transparent'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-10px)';
-                e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.15)';
-                e.currentTarget.style.borderColor = '#667eea';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-                e.currentTarget.style.borderColor = 'transparent';
-              }}
+              variants={itemVariants}
+              className="relative group h-full"
             >
-              {/* Icon */}
-              <div style={{
-                fontSize: '48px',
-                marginBottom: '15px',
-                textAlign: 'center'
-              }}>
-                {treatment.icon || '🦷'}
+              {/* Border container with gradient that travels around */}
+              <div className="absolute -inset-[2px] rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                <motion.div
+                  className="absolute inset-0"
+                  style={{
+                    background: `conic-gradient(from var(--angle), 
+                      hsl(262, 52%, 47%) 0deg, 
+                      hsl(262, 65%, 60%) 30deg,
+                      transparent 60deg,
+                      transparent 300deg,
+                      hsl(262, 65%, 60%) 330deg,
+                      hsl(262, 52%, 47%) 360deg)`,
+                  }}
+                  animate={{
+                    '--angle': ['0deg', '360deg'],
+                  }}
+                  transition={{
+                    duration: 3 + (index % 3) * 0.4,
+                    repeat: Infinity,
+                    ease: 'linear',
+                  }}
+                />
               </div>
 
-              {/* Title */}
-              <h3 style={{
-                fontSize: '22px',
-                fontWeight: 'bold',
-                marginBottom: '12px',
-                color: '#333',
-                textAlign: 'center'
-              }}>
-                {treatment.name}
-              </h3>
+              {/* Glow effect layer */}
+              <div className="absolute -inset-[6px] rounded-xl overflow-hidden opacity-0 group-hover:opacity-50 transition-opacity duration-500 blur-xl pointer-events-none">
+                <motion.div
+                  className="absolute inset-0"
+                  style={{
+                    background: `conic-gradient(from var(--angle), 
+                      hsl(262, 52%, 47%) 0deg, 
+                      hsl(262, 65%, 60%) 30deg,
+                      transparent 60deg,
+                      transparent 300deg,
+                      hsl(262, 65%, 60%) 330deg,
+                      hsl(262, 52%, 47%) 360deg)`,
+                  }}
+                  animate={{
+                    '--angle': ['0deg', '360deg'],
+                  }}
+                  transition={{
+                    duration: 3 + (index % 3) * 0.4,
+                    repeat: Infinity,
+                    ease: 'linear',
+                  }}
+                />
+              </div>
 
-              {/* Description */}
-              <p style={{
-                fontSize: '14px',
-                color: '#666',
-                lineHeight: '1.6',
-                textAlign: 'center'
-              }}>
-                {treatment.description}
-              </p>
-            </div>
+              {/* Card content */}
+              <motion.div
+                whileHover={{
+                  scale: 1.03,
+                  y: -5,
+                  transition: {
+                    type: 'spring',
+                    stiffness: 400,
+                    damping: 17,
+                  },
+                }}
+                className="relative bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-muted-dark h-full flex flex-col items-center"
+              >
+                {/* Animated Icon */}
+                <motion.div 
+                  className="flex justify-center mb-4 text-accent-light dark:text-accent-dark"
+                  initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                  whileInView={{ 
+                    opacity: 1, 
+                    scale: 1, 
+                    rotate: 0,
+                    transition: {
+                      type: 'spring',
+                      stiffness: 200,
+                      damping: 15,
+                      delay: index * 0.1,
+                    }
+                  }}
+                  viewport={{ once: true }}
+                >
+                  <motion.div
+                    whileHover={{
+                      scale: 1.2,
+                      rotate: 5,
+                      transition: {
+                        duration: 0.3,
+                        ease: 'easeInOut'
+                      }
+                    }}
+                  >
+                    <IconFromEmoji emoji={treatment.icon} className="w-16 h-16" />
+                  </motion.div>
+                </motion.div>
+
+                {/* Title */}
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 text-center">
+                  {treatment.name}
+                </h3>
+
+                {/* Description */}
+                <p className="text-gray-600 dark:text-gray-300 text-center text-sm leading-relaxed mb-4 flex-grow">
+                  {treatment.description}
+                </p>
+                
+
+              </motion.div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Call to Action */}
-        <div style={{
-          textAlign: 'center',
-          marginTop: '60px',
-          padding: '40px',
-          backgroundColor: 'white',
-          borderRadius: '15px',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{ fontSize: '28px', marginBottom: '15px', color: '#333' }}>
+        <div className="text-center mt-12 bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-lg max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Ready to Get Started?
           </h2>
-          <p style={{ fontSize: '16px', color: '#666', marginBottom: '25px' }}>
+          <p className="text-gray-600 dark:text-gray-300 mb-8">
             Book an appointment with one of our expert doctors today
           </p>
-          <a
-            href="/book-appointment"
-            style={{
-              display: 'inline-block',
-              padding: '15px 40px',
-              backgroundColor: '#667eea',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              transition: 'background-color 0.3s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#764ba2'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#667eea'}
+          <Link
+            to="/book-appointment"
+            className="inline-block px-8 py-4 bg-primary-light dark:bg-primary-dark text-white rounded-lg font-bold text-lg hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
           >
             Book Appointment
-          </a>
+          </Link>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

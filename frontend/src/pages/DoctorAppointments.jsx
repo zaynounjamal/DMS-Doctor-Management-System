@@ -224,6 +224,29 @@ const DoctorAppointments = () => {
     }
     success(`Sent ${successCount} reminders.`);
     setSelectedAppointments([]);
+    setSelectedAppointments([]);
+  };
+
+  const handleRemind = async (appointment, method) => {
+    if (method === 'whatsapp') {
+      const phone = appointment.patient?.phone || '';
+      // Simple cleaning of phone number (assuming it's international or local, needs cleanup for WA)
+      // If starts with 0, replace with country code (e.g. +961 for Lebanon or whatever default)
+      // For now just use as is or assume user has correct format, or strip non-digits.
+      const cleanPhone = phone.replace(/\D/g, '');
+      const message = `Hello ${appointment.patient.fullName}, this is a reminder for your appointment with Dr. ${user.fullName} on ${new Date(appointment.appointmentDate).toLocaleDateString()} at ${appointment.appointmentTime}.`;
+      const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+    } else {
+      // Email
+      try {
+        await sendReminder(appointment.id);
+        success('Email reminder sent');
+      } catch (e) {
+        console.error(e);
+        toastError('Failed to send email reminder');
+      }
+    }
   };
 
   // --- Notes Management ---
@@ -733,6 +756,7 @@ const DoctorAppointments = () => {
                     appointment={appointment}
                     onMarkAsDone={handleMarkAsDone}
                     onViewNotes={handleViewNotes}
+                    onRemind={handleRemind}
                     showActions={activeTab !== 'past' || appointment.medicalNotesCount > 0}
                   />
                 </div>

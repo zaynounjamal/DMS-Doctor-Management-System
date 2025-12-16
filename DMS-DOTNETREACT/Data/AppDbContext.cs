@@ -20,6 +20,11 @@ public class ClinicDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Treatment> Treatments => Set<Treatment>();
     public DbSet<PatientTreatment> PatientTreatments => Set<PatientTreatment>();
+    public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Holiday> Holidays => Set<Holiday>();
+    public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -112,6 +117,46 @@ public class ClinicDbContext : DbContext
             .WithMany()
             .HasForeignKey(pt => pt.AppointmentId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Transaction>()
+            .HasOne(t => t.Patient)
+            .WithMany()
+            .HasForeignKey(t => t.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<EmailTemplate>().HasData(
+            new EmailTemplate
+            {
+                Id = 1,
+                Name = "WelcomeEmail",
+                Subject = "Welcome to Our Clinic!",
+                Body = @"
+                    <h3>Welcome, {{FullName}}!</h3>
+                    <p>Thank you for registering with us. We are excited to have you on board.</p>
+                    <p>Your username is: <strong>{{UserName}}</strong></p>
+                    <br/>
+                    <p>Best Regards,</p>
+                    <p>The Clinic Team</p>",
+                Description = "Sent to new users upon registration."
+            },
+            new EmailTemplate
+            {
+                Id = 2,
+                Name = "AppointmentReminder",
+                Subject = "Appointment Reminder",
+                Body = @"
+                    <h3>Appointment Reminder</h3>
+                    <p>Dear {{FullName}},</p>
+                    <p>This is a reminder for your upcoming appointment.</p>
+                    <p><strong>Date:</strong> {{Date}}</p>
+                    <p><strong>Time:</strong> {{Time}}</p>
+                    <p><strong>Doctor:</strong> {{DoctorName}}</p>
+                    <br/>
+                    <p>Please contact us if you need to reschedule.</p>
+                    <p>The Clinic Team</p>",
+                Description = "Automated reminder sent 1 day before appointment."
+            }
+        );
     }
 }
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Icons from 'lucide-react';
 import {
   Heart,
   Stethoscope,
@@ -50,6 +51,12 @@ export const getIconFromEmoji = (emoji, props = {}) => {
     return <Icon {...props} />;
   }
 
+  // Check if it's a direct Lucide Icon name (e.g., 'Stethoscope', 'Droplet')
+  if (Icons[emoji]) {
+      const LucideIcon = Icons[emoji];
+      return <LucideIcon {...props} />;
+  }
+
   const IconOrString = emojiToIconMap[emoji] || DefaultIcon;
   
   // If it's a string identifier (like 'tooth'), use Font Awesome
@@ -57,7 +64,7 @@ export const getIconFromEmoji = (emoji, props = {}) => {
     return <FontAwesomeIcon icon={faTooth} {...props} />;
   }
   
-  // Otherwise, it's a Lucide React icon component
+  // Otherwise, it's a Lucide React icon component from the map
   const Icon = IconOrString;
   return <Icon {...props} />;
 };

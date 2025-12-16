@@ -5,9 +5,31 @@ import { Calendar, ArrowRight, Sparkles, Stethoscope, Heart, Activity, Shield, S
 import StatsSection from './StatsSection';
 import TreatmentsPreview from './TreatmentsPreview';
 import heroImage from '../imgs/herosectionimage.jpg';
+import { getPublicSettings } from '../api';
 
 const HomePage = () => {
   const heroSectionRef = React.useRef(null);
+  const [branding, setBranding] = useState({
+      heroTitle: 'Your Health, Our Priority.',
+      heroSubtitle: 'Experience world-class healthcare services with our expert team of doctors. Book your appointment today and take the first step towards better health.',
+      heroImage: heroImage
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+        try {
+            const data = await getPublicSettings();
+            setBranding({
+                heroTitle: data.HeroTitle || 'Your Health, Our Priority.',
+                heroSubtitle: data.HeroSubtitle || 'Experience world-class healthcare services with our expert team of doctors. Book your appointment today and take the first step towards better health.',
+                heroImage: data.HeroImageUrl || heroImage
+            });
+        } catch (error) {
+            console.error('Failed to load branding settings', error);
+        }
+    };
+    fetchSettings();
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -89,8 +111,8 @@ const HomePage = () => {
         {/* Background Image for Mobile - Using img tag for better compatibility */}
         <div className="lg:hidden absolute inset-0 z-0 overflow-hidden">
           <img 
-            src={heroImage} 
-            alt="" 
+            src={branding.heroImage} 
+            alt="Hero Background" 
             className="absolute inset-0 w-full h-full object-cover"
             style={{ minHeight: '600px' }}
           />
@@ -119,15 +141,13 @@ const HomePage = () => {
               </motion.div>
 
               {/* Main Heading */}
+              {/* Main Heading */}
               <motion.h1
                 variants={itemVariants}
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight"
               >
                 <span className="text-gray-900 dark:text-white">
-                  Your Health,{' '}
-                </span>
-                <span className="text-primary-light dark:text-primary-dark">
-                  Our Priority.
+                  {branding.heroTitle}
                 </span>
               </motion.h1>
 
@@ -136,9 +156,7 @@ const HomePage = () => {
                 variants={itemVariants}
                 className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 leading-relaxed max-w-xl"
               >
-                Experience world-class healthcare services with our expert team of
-                doctors. Book your appointment today and take the first step towards
-                better health.
+                {branding.heroSubtitle}
               </motion.p>
 
               {/* CTA Buttons */}
@@ -170,7 +188,7 @@ const HomePage = () => {
             >
               <div className="relative rounded-2xl shadow-2xl overflow-hidden">
                 <img 
-                  src={heroImage} 
+                  src={branding.heroImage} 
                   alt="Healthcare professionals" 
                   className="w-full h-full object-cover aspect-square rounded-2xl"
                 />

@@ -82,6 +82,7 @@ public class ProfileController : ControllerBase
         {
             user.Id,
             user.Username,
+            user.Email,
             user.Role,
             user.CreatedAt,
             Profile = profileData
@@ -155,7 +156,9 @@ public class ProfileController : ControllerBase
             return Unauthorized("Invalid token");
         }
 
-        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == userId);
+        var patient = await _context.Patients
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.UserId == userId);
         if (patient == null)
         {
             return NotFound("Patient profile not found");
@@ -163,6 +166,7 @@ public class ProfileController : ControllerBase
 
         // Update fields
         patient.FullName = model.FullName;
+        patient.User.Email = model.Email; // Update Email
         patient.Phone = model.Phone;
         patient.Gender = model.Gender;
         patient.BirthDate = model.BirthDate;
@@ -170,7 +174,20 @@ public class ProfileController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(new { Message = "Profile updated successfully", Patient = patient });
+        return Ok(new 
+        { 
+            Message = "Profile updated successfully", 
+            Patient = new 
+            {
+                patient.Id,
+                patient.FullName,
+                patient.Phone,
+                patient.Gender,
+                patient.BirthDate,
+                patient.ProfilePhoto,
+                User = new { patient.User.Email }
+            }
+        });
     }
 
     /// <summary>
@@ -191,7 +208,9 @@ public class ProfileController : ControllerBase
             return Unauthorized("Invalid token");
         }
 
-        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+        var doctor = await _context.Doctors
+            .Include(d => d.User)
+            .FirstOrDefaultAsync(d => d.UserId == userId);
         if (doctor == null)
         {
             return NotFound("Doctor profile not found");
@@ -199,6 +218,7 @@ public class ProfileController : ControllerBase
 
         // Update fields
         doctor.FullName = model.FullName;
+        doctor.User.Email = model.Email; // Update Email
         doctor.Specialty = model.Specialty;
         doctor.Phone = model.Phone;
         doctor.StartHour = model.StartHour;
@@ -207,7 +227,21 @@ public class ProfileController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(new { Message = "Profile updated successfully", Doctor = doctor });
+        return Ok(new 
+        { 
+            Message = "Profile updated successfully", 
+            Doctor = new 
+            {
+                doctor.Id,
+                doctor.FullName,
+                doctor.Specialty,
+                doctor.Phone,
+                doctor.StartHour,
+                doctor.EndHour,
+                doctor.ProfilePhoto,
+                User = new { doctor.User.Email }
+            }
+        });
     }
 
     /// <summary>

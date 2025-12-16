@@ -15,12 +15,14 @@ public class AuthController : ControllerBase
     private readonly ClinicDbContext _context;
     private readonly JwtService _jwtService;
     private readonly PasswordHasher _passwordHasher;
+    private readonly EmailService _emailService;
 
-    public AuthController(ClinicDbContext context, JwtService jwtService, PasswordHasher passwordHasher)
+    public AuthController(ClinicDbContext context, JwtService jwtService, PasswordHasher passwordHasher, EmailService emailService)
     {
         _context = context;
         _jwtService = jwtService;
         _passwordHasher = passwordHasher;
+        _emailService = emailService;
     }
 
     [HttpPost("login")]
@@ -50,6 +52,7 @@ public class AuthController : ControllerBase
         {
             Id = user.Id,
             Username = user.Username,
+            Email = user.Email,
             Role = user.Role,
             Token = token
         };
@@ -74,6 +77,7 @@ public class AuthController : ControllerBase
         {
             Username = model.Username,
             PasswordHash = _passwordHasher.HashPassword(model.Password),
+            Email = model.Email,
             Role = "patient",
             IsActive = true,
             CreatedAt = DateTime.UtcNow
@@ -92,12 +96,35 @@ public class AuthController : ControllerBase
         _context.Patients.Add(patient);
         await _context.SaveChangesAsync();
 
+        // Send Welcome Email
+        if (!string.IsNullOrEmpty(model.Email))
+        {
+            try
+            {
+                var template = await _context.EmailTemplates.FirstOrDefaultAsync(t => t.Name == "WelcomeEmail");
+                if (template != null)
+                {
+                    var body = template.Body
+                        .Replace("{{FullName}}", patient.FullName)
+                        .Replace("{{UserName}}", user.Username);
+
+                    await _emailService.SendEmailAsync(model.Email, template.Subject, body);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail signup
+                Console.WriteLine($"Error sending welcome email: {ex.Message}");
+            }
+        }
+
         var token = _jwtService.GenerateToken(user.Id, user.Username, user.Role);
 
         var viewModel = new UserViewModel
         {
             Id = user.Id,
             Username = user.Username,
+            Email = user.Email,
             Role = user.Role,
             Token = token
         };

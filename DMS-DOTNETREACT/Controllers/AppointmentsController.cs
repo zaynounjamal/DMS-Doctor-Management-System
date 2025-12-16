@@ -1,6 +1,7 @@
 using DMS_DOTNETREACT.Data;
 using DMS_DOTNETREACT.DataModel;
 using DMS_DOTNETREACT.Models.BindingModels;
+using DMS_DOTNETREACT.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,12 @@ namespace DMS_DOTNETREACT.Controllers;
 public class AppointmentsController : ControllerBase
 {
     private readonly ClinicDbContext _context;
+    private readonly AuditService _auditService;
 
-    public AppointmentsController(ClinicDbContext context)
+    public AppointmentsController(ClinicDbContext context, AuditService auditService)
     {
         _context = context;
+        _auditService = auditService;
     }
 
     /// <summary>
@@ -66,6 +69,10 @@ public class AppointmentsController : ControllerBase
             .Select(od => od.OffDate)
             .ToListAsync();
 
+        var holidays = await _context.Holidays
+            .Where(h => h.IsRecurring || (h.Date >= today && h.Date <= endDate))
+            .ToListAsync();
+
         var availableDates = new List<DateOnly>();
 
         for (var date = today; date <= endDate; date = date.AddDays(1))
@@ -76,6 +83,10 @@ public class AppointmentsController : ControllerBase
 
             // Check if doctor has this day off
             if (offDays.Contains(date))
+                continue;
+
+            // Check if it's a holiday
+            if (holidays.Any(h => (h.IsRecurring && h.Date.Month == date.Month && h.Date.Day == date.Day) || (!h.IsRecurring && h.Date == date)))
                 continue;
 
             availableDates.Add(date);
@@ -224,6 +235,17 @@ public class AppointmentsController : ControllerBase
             return BadRequest("The doctor is not available on this date.");
         }
 
+        // Check for holiday
+        var isHoliday = await _context.Holidays.AnyAsync(h => 
+            (h.IsRecurring && h.Date.Month == model.AppointmentDate.Month && h.Date.Day == model.AppointmentDate.Day) ||
+            (!h.IsRecurring && h.Date == model.AppointmentDate)
+        );
+
+        if (isHoliday)
+        {
+            return BadRequest("The clinic is closed on this date.");
+        }
+
         // Create appointment
         var appointment = new Appointment
         {
@@ -238,6 +260,7 @@ public class AppointmentsController : ControllerBase
 
         _context.Appointments.Add(appointment);
         await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(userId, "APPOINTMENT_BOOKED", $"Patient {patient.FullName} booked appointment with Doctor {doctor.FullName} on {appointment.AppointmentDate}");
 
         return Ok(new
         {
@@ -292,6 +315,7 @@ public class AppointmentsController : ControllerBase
         appointment.CancelReason = "Patient cancelled via portal";
         
         await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(userId, "APPOINTMENT_CANCELLED", $"Patient {patient.FullName} cancelled appointment #{id}");
 
         return Ok(new { Message = "Appointment cancelled successfully" });
     }
@@ -601,6 +625,7 @@ public class AppointmentsController : ControllerBase
         appointment.Status = "done";
 
         await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(userId, "APPOINTMENT_COMPLETED", $"Doctor {doctor.FullName} completed appointment #{id}. Price: {appointment.FinalPrice}, PaymentStatus: {appointment.PaymentStatus}");
 
         return Ok(new 
         { 
@@ -644,6 +669,7 @@ public class AppointmentsController : ControllerBase
 
         appointment.PaymentStatus = status;
         await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(userId, "PAYMENT_STATUS_UPDATE", $"Doctor {doctor.FullName} updated payment status of appointment #{id} to {status}");
 
         return Ok(new { Message = "Payment status updated", appointment.PaymentStatus });
     }
