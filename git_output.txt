@@ -1,1 +1,16 @@
 Running git commands...
+Switched to a new branch 'feature/doctor-dashboard-enhancements'
+warning: in the working copy of 'frontend/src/pages/CalendarView.jsx', LF will be replaced by CRLF the next time Git touches it
+[feature/doctor-dashboard-enhancements dbad1bb] Enhance doctor dashboard: icons, colors, and live background
+ 15 files changed, 1481 insertions(+), 381 deletions(-)
+ create mode 100644 DMS-DOTNETREACT/wwwroot/uploads/profiles/8_639013372267179852.png
+ create mode 100644 frontend/src/components/ui/FloatingDotsBackground.jsx
+ create mode 100644 git_output.txt
+ create mode 100644 push_changes.bat
+remote: 
+remote: Create a pull request for 'feature/doctor-dashboard-enhancements' on GitHub by visiting:        
+remote:      https://github.com/zaynounjamal/DMS-Doctor-Management-System/pull/new/feature/doctor-dashboard-enhancements        
+remote: 
+branch 'feature/doctor-dashboard-enhancements' set up to track 'origin/feature/doctor-dashboard-enhancements'.
+To https://github.com/zaynounjamal/DMS-Doctor-Management-System.git
+ * [new branch]      feature/doctor-dashboard-enhancements -> feature/doctor-dashboard-enhancements

@@ -35,10 +35,10 @@ const DoctorDashboard = () => {
     } catch (error) {
       console.error('Failed to load dashboard:', error);
       if (error.message.includes('401') || error.message.includes('403')) {
-          toastError("Session expired. Please log in again.");
-          navigate('/');
+        toastError("Session expired. Please log in again.");
+        navigate('/');
       } else {
-          toastError(`Failed to load dashboard data: ${error.message}`);
+        toastError(`Failed to load dashboard data: ${error.message}`);
       }
     } finally {
       setLoading(false);
@@ -82,7 +82,7 @@ const DoctorDashboard = () => {
 
       {/* Waiting Room - Priority View */}
       <div className="mb-8">
-         <DoctorWaitingRoom />
+        <DoctorWaitingRoom />
       </div>
 
       {/* Stats Grid */}
@@ -157,7 +157,7 @@ const DoctorDashboard = () => {
       {/* Today's Appointments */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#333', margin: 0 }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: theme === 'dark' ? '#fff' : '#333', margin: 0 }}>
             Today's Appointments ({todayAppointments.length})
           </h2>
           {todayAppointments.length > 0 && (
@@ -167,20 +167,20 @@ const DoctorDashboard = () => {
                 padding: '8px 16px',
                 fontSize: '14px',
                 fontWeight: 'bold',
-                border: '2px solid #667eea',
+                border: '2px solid #9333ea',
                 borderRadius: '6px',
                 backgroundColor: 'white',
-                color: '#667eea',
+                color: '#9333ea',
                 cursor: 'pointer',
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#667eea';
+                e.currentTarget.style.backgroundColor = '#9333ea';
                 e.currentTarget.style.color = 'white';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'white';
-                e.currentTarget.style.color = '#667eea';
+                e.currentTarget.style.color = '#9333ea';
               }}
             >
               View All <ArrowRight size={16} style={{ display: 'inline', marginLeft: '4px' }} />
@@ -190,17 +190,20 @@ const DoctorDashboard = () => {
 
         {todayAppointments.length === 0 ? (
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
+            background: '#000000',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            borderRadius: '16px',
+            border: '1px solid rgba(155, 89, 182, 0.2)',
+            boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
             padding: '60px 20px',
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            textAlign: 'center'
           }}>
             <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
-              <Calendar size={64} style={{ color: '#999' }} />
+              <Calendar size={64} style={{ color: '#9333ea' }} />
             </div>
-            <h3 style={{ fontSize: '20px', color: '#333', marginBottom: '8px' }}>No appointments today</h3>
-            <p style={{ fontSize: '14px', color: '#666' }}>Enjoy your free time!</p>
+            <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px' }}>No appointments today</h3>
+            <p style={{ fontSize: '14px', color: '#ccc' }}>Enjoy your free time!</p>
           </div>
         ) : (
           <div>

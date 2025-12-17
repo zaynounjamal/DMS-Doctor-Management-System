@@ -3,26 +3,28 @@ import React from 'react';
 const StatCard = ({ title, value, subtitle, icon: Icon, color = '#667eea' }) => {
   return (
     <div style={{
-      backgroundColor: 'white',
-      borderRadius: '12px',
+      background: '#000000',
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      borderRadius: '16px',
+      border: '1px solid rgba(155, 89, 182, 0.2)',
+      boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
       padding: '24px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
       transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       cursor: 'pointer',
-      border: `2px solid transparent`,
       position: 'relative',
       overflow: 'hidden'
     }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = 'translateY(-4px)';
-      e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.15)';
-      e.currentTarget.style.borderColor = color;
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = 'translateY(0)';
-      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-      e.currentTarget.style.borderColor = 'transparent';
-    }}>
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.15)';
+        e.currentTarget.style.borderColor = color;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        e.currentTarget.style.borderColor = 'transparent';
+      }}>
       {/* Background decoration */}
       <div style={{
         position: 'absolute',
@@ -55,7 +57,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, color = '#667eea' }) => 
         {/* Title */}
         <div style={{
           fontSize: '14px',
-          color: '#666',
+          color: '#ccc',
           marginBottom: '8px',
           fontWeight: '500'
         }}>
@@ -66,7 +68,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, color = '#667eea' }) => 
         <div style={{
           fontSize: '32px',
           fontWeight: 'bold',
-          color: '#333',
+          color: '#fff',
           marginBottom: '4px'
         }}>
           {value}

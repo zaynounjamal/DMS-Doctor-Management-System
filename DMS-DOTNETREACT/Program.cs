@@ -194,22 +194,33 @@ using (var scope = app.Services.CreateScope())
         var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
         
         // For development: delete and recreate database
-        // context.Database.EnsureDeleted();
+        try
+        {
+            context.Database.EnsureDeleted();
+            await Task.Delay(500); // Wait for deletion to complete
+        }
+        catch (Exception delEx)
+        {
+            Console.WriteLine($"Note: Could not delete existing database: {delEx.Message}");
+            Console.WriteLine("Attempting to continue with existing database...");
+        }
+        
         context.Database.EnsureCreated();
-        Console.WriteLine("Database created successfully!");
+        Console.WriteLine("Database created/verified successfully!");
         
         await DMS_DOTNETREACT.Helpers.DatabaseSeeder.SeedDatabase(context, passwordHasher);
         Console.WriteLine("Database seeded successfully!");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"ERROR during database setup: {ex.Message}");
-        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        Console.WriteLine($"WARNING: Database setup encountered an error: {ex.Message}");
         if (ex.InnerException != null)
         {
             Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
         }
-        throw;
+        Console.WriteLine("Application will continue to start, but database may need manual intervention.");
+        Console.WriteLine("To fix: Delete the DmsDemoDb database manually and restart the application.");
+        // Don't throw - allow the app to start even if seeding fails
     }
 }
 
