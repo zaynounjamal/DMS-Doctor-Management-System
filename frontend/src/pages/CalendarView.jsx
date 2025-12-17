@@ -163,7 +163,7 @@ const CalendarView = () => {
       setShowReminderModal(false);
     } catch (error) {
       console.error('Failed to send reminder:', error);
-      toastError('Failed to send reminder');
+      toastError(error?.message || 'Failed to send reminder');
     }
   };
 

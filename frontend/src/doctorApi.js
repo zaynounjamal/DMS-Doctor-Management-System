@@ -194,12 +194,42 @@ export const bulkCompleteAppointments = async (appointmentIds, defaultPrice) => 
 
 // Notifications
 export const sendReminder = async (appointmentId) => {
-    const response = await fetch(`${API_URL}/notifications/send-reminder`, {
+    try {
+        const response = await fetch(`${API_URL}/notifications/send-reminder`, {
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ appointmentId })
+        });
+        
+        if (!response.ok) {
+            let errorMessage = 'Failed to send reminder';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                const errorText = await response.text();
+                if (errorText) errorMessage = errorText;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('[sendReminder] Error:', error);
+        throw error;
+    }
+};
+
+export const sendRemindersBulk = async (appointmentIds) => {
+    const response = await fetch(`${API_URL}/notifications/send-reminders-bulk`, {
         method: 'POST',
         headers: getAuthHeader(),
-        body: JSON.stringify({ appointmentId })
+        body: JSON.stringify({ appointmentIds })
     });
-    if (!response.ok) throw new Error('Failed to send reminder');
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to send bulk reminders' }));
+        throw new Error(errorData.message || 'Failed to send bulk reminders');
+    }
     return response.json();
 };
 

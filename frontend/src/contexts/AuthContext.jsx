@@ -22,11 +22,15 @@ export const AuthProvider = ({ children }) => {
           try {
              const profileResponse = await getProfile();
              
-             // The backend returns { profile: { ... } }
-             // We need to merge this fresh data with our existing token/user data
+             // The backend returns { id, username, email, role, profile: { ... } }
+             // We need to merge root-level fields AND profile data
              const freshUser = {
                ...userData,
-               ...profileResponse.profile, // Overwrite with fresh db data
+               id: profileResponse.id,
+               username: profileResponse.username,
+               email: profileResponse.email,
+               role: profileResponse.role,
+               ...profileResponse.profile, // Merge profile data (fullName, phone, etc.)
                token: userData.token // Keep the token
              };
 

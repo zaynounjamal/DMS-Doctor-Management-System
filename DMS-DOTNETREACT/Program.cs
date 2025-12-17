@@ -3,6 +3,7 @@ using DMS_DOTNETREACT.Services;
 using DMS_DOTNETREACT.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AspNetCoreRateLimit;
@@ -206,6 +207,27 @@ using (var scope = app.Services.CreateScope())
         }
         
         context.Database.EnsureCreated();
+
+        // Ensure Email column exists (for existing databases)
+        try
+        {
+            var connection = context.Database.GetDbConnection();
+            await connection.OpenAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND name = 'Email')
+                BEGIN
+                    ALTER TABLE [Users] ADD [Email] nvarchar(100) NULL;
+                END";
+            await command.ExecuteNonQueryAsync();
+            await connection.CloseAsync();
+            Console.WriteLine("Email column verified/added successfully!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not verify Email column: {ex.Message}");
+        }
+
         Console.WriteLine("Database created/verified successfully!");
         
         await DMS_DOTNETREACT.Helpers.DatabaseSeeder.SeedDatabase(context, passwordHasher);

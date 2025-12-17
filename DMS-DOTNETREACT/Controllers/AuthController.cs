@@ -5,6 +5,7 @@ using DMS_DOTNETREACT.Models.ViewModels;
 using DMS_DOTNETREACT.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace DMS_DOTNETREACT.Controllers;
 
@@ -63,8 +64,14 @@ public class AuthController : ControllerBase
     [HttpPost("signup")]
     public async Task<ActionResult<UserViewModel>> Signup([FromBody] SignupBindingModel model)
     {
+        // Debug logging
+        Console.WriteLine($"[Signup] Received email: '{model.Email}'");
+        Console.WriteLine($"[Signup] Email is null: {model.Email == null}");
+        Console.WriteLine($"[Signup] Email is empty: {string.IsNullOrEmpty(model.Email)}");
+        
         if (!ModelState.IsValid)
         {
+            Console.WriteLine($"[Signup] ModelState invalid. Errors: {string.Join(", ", ModelState.SelectMany(x => x.Value?.Errors ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.ModelBinding.ModelError>()).Select(e => e.ErrorMessage))}");
             return BadRequest(ModelState);
         }
 
@@ -73,11 +80,15 @@ public class AuthController : ControllerBase
             return BadRequest("Username is already taken");
         }
 
+        // Normalize email: convert empty string to null
+        var email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
+        Console.WriteLine($"[Signup] Normalized email: '{email}'");
+
         var user = new User
         {
             Username = model.Username,
             PasswordHash = _passwordHasher.HashPassword(model.Password),
-            Email = model.Email,
+            Email = email,
             Role = "patient",
             IsActive = true,
             CreatedAt = DateTime.UtcNow
