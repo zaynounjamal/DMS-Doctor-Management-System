@@ -12,6 +12,7 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
         { path: '/secretary-dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/secretary/schedule', label: 'Schedule', icon: Calendar },
         { path: '/secretary/payments', label: 'Payments', icon: Calendar },
+        { path: '/secretary/chat', label: 'Chat', icon: Users },
     ];
 
     const handleLogout = () => {

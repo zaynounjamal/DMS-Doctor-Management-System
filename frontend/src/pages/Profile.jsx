@@ -36,11 +36,11 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <BackButton to={backButtonDestination} />
-        <div className="flex items-center justify-between">
-           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-        </div>
+        <div className="max-w-6xl mx-auto space-y-8">
+          <BackButton to={backButtonDestination} />
+          <div className="flex items-center justify-between">
+             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          </div>
 
         {/* Profile Header Card */}
         <div className="rounded-2xl border-0 bg-white dark:bg-gray-800 shadow-lg overflow-hidden flex flex-col relative group">
