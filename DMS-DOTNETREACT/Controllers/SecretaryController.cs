@@ -166,6 +166,12 @@ public class SecretaryController : ControllerBase
         var appt = await _context.Appointments.FindAsync(id);
         if (appt == null) return NotFound();
 
+        var proposedDateTime = model.NewDate.ToDateTime(model.NewTime);
+        if (proposedDateTime < DateTime.Now)
+        {
+            return BadRequest("Cannot reschedule an appointment to a past date/time");
+        }
+
         appt.AppointmentDate = model.NewDate;
         appt.AppointmentTime = model.NewTime;
         appt.StartTime = model.NewTime;
@@ -185,6 +191,12 @@ public class SecretaryController : ControllerBase
         // 1. Check Doctor exists
         var doctor = await _context.Doctors.FindAsync(model.DoctorId);
         if (doctor == null) return BadRequest("Doctor not found");
+
+        var proposedDateTime = model.Date.ToDateTime(model.Time);
+        if (proposedDateTime < DateTime.Now)
+        {
+            return BadRequest("Cannot create an appointment in the past");
+        }
 
         // Check if slot is taken
         bool isTaken = await _context.Appointments.AnyAsync(a => 

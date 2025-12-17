@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace DMS_DOTNETREACT.Controllers;
 
-[Route("api/notifications")]
+[Route("api/legacy-notifications")]
 [ApiController]
 [Authorize(Policy = "DoctorOnly")]
 public class NotificationController : ControllerBase
