@@ -8,6 +8,7 @@ import heroImage from '../imgs/herosectionimage.jpg';
 import { getPublicSettings } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import PatientChatWidget from '../components/chat/PatientChatWidget';
+import AIChatWidget from '../components/chat/AIChatWidget';
 
 const HomePage = () => {
   const { user } = useAuth();
@@ -208,6 +209,7 @@ const HomePage = () => {
       {/* Treatments Preview Section */}
       <TreatmentsPreview />
 
+      <AIChatWidget bottomOffsetPx={user?.role?.toLowerCase() === 'patient' ? 96 : 20} />
       {user?.role?.toLowerCase() === 'patient' && <PatientChatWidget />}
     </div>
   );
