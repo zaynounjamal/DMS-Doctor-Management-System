@@ -114,17 +114,22 @@ const DoctorProfitAnalytics = () => {
 
       {/* Statistics */}
       {stats && (
-        <div className={`
-          p-6 rounded-xl shadow-sm mb-8
-          ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border text-gray-900 border-gray-100'}
-        `}>
-          <h2 className="text-xl font-bold mb-6">
+        <div style={{
+          background: '#000000',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          borderRadius: '16px',
+          border: '1px solid rgba(155, 89, 182, 0.2)',
+          boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+          padding: '24px'
+        }}>
+          <h2 className="text-xl font-bold mb-6 text-white">
             Performance Metrics
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             <div>
-              <div className={`text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Total Appointments</div>
-              <div className="text-2xl font-bold">{stats.totalAppointments}</div>
+              <div className="text-xs font-semibold uppercase tracking-wider mb-1 text-gray-400">Total Appointments</div>
+              <div className="text-2xl font-bold text-white">{stats.totalAppointments}</div>
             </div>
             <div>
               <div className={`text-xs font-semibold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Completed</div>
@@ -156,26 +161,32 @@ const DoctorProfitAnalytics = () => {
 
       {/* Daily Chart Data */}
       {profitData?.dailyData && profitData.dailyData.length > 0 && (
-        <div className={`
-          p-6 rounded-xl shadow-sm overflow-hidden
-          ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border border-gray-100'}
-        `}>
-          <h2 className="text-xl font-bold marginBottom-6 mb-6">
+        <div style={{
+          background: '#000000',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          borderRadius: '16px',
+          border: '1px solid rgba(155, 89, 182, 0.2)',
+          boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+          padding: '24px',
+          overflow: 'hidden'
+        }}>
+          <h2 className="text-xl font-bold marginBottom-6 mb-6 text-white">
             Daily Breakdown
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className={`border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <th className={`p-4 font-semibold text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Date</th>
-                  <th className={`p-4 font-semibold text-sm text-right ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Actual Profit</th>
-                  <th className={`p-4 font-semibold text-sm text-right ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Expected Profit</th>
+                <tr className="border-b border-gray-800">
+                  <th className="p-4 font-semibold text-sm text-gray-400">Date</th>
+                  <th className="p-4 font-semibold text-sm text-right text-gray-400">Actual Profit</th>
+                  <th className="p-4 font-semibold text-sm text-right text-gray-400">Expected Profit</th>
                 </tr>
               </thead>
               <tbody>
                 {profitData.dailyData.map((day, index) => (
-                  <tr key={index} className={`border-b last:border-0 hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                    <td className={`p-4 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                  <tr key={index} className="border-b border-gray-800 last:border-0 hover:bg-white/5 transition-colors">
+                    <td className="p-4 text-gray-200">
                       {new Date(day.date).toLocaleDateString()}
                     </td>
                     <td className="p-4 text-right font-mono font-medium text-emerald-500">

@@ -1,0 +1,127 @@
+--- git status ---
+On branch feature/doctor-dashboard-enhancements
+Your branch is up to date with 'origin/feature/doctor-dashboard-enhancements'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   git_output.txt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	git_sync_output.txt
+	sync_master.bat
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+--- git pull origin master ---
+From https://github.com/zaynounjamal/DMS-Doctor-Management-System
+ * branch            master     -> FETCH_HEAD
+Updating dbad1bb..3f73294
+Fast-forward
+ DMS-DOTNETREACT/Controllers/AdminController.cs     | 496 +++++++++++++
+ .../Controllers/AppointmentsController.cs          |  28 +-
+ DMS-DOTNETREACT/Controllers/AuthController.cs      |  29 +-
+ DMS-DOTNETREACT/Controllers/DoctorController.cs    |  46 +-
+ .../Controllers/EmailTemplatesController.cs        |  79 +++
+ DMS-DOTNETREACT/Controllers/FinancialController.cs |  11 +-
+ .../Controllers/NotificationsController.cs         |  69 ++
+ DMS-DOTNETREACT/Controllers/ProfileController.cs   |  42 +-
+ DMS-DOTNETREACT/Controllers/PublicController.cs    |  29 +
+ DMS-DOTNETREACT/Controllers/SecretaryController.cs | 263 +++++--
+ DMS-DOTNETREACT/Controllers/SettingsController.cs  |  32 +
+ DMS-DOTNETREACT/Controllers/UploadController.cs    |  39 +
+ DMS-DOTNETREACT/Data/AppDbContext.cs               |  45 ++
+ DMS-DOTNETREACT/DataModel/AuditLog.cs              |  24 +
+ DMS-DOTNETREACT/DataModel/EmailTemplate.cs         |  22 +
+ DMS-DOTNETREACT/DataModel/Holiday.cs               |  17 +
+ DMS-DOTNETREACT/DataModel/Patient.cs               |   3 +-
+ DMS-DOTNETREACT/DataModel/SystemSetting.cs         |  21 +
+ DMS-DOTNETREACT/DataModel/Transaction.cs           |  18 +
+ DMS-DOTNETREACT/DataModel/User.cs                  |   4 +
+ DMS-DOTNETREACT/Helpers/DatabaseSeeder.cs          | 595 ++++++----------
+ .../Migrations/20251212092246_InitialCreate.cs     | 389 +---------
+ ...44_AddPatientBalanceAndTransactions.Designer.cs | 688 ++++++++++++++++++
+ ...51216132244_AddPatientBalanceAndTransactions.cs |  23 +
+ .../20251216144444_AddAdminDashboard.Designer.cs   | 717 +++++++++++++++++++
+ .../Migrations/20251216144444_AddAdminDashboard.cs |  23 +
+ .../20251216153445_AddAdminFeatures.Designer.cs    | 784 ++++++++++++++++++++
+ .../Migrations/20251216153445_AddAdminFeatures.cs  |  67 ++
+ .../20251216182403_AddEmailToUser.Designer.cs      | 788 +++++++++++++++++++++
+ .../Migrations/20251216182403_AddEmailToUser.cs    |  29 +
+ .../Migrations/ClinicDbContextModelSnapshot.cs     | 180 +++++
+ .../Models/BindingModels/SignupBindingModel.cs     |   3 +
+ .../UpdateDoctorProfileBindingModel.cs             |   3 +
+ .../UpdatePatientProfileBindingModel.cs            |   3 +
+ DMS-DOTNETREACT/Models/ViewModels/UserViewModel.cs |   1 +
+ DMS-DOTNETREACT/Program.cs                         |  11 +-
+ DMS-DOTNETREACT/Services/AuditService.cs           |  53 ++
+ .../Services/NotificationBackgroundService.cs      |  88 +++
+ DMS-DOTNETREACT/build_err.txt                      | Bin 0 -> 56234 bytes
+ DMS-DOTNETREACT/build_log.txt                      | Bin 18294 -> 59994 bytes
+ README.md                                          |  88 ++-
+ features.md                                        | 130 ++++
+ frontend/src/App.jsx                               |  26 +
+ frontend/src/adminApi.js                           | 215 ++++++
+ frontend/src/api.js                                |  53 ++
+ frontend/src/components/AppointmentCard.jsx        |  29 +-
+ frontend/src/components/auth/LoginModal.jsx        |  13 +-
+ .../src/components/doctor/DoctorWaitingRoom.jsx    |  94 +++
+ frontend/src/components/layout/AdminLayout.jsx     | 149 ++++
+ frontend/src/components/layout/Footer.jsx          |  51 +-
+ frontend/src/components/layout/Header.jsx          |  32 +-
+ .../components/secretary/AppointmentManager.jsx    |  93 ++-
+ .../src/components/secretary/PatientManager.jsx    | 170 ++++-
+ frontend/src/lib/iconMapper.jsx                    |   9 +-
+ frontend/src/pages/AdminAuditLogs.jsx              | 158 +++++
+ frontend/src/pages/AdminDashboard.jsx              |  83 +++
+ frontend/src/pages/AdminEmailTemplates.jsx         | 142 ++++
+ frontend/src/pages/AdminPatients.jsx               | 114 +++
+ frontend/src/pages/AdminReports.jsx                | 128 ++++
+ frontend/src/pages/AdminSchedule.jsx               | 178 +++++
+ frontend/src/pages/AdminSettings.jsx               | 214 ++++++
+ frontend/src/pages/AdminTreatments.jsx             | 260 +++++++
+ frontend/src/pages/AdminUsers.jsx                  | 396 +++++++++++
+ frontend/src/pages/DoctorAppointments.jsx          |  24 +
+ frontend/src/pages/DoctorDashboard.jsx             |   6 +
+ frontend/src/pages/EditProfile.jsx                 |  34 +-
+ frontend/src/pages/FinancialSummary.jsx            |   2 +-
+ frontend/src/pages/HomePage.jsx                    |  38 +-
+ frontend/src/pages/SecretaryProfile.jsx            | 109 ++-
+ frontend/src/pages/TreatmentsPage.jsx              | 284 +++++---
+ frontend/src/secretaryApi.js                       |  52 +-
+ 71 files changed, 8089 insertions(+), 1047 deletions(-)
+ create mode 100644 DMS-DOTNETREACT/Controllers/AdminController.cs
+ create mode 100644 DMS-DOTNETREACT/Controllers/EmailTemplatesController.cs
+ create mode 100644 DMS-DOTNETREACT/Controllers/NotificationsController.cs
+ create mode 100644 DMS-DOTNETREACT/Controllers/PublicController.cs
+ create mode 100644 DMS-DOTNETREACT/Controllers/SettingsController.cs
+ create mode 100644 DMS-DOTNETREACT/DataModel/AuditLog.cs
+ create mode 100644 DMS-DOTNETREACT/DataModel/EmailTemplate.cs
+ create mode 100644 DMS-DOTNETREACT/DataModel/Holiday.cs
+ create mode 100644 DMS-DOTNETREACT/DataModel/SystemSetting.cs
+ create mode 100644 DMS-DOTNETREACT/DataModel/Transaction.cs
+ create mode 100644 DMS-DOTNETREACT/Migrations/20251216132244_AddPatientBalanceAndTransactions.Designer.cs
+ create mode 100644 DMS-DOTNETREACT/Migrations/20251216132244_AddPatientBalanceAndTransactions.cs
+ create mode 100644 DMS-DOTNETREACT/Migrations/20251216144444_AddAdminDashboard.Designer.cs
+ create mode 100644 DMS-DOTNETREACT/Migrations/20251216144444_AddAdminDashboard.cs
+ create mode 100644 DMS-DOTNETREACT/Migrations/20251216153445_AddAdminFeatures.Designer.cs
+ create mode 100644 DMS-DOTNETREACT/Migrations/20251216153445_AddAdminFeatures.cs
+ create mode 100644 DMS-DOTNETREACT/Migrations/20251216182403_AddEmailToUser.Designer.cs
+ create mode 100644 DMS-DOTNETREACT/Migrations/20251216182403_AddEmailToUser.cs
+ create mode 100644 DMS-DOTNETREACT/Services/AuditService.cs
+ create mode 100644 DMS-DOTNETREACT/Services/NotificationBackgroundService.cs
+ create mode 100644 DMS-DOTNETREACT/build_err.txt
+ create mode 100644 features.md
+ create mode 100644 frontend/src/adminApi.js
+ create mode 100644 frontend/src/components/doctor/DoctorWaitingRoom.jsx
+ create mode 100644 frontend/src/components/layout/AdminLayout.jsx
+ create mode 100644 frontend/src/pages/AdminAuditLogs.jsx
+ create mode 100644 frontend/src/pages/AdminDashboard.jsx
+ create mode 100644 frontend/src/pages/AdminEmailTemplates.jsx
+ create mode 100644 frontend/src/pages/AdminPatients.jsx
+ create mode 100644 frontend/src/pages/AdminReports.jsx
+ create mode 100644 frontend/src/pages/AdminSchedule.jsx
+ create mode 100644 frontend/src/pages/AdminSettings.jsx
+ create mode 100644 frontend/src/pages/AdminTreatments.jsx
+ create mode 100644 frontend/src/pages/AdminUsers.jsx
