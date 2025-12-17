@@ -68,21 +68,55 @@ const CalendarView = () => {
       setOffDays(offDaysData);
 
       // Transform appointments to events
-      const appointmentEvents = appointments.map(apt => {
-        const startDate = new Date(`${apt.appointmentDate}T${apt.appointmentTime}`);
-        // Use actual duration if available, otherwise default to 1 hour
-        const duration = apt.duration ? apt.duration * 60 * 1000 : 60 * 60 * 1000;
-        const endDate = new Date(startDate.getTime() + duration);
+      const appointmentEvents = appointments
+        .map(apt => {
+          const appointmentId = apt?.id ?? apt?.Id ?? apt?.appointmentId ?? apt?.AppointmentId;
+          const patient = apt?.patient ?? apt?.Patient;
+          const patientFullName = patient?.fullName ?? patient?.FullName;
+          const patientPhone = patient?.phone ?? patient?.Phone;
+          const status = apt?.status ?? apt?.Status;
+          const isCompleted = apt?.isCompleted ?? apt?.IsCompleted;
+          const appointmentDate = apt?.appointmentDate ?? apt?.AppointmentDate;
+          const appointmentTimeRaw = apt?.appointmentTime ?? apt?.AppointmentTime;
 
-        return {
-          id: apt.id,
-          title: `${apt.patient?.fullName || 'Unknown'} - ${apt.status}`,
-          start: startDate,
-          end: endDate,
-          resource: apt,
-          type: 'appointment'
-        };
-      });
+          const normalizedAppointment = {
+            ...apt,
+            id: appointmentId,
+            status,
+            isCompleted,
+            appointmentDate,
+            appointmentTime: appointmentTimeRaw,
+            patient: patient
+              ? {
+                  ...patient,
+                  fullName: patientFullName,
+                  phone: patientPhone
+                }
+              : undefined
+          };
+
+          const datePart = normalizedAppointment.appointmentDate;
+          let timePart = (appointmentTimeRaw || '00:00:00').toString();
+          timePart = timePart.split('.')[0];
+          if (timePart.length === 5) timePart = `${timePart}:00`;
+
+          const startDate = new Date(`${datePart}T${timePart}`);
+          if (Number.isNaN(startDate.getTime())) return null;
+
+          // Use actual duration if available, otherwise default to 1 hour
+          const duration = apt.duration ? apt.duration * 60 * 1000 : 60 * 60 * 1000;
+          const endDate = new Date(startDate.getTime() + duration);
+
+          return {
+            id: appointmentId,
+            title: `${normalizedAppointment.patient?.fullName || 'Unknown'} - ${status}`,
+            start: startDate,
+            end: endDate,
+            resource: normalizedAppointment,
+            type: 'appointment'
+          };
+        })
+        .filter(Boolean);
 
       // Transform off days to events
       const offDayEvents = offDaysData.map(day => ({
@@ -156,9 +190,32 @@ const CalendarView = () => {
     setShowReminderModal(true);
   };
 
+  const handleSendWhatsApp = () => {
+    const phone = selectedEvent?.patient?.phone ?? selectedEvent?.patient?.Phone;
+    const fullName = selectedEvent?.patient?.fullName ?? selectedEvent?.patient?.FullName;
+    const date = selectedEvent?.appointmentDate ?? selectedEvent?.AppointmentDate;
+    const time = selectedEvent?.appointmentTime ?? selectedEvent?.AppointmentTime;
+
+    const cleanPhone = (phone || '').toString().replace(/\D/g, '');
+    if (!cleanPhone) {
+      toastError('Patient phone number is missing');
+      return;
+    }
+
+    const message = `Hello ${fullName || ''}, this is a reminder for your appointment on ${date || ''} at ${time || ''}.`;
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
   const executeSendReminder = async () => {
     try {
-      await sendReminder(selectedEvent.id);
+      const appointmentId = selectedEvent?.id ?? selectedEvent?.Id ?? selectedEvent?.appointmentId ?? selectedEvent?.AppointmentId;
+      if (!appointmentId) {
+        toastError('Could not send reminder: missing appointment id');
+        return;
+      }
+
+      await sendReminder(appointmentId);
       success('Reminder sent successfully!');
       setShowReminderModal(false);
     } catch (error) {
@@ -508,7 +565,7 @@ const CalendarView = () => {
         }
         
         .rbc-agenda-view table tbody tr:hover {
-          background: radial-gradient(circle at center, rgba(155, 89, 182, 0.1) 0%, #0a0a0a 100%) !important;
+          background: radial-gradient(circle at center, rgba(155, 89, 182, 0.1), transparent);
           transform: scale(1.01) !important;
         }
         
@@ -935,19 +992,20 @@ const CalendarView = () => {
                 Appointment Details
               </h2>
               <div style={{ marginBottom: '16px', fontSize: '15px' }}>
-                <strong style={{ color: '#9333ea' }}>Patient:</strong> {selectedEvent.patient.fullName}
+                <strong style={{ color: '#9333ea' }}>Patient:</strong> {selectedEvent?.patient?.fullName || selectedEvent?.patient?.FullName || 'Unknown'}
               </div>
               <div style={{ marginBottom: '16px', fontSize: '15px' }}>
-                <strong style={{ color: '#9333ea' }}>Date:</strong> {selectedEvent.appointmentDate} at {selectedEvent.appointmentTime}
+                <strong style={{ color: '#9333ea' }}>Date:</strong> {selectedEvent?.appointmentDate || selectedEvent?.AppointmentDate} at {selectedEvent?.appointmentTime || selectedEvent?.AppointmentTime}
               </div>
               <div style={{ marginBottom: '16px', fontSize: '15px' }}>
-                <strong style={{ color: '#9333ea' }}>Status:</strong> {selectedEvent.isCompleted ? 'Completed' : selectedEvent.status}
+                <strong style={{ color: '#9333ea' }}>Status:</strong> {(selectedEvent?.isCompleted ?? selectedEvent?.IsCompleted) ? 'Completed' : (selectedEvent?.status || selectedEvent?.Status)}
               </div>
               {selectedEvent.finalPrice && (
                 <div style={{ marginBottom: '16px', fontSize: '15px' }}>
                   <strong style={{ color: '#9333ea' }}>Price:</strong> ${selectedEvent.finalPrice}
                 </div>
               )}
+
               <div style={{
                 display: 'flex',
                 flexDirection: isMobile ? 'column' : 'row',
@@ -986,6 +1044,30 @@ const CalendarView = () => {
                   <Mail size={isMobile ? 14 : 16} />
                   Send Reminder
                 </button>
+
+                <button
+                  onClick={handleSendWhatsApp}
+                  style={{
+                    padding: 'clamp(8px, 2vw, 10px) clamp(16px, 4vw, 20px)',
+                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)',
+                    width: isMobile ? '100%' : 'auto',
+                    fontSize: 'clamp(13px, 2vw, 14px)'
+                  }}
+                >
+                  WhatsApp
+                </button>
+
                 <button
                   onClick={() => setSelectedEvent(null)}
                   style={{
@@ -1019,7 +1101,7 @@ const CalendarView = () => {
         <ConfirmationModal
           isOpen={showReminderModal}
           title="Send Appointment Reminder"
-          message={`Are you sure you want to send a reminder to ${selectedEvent?.patient?.fullName}?`}
+          message={`Are you sure you want to send a reminder to ${selectedEvent?.patient?.fullName || selectedEvent?.patient?.FullName || 'this patient'}?`}
           confirmText="Send Reminder"
           onConfirm={executeSendReminder}
           onCancel={() => setShowReminderModal(false)}

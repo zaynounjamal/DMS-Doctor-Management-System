@@ -6,13 +6,16 @@ import { DollarSign, Calendar, Download, TrendingUp, Users, CreditCard, ChevronL
 
 // Import PDF libraries - using try-catch to handle import errors gracefully
 let jsPDF = null;
+let autoTable = null;
 let pdfLibsLoaded = false;
 
 const loadPDFLibs = async () => {
     if (!pdfLibsLoaded) {
         try {
             jsPDF = (await import('jspdf')).default;
-            await import('jspdf-autotable');
+            // jspdf-autotable v5+ exports a function; in some bundlers it does not reliably patch doc.autoTable
+            const autoTableModule = await import('jspdf-autotable');
+            autoTable = autoTableModule.default || autoTableModule.autoTable || autoTableModule;
             pdfLibsLoaded = true;
         } catch (error) {
             console.error('Failed to load PDF libraries:', error);
@@ -156,7 +159,7 @@ const PaymentReports = () => {
             ]);
             
             // Add table
-            doc.autoTable({
+            autoTable(doc, {
                 startY: data.summary ? 75 : 40,
                 head: [['Date', 'Patient', 'Doctor', 'Amount', 'Payment Method']],
                 body: tableData,
@@ -168,7 +171,7 @@ const PaymentReports = () => {
             
             // Add summary by doctor if available
             if (data.summary && data.summary.byDoctor && data.summary.byDoctor.length > 0) {
-                const finalY = doc.lastAutoTable.finalY + 10;
+                const finalY = (doc.lastAutoTable?.finalY || (data.summary ? 75 : 40)) + 10;
                 doc.setFontSize(12);
                 doc.text('Revenue by Doctor', 14, finalY);
                 
@@ -178,7 +181,7 @@ const PaymentReports = () => {
                     `${d.count} payments`
                 ]);
                 
-                doc.autoTable({
+                autoTable(doc, {
                     startY: finalY + 5,
                     head: [['Doctor', 'Total Revenue', 'Count']],
                     body: doctorData,
@@ -190,7 +193,7 @@ const PaymentReports = () => {
             
             // Add summary by payment method if available
             if (data.summary && data.summary.byMethod && data.summary.byMethod.length > 0) {
-                const finalY = doc.lastAutoTable.finalY + 10;
+                const finalY = (doc.lastAutoTable?.finalY || (data.summary ? 75 : 40)) + 10;
                 doc.setFontSize(12);
                 doc.text('Revenue by Payment Method', 14, finalY);
                 
@@ -200,7 +203,7 @@ const PaymentReports = () => {
                     `${m.count} payments`
                 ]);
                 
-                doc.autoTable({
+                autoTable(doc, {
                     startY: finalY + 5,
                     head: [['Payment Method', 'Total Revenue', 'Count']],
                     body: methodData,

@@ -178,7 +178,19 @@ export const searchAppointments = async (params) => {
     const response = await fetch(`${API_URL}/doctor/appointments/search?${queryParams.toString()}`, {
         headers: getAuthHeader()
     });
-    if (!response.ok) throw new Error('Failed to search appointments');
+
+    if (!response.ok) {
+        let errorMessage = 'Failed to search appointments';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+            const errorText = await response.text();
+            if (errorText) errorMessage = errorText;
+        }
+        throw new Error(errorMessage);
+    }
+
     return response.json();
 };
 
@@ -215,6 +227,13 @@ export const sendReminder = async (appointmentId) => {
         
         return await response.json();
     } catch (error) {
+        // Network-level failure (backend down, CORS blocked, wrong API_URL, etc.)
+        if (error instanceof TypeError && (error?.message || '').toLowerCase().includes('failed to fetch')) {
+            const api = `${API_URL}/notifications/send-reminder`;
+            console.error('[sendReminder] Network error: Failed to fetch', { api, error });
+            throw new Error(`Failed to reach the server. Make sure the backend is running and accessible at ${API_URL} (and CORS allows this frontend).`);
+        }
+
         console.error('[sendReminder] Error:', error);
         throw error;
     }

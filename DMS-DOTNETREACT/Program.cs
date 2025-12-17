@@ -120,14 +120,24 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactFrontend", policy =>
     {
-        var allowedOrigins = builder.Environment.IsDevelopment()
-            ? new[] { "http://localhost:3000", "http://localhost:5173", "http://localhost:5174" }
-            : new[] { "https://yourdomain.com" }; // Update with your production domain
+        if (builder.Environment.IsDevelopment())
+        {
+            // In development, allow the Vite dev server from localhost OR LAN IPs.
+            // This avoids CORS issues when accessing the frontend via the Network URL (e.g. http://192.168.x.x:5174).
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+            var allowedOrigins = new[] { "https://yourdomain.com" }; // Update with your production domain
 
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
     });
 });
 

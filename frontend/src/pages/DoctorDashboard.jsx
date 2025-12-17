@@ -6,13 +6,13 @@ import AppointmentCard from '../components/AppointmentCard';
 import MarkAsDoneModal from '../components/MarkAsDoneModal';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
-import { getDoctorDashboard, getTodayAppointments, completeAppointment } from '../doctorApi';
+import { getDoctorDashboard, getTodayAppointments, completeAppointment, sendReminder } from '../doctorApi';
 import DoctorWaitingRoom from '../components/doctor/DoctorWaitingRoom';
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const { error: toastError } = useToast();
+  const { success, error: toastError } = useToast();
   const [stats, setStats] = useState(null);
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +31,26 @@ const DoctorDashboard = () => {
         getTodayAppointments()
       ]);
       setStats(dashboardData);
-      setTodayAppointments(appointments);
+      const normalizedAppointments = (appointments || []).map((apt) => {
+        const id = apt?.id ?? apt?.Id ?? apt?.appointmentId ?? apt?.AppointmentId;
+        const patient = apt?.patient ?? apt?.Patient;
+        const patientFullName = patient?.fullName ?? patient?.FullName;
+        const patientPhone = patient?.phone ?? patient?.Phone;
+
+        return {
+          ...apt,
+          id,
+          patient: patient
+            ? {
+                ...patient,
+                fullName: patientFullName,
+                phone: patientPhone
+              }
+            : undefined
+        };
+      });
+
+      setTodayAppointments(normalizedAppointments);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
       if (error.message.includes('401') || error.message.includes('403')) {
@@ -50,9 +69,42 @@ const DoctorDashboard = () => {
     setShowMarkAsDoneModal(true);
   };
 
+  const handleRemind = async (appointment, method) => {
+    if (method === 'whatsapp') {
+      const phone = appointment?.patient?.phone || '';
+      const cleanPhone = phone.replace(/\D/g, '');
+
+      if (!cleanPhone) {
+        toastError('Patient phone number is missing');
+        return;
+      }
+
+      const message = `Hello ${appointment?.patient?.fullName || ''}, this is a reminder for your appointment on ${new Date(appointment?.appointmentDate).toLocaleDateString()} at ${appointment?.appointmentTime}.`;
+      const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+      return;
+    }
+
+    // Email
+    try {
+      const appointmentId = appointment?.id ?? appointment?.Id ?? appointment?.appointmentId ?? appointment?.AppointmentId;
+      if (!appointmentId) {
+        toastError('Could not send reminder: missing appointment id');
+        return;
+      }
+
+      await sendReminder(appointmentId);
+      success('Email reminder sent');
+    } catch (e) {
+      console.error(e);
+      toastError(e?.message || 'Failed to send email reminder');
+    }
+  };
+
   const handleSubmitCompletion = async (finalPrice, completionNotes) => {
     try {
-      await completeAppointment(selectedAppointment.id, finalPrice, completionNotes);
+      const appointmentId = selectedAppointment?.id ?? selectedAppointment?.Id;
+      await completeAppointment(appointmentId, finalPrice, completionNotes);
       await loadDashboardData(); // Reload data
       setShowMarkAsDoneModal(false);
     } catch (error) {
@@ -212,7 +264,11 @@ const DoctorDashboard = () => {
                 key={appointment.id}
                 appointment={appointment}
                 onMarkAsDone={handleMarkAsDone}
-                onViewNotes={(apt) => navigate(`/doctor/appointments?appointmentId=${apt.id}`)}
+                onViewNotes={(apt) => {
+                  const appointmentId = apt?.id ?? apt?.Id;
+                  navigate(`/doctor/appointments?appointmentId=${appointmentId}`);
+                }}
+                onRemind={handleRemind}
               />
             ))}
             {todayAppointments.length > 5 && (

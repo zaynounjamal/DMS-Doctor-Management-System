@@ -151,16 +151,20 @@ public class AppointmentsController : ControllerBase
                 .Select(a => a.AppointmentTime)
                 .ToListAsync();
 
+            var isToday = parsedDate == DateOnly.FromDateTime(DateTime.Today);
+            var nowTime = TimeOnly.FromDateTime(DateTime.Now);
+
             var currentTime = startTime;
             while (currentTime < endTime)
             {
                 var isReserved = existingAppointments.Contains(currentTime);
+                var isPastSlot = isToday && currentTime < nowTime;
 
                 timeSlots.Add(new
                 {
                     Time = currentTime.ToString("HH:mm"),
                     DisplayTime = currentTime.ToString("h:mm tt"),
-                    IsAvailable = !isReserved
+                    IsAvailable = !isReserved && !isPastSlot
                 });
 
                 currentTime = currentTime.AddMinutes(30);
@@ -212,6 +216,13 @@ public class AppointmentsController : ControllerBase
         if (model.AppointmentDate < DateOnly.FromDateTime(DateTime.Today))
         {
             return BadRequest("Cannot book appointments in the past");
+        }
+
+        // Also block booking for a past time on the same day
+        var proposedDateTime = model.AppointmentDate.ToDateTime(model.AppointmentTime);
+        if (proposedDateTime < DateTime.Now)
+        {
+            return BadRequest("Cannot book an appointment in the past");
         }
 
         // Check if time slot is already taken

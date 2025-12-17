@@ -7,7 +7,16 @@ import { Calendar, ChevronLeft, ChevronRight, Clock, User, Phone, Printer } from
 const DailySchedule = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
+    const formatLocalDate = (date) => {
+        const d = new Date(date);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    };
+
+    const [selectedDate, setSelectedDate] = useState(formatLocalDate(new Date()));
     const [appointments, setAppointments] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [selectedDoctor, setSelectedDoctor] = useState('');
@@ -40,8 +49,8 @@ const DailySchedule = () => {
         setLoading(true);
         try {
             // Determine tab based on selected date
-            const today = new Date().toISOString().split('T')[0];
-            const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const today = formatLocalDate(new Date());
+            const tomorrow = formatLocalDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
             
             let tab = 'today';
             if (selectedDate === tomorrow) tab = 'tomorrow';
@@ -49,9 +58,50 @@ const DailySchedule = () => {
             else if (selectedDate < today) tab = 'past';
 
             const data = await getSecretaryAppointments(tab, null, selectedDoctor || null);
-            
-            // Filter by exact date
-            const filtered = data.filter(appt => appt.appointmentDate === selectedDate);
+
+            const normalized = (data || []).map((appt) => {
+                const id = appt?.id ?? appt?.Id;
+                const appointmentDateRaw = appt?.appointmentDate ?? appt?.AppointmentDate;
+                const appointmentTimeRaw = appt?.appointmentTime ?? appt?.AppointmentTime;
+                const doctorId = appt?.doctorId ?? appt?.DoctorId;
+                const status = appt?.status ?? appt?.Status;
+                const paymentStatus = appt?.paymentStatus ?? appt?.PaymentStatus;
+                const price = appt?.price ?? appt?.Price;
+                const finalPrice = appt?.finalPrice ?? appt?.FinalPrice;
+
+                const patient = appt?.patient ?? appt?.Patient;
+                const patientFullName = patient?.fullName ?? patient?.FullName;
+                const patientPhone = patient?.phone ?? patient?.Phone;
+
+                // Normalize date to YYYY-MM-DD
+                const datePart = (appointmentDateRaw || '').toString().substring(0, 10);
+                // Normalize time to HH:mm:ss (handle TimeOnly with fractional seconds)
+                let timePart = (appointmentTimeRaw || '').toString();
+                timePart = timePart.split('.')[0];
+                if (timePart.length === 5) timePart = `${timePart}:00`;
+
+                return {
+                    ...appt,
+                    id,
+                    doctorId,
+                    status,
+                    paymentStatus,
+                    price,
+                    finalPrice,
+                    appointmentDate: datePart,
+                    appointmentTime: timePart,
+                    patient: patient
+                        ? {
+                            ...patient,
+                            fullName: patientFullName,
+                            phone: patientPhone
+                        }
+                        : { fullName: 'Unknown', phone: '' }
+                };
+            });
+
+            // Filter by exact date (YYYY-MM-DD)
+            const filtered = normalized.filter(appt => appt.appointmentDate === selectedDate);
             setAppointments(filtered);
         } catch (error) {
             showToast('Failed to load schedule', 'error');
@@ -61,14 +111,14 @@ const DailySchedule = () => {
     };
 
     const changeDate = (days) => {
-        const newDate = new Date(selectedDate);
+        const newDate = new Date(`${selectedDate}T00:00:00`);
         newDate.setDate(newDate.getDate() + days);
-        setSelectedDate(newDate.toISOString().split('T')[0]);
+        setSelectedDate(formatLocalDate(newDate));
     };
 
     const getAppointmentForSlot = (timeSlot) => {
         return appointments.filter(appt => {
-            const apptTime = appt.appointmentTime.substring(0, 5);
+            const apptTime = (appt.appointmentTime || '').substring(0, 5);
             return apptTime === timeSlot;
         });
     };
@@ -160,13 +210,13 @@ const DailySchedule = () => {
                         {/* Quick Date Buttons */}
                         <div className="flex gap-2">
                             <button
-                                onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                                onClick={() => setSelectedDate(formatLocalDate(new Date()))}
                                 className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                             >
                                 Today
                             </button>
                             <button
-                                onClick={() => setSelectedDate(new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0])}
+                                onClick={() => setSelectedDate(formatLocalDate(new Date(Date.now() + 24 * 60 * 60 * 1000)))}
                                 className="flex-1 px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
                             >
                                 Tomorrow
