@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -28,7 +28,8 @@ import CalendarView from './pages/CalendarView';
 import Profile from './pages/Profile';
 import SecretaryDashboard from './pages/SecretaryDashboard';
 import SecretaryProfile from './pages/SecretaryProfile';
-import PaymentReports from './pages/PaymentReports';
+// Lazy load PaymentReports to avoid loading jspdf on initial app load
+const PaymentReports = lazy(() => import('./pages/PaymentReports'));
 import DailySchedule from './pages/DailySchedule';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminUsers from './pages/AdminUsers';
@@ -116,7 +117,11 @@ const AppContent = () => {
         <Route element={<ProtectedRoute allowedRoles={['secretary']} />}>
           <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
           <Route path="/secretary/profile" element={<SecretaryProfile />} />
-          <Route path="/secretary/payments" element={<PaymentReports />} />
+          <Route path="/secretary/payments" element={
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
+              <PaymentReports />
+            </Suspense>
+          } />
           <Route path="/secretary/schedule" element={<DailySchedule />} />
         </Route>
 

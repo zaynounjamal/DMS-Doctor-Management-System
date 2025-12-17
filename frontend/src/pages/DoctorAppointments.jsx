@@ -14,7 +14,8 @@ import {
   editMedicalNote,
   searchAppointments,
   bulkCompleteAppointments,
-  sendReminder
+  sendReminder,
+  sendRemindersBulk
 } from '../doctorApi';
 import API_URL from '../config';
 
@@ -212,19 +213,30 @@ const DoctorAppointments = () => {
   };
 
   const handleBulkRemind = async () => {
-    // Loop send reminder
-    let successCount = 0;
-    for (const id of selectedAppointments) {
-      try {
-        await sendReminder(id);
-        successCount++;
-      } catch (e) {
-        console.error(e);
-      }
+    if (selectedAppointments.length === 0) {
+      toastError('Please select at least one appointment');
+      return;
     }
-    success(`Sent ${successCount} reminders.`);
-    setSelectedAppointments([]);
-    setSelectedAppointments([]);
+
+    try {
+      const result = await sendRemindersBulk(selectedAppointments);
+      if (result.succeeded > 0) {
+        success(`Successfully sent ${result.succeeded} reminder(s). ${result.failed > 0 ? `${result.failed} failed.` : ''}`);
+      } else {
+        toastError(`Failed to send reminders. ${result.message || 'Please check patient email addresses.'}`);
+      }
+      
+      // Log detailed results if there are failures
+      if (result.failed > 0 && result.results) {
+        const failures = result.results.filter(r => !r.success);
+        console.warn('Failed reminders:', failures);
+      }
+      
+      setSelectedAppointments([]);
+    } catch (error) {
+      console.error('Bulk reminder error:', error);
+      toastError(error.message || 'Failed to send bulk reminders');
+    }
   };
 
   const handleRemind = async (appointment, method) => {
@@ -244,7 +256,7 @@ const DoctorAppointments = () => {
         success('Email reminder sent');
       } catch (e) {
         console.error(e);
-        toastError('Failed to send email reminder');
+        toastError(e?.message || 'Failed to send email reminder');
       }
     }
   };

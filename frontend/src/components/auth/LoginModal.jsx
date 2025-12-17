@@ -277,6 +277,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
           password: formData.password,
           fullName: formData.fullName,
           phone: formData.phoneNumber,
+          email: formData.email || null,
           gender: formData.gender || null,
           birthDate: formData.dateOfBirth ? formData.dateOfBirth : null,
         };
