@@ -6,8 +6,11 @@ import StatsSection from './StatsSection';
 import TreatmentsPreview from './TreatmentsPreview';
 import heroImage from '../imgs/herosectionimage.jpg';
 import { getPublicSettings } from '../api';
+import { useAuth } from '../contexts/AuthContext';
+import PatientChatWidget from '../components/chat/PatientChatWidget';
 
 const HomePage = () => {
+  const { user } = useAuth();
   const heroSectionRef = React.useRef(null);
   const [branding, setBranding] = useState({
       heroTitle: 'Your Health, Our Priority.',
@@ -204,6 +207,8 @@ const HomePage = () => {
 
       {/* Treatments Preview Section */}
       <TreatmentsPreview />
+
+      {user?.role?.toLowerCase() === 'patient' && <PatientChatWidget />}
     </div>
   );
 };

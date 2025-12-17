@@ -28,6 +28,7 @@ import CalendarView from './pages/CalendarView';
 import Profile from './pages/Profile';
 import SecretaryDashboard from './pages/SecretaryDashboard';
 import SecretaryProfile from './pages/SecretaryProfile';
+import SecretaryChat from './pages/SecretaryChat';
 // Lazy load PaymentReports to avoid loading jspdf on initial app load
 const PaymentReports = lazy(() => import('./pages/PaymentReports'));
 import DailySchedule from './pages/DailySchedule';
@@ -117,6 +118,7 @@ const AppContent = () => {
         <Route element={<ProtectedRoute allowedRoles={['secretary']} />}>
           <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
           <Route path="/secretary/profile" element={<SecretaryProfile />} />
+          <Route path="/secretary/chat" element={<SecretaryChat />} />
           <Route path="/secretary/payments" element={
             <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
               <PaymentReports />

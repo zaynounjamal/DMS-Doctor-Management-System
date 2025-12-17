@@ -26,6 +26,10 @@ public class ClinicDbContext : DbContext
     public DbSet<Holiday> Holidays => Set<Holiday>();
     public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
 
+    public DbSet<ChatConversation> ChatConversations => Set<ChatConversation>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<SecretaryAvailability> SecretaryAvailabilities => Set<SecretaryAvailability>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -51,6 +55,30 @@ public class ClinicDbContext : DbContext
             .WithOne(s => s.User)
             .HasForeignKey<Secretary>(s => s.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ChatConversation>()
+            .HasOne(c => c.Patient)
+            .WithMany()
+            .HasForeignKey(c => c.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ChatConversation>()
+            .HasOne(c => c.AssignedSecretary)
+            .WithMany()
+            .HasForeignKey(c => c.AssignedSecretaryId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ChatMessage>()
+            .HasOne(m => m.Conversation)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.ConversationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SecretaryAvailability>()
+            .HasOne(a => a.Secretary)
+            .WithOne()
+            .HasForeignKey<SecretaryAvailability>(a => a.SecretaryId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Notification>()
             .HasOne(n => n.User)

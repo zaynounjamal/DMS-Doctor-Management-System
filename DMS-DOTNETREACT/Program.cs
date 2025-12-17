@@ -203,19 +203,7 @@ using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<ClinicDbContext>();
         var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
-        
-        // For development: delete and recreate database
-        try
-        {
-            context.Database.EnsureDeleted();
-            await Task.Delay(500); // Wait for deletion to complete
-        }
-        catch (Exception delEx)
-        {
-            Console.WriteLine($"Note: Could not delete existing database: {delEx.Message}");
-            Console.WriteLine("Attempting to continue with existing database...");
-        }
-        
+
         context.Database.EnsureCreated();
 
         // Ensure Email column exists (for existing databases)
@@ -228,6 +216,64 @@ using (var scope = app.Services.CreateScope())
                 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND name = 'Email')
                 BEGIN
                     ALTER TABLE [Users] ADD [Email] nvarchar(100) NULL;
+                END
+
+                IF OBJECT_ID(N'[dbo].[ChatConversations]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[ChatConversations](
+                        [Id] int IDENTITY(1,1) NOT NULL,
+                        [PatientId] int NOT NULL,
+                        [AssignedSecretaryId] int NULL,
+                        [Status] nvarchar(20) NOT NULL,
+                        [CreatedAt] datetime2 NOT NULL,
+                        [ClosedAt] datetime2 NULL,
+                        CONSTRAINT [PK_ChatConversations] PRIMARY KEY CLUSTERED ([Id] ASC)
+                    );
+
+                    ALTER TABLE [dbo].[ChatConversations] WITH CHECK ADD CONSTRAINT [FK_ChatConversations_Patients_PatientId]
+                        FOREIGN KEY([PatientId]) REFERENCES [dbo].[Patients] ([Id]);
+                    ALTER TABLE [dbo].[ChatConversations] CHECK CONSTRAINT [FK_ChatConversations_Patients_PatientId];
+
+                    ALTER TABLE [dbo].[ChatConversations] WITH CHECK ADD CONSTRAINT [FK_ChatConversations_Secretaries_AssignedSecretaryId]
+                        FOREIGN KEY([AssignedSecretaryId]) REFERENCES [dbo].[Secretaries] ([Id]);
+                    ALTER TABLE [dbo].[ChatConversations] CHECK CONSTRAINT [FK_ChatConversations_Secretaries_AssignedSecretaryId];
+
+                    CREATE INDEX [IX_ChatConversations_PatientId] ON [dbo].[ChatConversations]([PatientId]);
+                    CREATE INDEX [IX_ChatConversations_AssignedSecretaryId] ON [dbo].[ChatConversations]([AssignedSecretaryId]);
+                END
+
+                IF OBJECT_ID(N'[dbo].[ChatMessages]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[ChatMessages](
+                        [Id] int IDENTITY(1,1) NOT NULL,
+                        [ConversationId] int NOT NULL,
+                        [SenderUserId] int NOT NULL,
+                        [SenderRole] nvarchar(20) NOT NULL,
+                        [Text] nvarchar(2000) NOT NULL,
+                        [SentAt] datetime2 NOT NULL,
+                        [ReadAt] datetime2 NULL,
+                        CONSTRAINT [PK_ChatMessages] PRIMARY KEY CLUSTERED ([Id] ASC)
+                    );
+
+                    ALTER TABLE [dbo].[ChatMessages] WITH CHECK ADD CONSTRAINT [FK_ChatMessages_ChatConversations_ConversationId]
+                        FOREIGN KEY([ConversationId]) REFERENCES [dbo].[ChatConversations] ([Id]) ON DELETE CASCADE;
+                    ALTER TABLE [dbo].[ChatMessages] CHECK CONSTRAINT [FK_ChatMessages_ChatConversations_ConversationId];
+
+                    CREATE INDEX [IX_ChatMessages_ConversationId] ON [dbo].[ChatMessages]([ConversationId]);
+                END
+
+                IF OBJECT_ID(N'[dbo].[SecretaryAvailabilities]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[SecretaryAvailabilities](
+                        [SecretaryId] int NOT NULL,
+                        [IsAvailable] bit NOT NULL,
+                        [UpdatedAt] datetime2 NOT NULL,
+                        CONSTRAINT [PK_SecretaryAvailabilities] PRIMARY KEY CLUSTERED ([SecretaryId] ASC)
+                    );
+
+                    ALTER TABLE [dbo].[SecretaryAvailabilities] WITH CHECK ADD CONSTRAINT [FK_SecretaryAvailabilities_Secretaries_SecretaryId]
+                        FOREIGN KEY([SecretaryId]) REFERENCES [dbo].[Secretaries] ([Id]) ON DELETE CASCADE;
+                    ALTER TABLE [dbo].[SecretaryAvailabilities] CHECK CONSTRAINT [FK_SecretaryAvailabilities_Secretaries_SecretaryId];
                 END";
             await command.ExecuteNonQueryAsync();
             await connection.CloseAsync();
