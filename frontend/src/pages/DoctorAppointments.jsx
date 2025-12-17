@@ -317,10 +317,10 @@ const DoctorAppointments = () => {
             style={{
               padding: '10px 12px',
               fontSize: '14px',
-              border: '2px solid #e5e7eb',
+              border: '1px solid rgba(155, 89, 182, 0.3)',
               borderRadius: '6px',
-              backgroundColor: 'white',
-              color: '#333',
+              background: '#000000',
+              color: 'white',
               cursor: 'pointer',
               outline: 'none'
             }}
@@ -566,8 +566,14 @@ const DoctorAppointments = () => {
         display: 'flex',
         gap: '8px',
         marginBottom: '24px',
-        borderBottom: '2px solid #e5e7eb',
-        overflowX: 'auto'
+        border: '1px solid rgba(155, 89, 182, 0.2)',
+        overflowX: 'auto',
+        padding: '8px',
+        background: '#000000',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderRadius: '16px',
+        boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)'
       }}>
         {tabs.map((tab) => (
           <button
@@ -578,25 +584,30 @@ const DoctorAppointments = () => {
               fontSize: '14px',
               fontWeight: 'bold',
               border: 'none',
-              borderBottom: activeTab === tab.id ? '3px solid #9333ea' : '3px solid transparent',
-              backgroundColor: 'transparent',
-              color: activeTab === tab.id ? '#9333ea' : '#666',
+              borderRadius: '8px',
+              backgroundColor: activeTab === tab.id ? 'rgba(147, 51, 234, 0.2)' : 'transparent',
+              color: activeTab === tab.id ? '#9333ea' : '#aaa',
               cursor: 'pointer',
               transition: 'all 0.2s',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              backdropFilter: activeTab === tab.id ? 'blur(5px)' : 'none'
             }}
             onMouseEnter={(e) => {
               if (activeTab !== tab.id) {
-                e.currentTarget.style.color = '#333';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                e.currentTarget.style.color = '#fff';
               }
             }}
             onMouseLeave={(e) => {
               if (activeTab !== tab.id) {
-                e.currentTarget.style.color = '#666';
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#aaa';
               }
             }}
           >
-            <tab.IconComponent size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+            <tab.IconComponent size={16} style={{ marginRight: '8px' }} />
             {tab.label}
           </button>
         ))}
@@ -612,19 +623,20 @@ const DoctorAppointments = () => {
       }}>
         {/* Completion Filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>Status:</span>
+          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#9333ea' }}>Status:</span>
           <select
             value={completionFilter}
             onChange={(e) => setCompletionFilter(e.target.value)}
             style={{
               padding: '8px 12px',
               fontSize: '14px',
-              border: '2px solid #e5e7eb',
+              border: '1px solid rgba(155, 89, 182, 0.3)',
               borderRadius: '6px',
-              backgroundColor: 'white',
-              color: '#333',
+              background: '#000000',
+              color: 'white',
               cursor: 'pointer',
-              outline: 'none'
+              outline: 'none',
+              fontWeight: '600'
             }}
           >
             <option value="all">All</option>
@@ -635,19 +647,20 @@ const DoctorAppointments = () => {
 
         {/* Payment Filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>Payment:</span>
+          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#9333ea' }}>Payment:</span>
           <select
             value={paymentFilter}
             onChange={(e) => setPaymentFilter(e.target.value)}
             style={{
               padding: '8px 12px',
               fontSize: '14px',
-              border: '2px solid #e5e7eb',
+              border: '1px solid rgba(155, 89, 182, 0.3)',
               borderRadius: '6px',
-              backgroundColor: 'white',
-              color: '#333',
+              background: '#000000',
+              color: 'white',
               cursor: 'pointer',
-              outline: 'none'
+              outline: 'none',
+              fontWeight: '600'
             }}
           >
             <option value="all">All</option>
@@ -689,251 +702,278 @@ const DoctorAppointments = () => {
       </div>
 
       {/* Appointments List */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <div style={{ fontSize: '18px', color: '#666' }}>Loading appointments...</div>
-        </div>
-      ) : (() => {
-        // Apply filters
-        const filteredAppointments = appointments.filter(apt => {
-          // Completion filter
-          if (completionFilter === 'completed' && !apt.isCompleted) return false;
-          if (completionFilter === 'not-completed' && apt.isCompleted) return false;
-
-          // Payment filter (only for completed appointments)
-          if (paymentFilter !== 'all' && apt.isCompleted) {
-            if (paymentFilter === 'paid' && apt.paymentStatus !== 'paid') return false;
-            if (paymentFilter === 'unpaid' && apt.paymentStatus !== 'unpaid') return false;
-          }
-
-          return true;
-        });
-
-        return filteredAppointments.length === 0 ? (
+      <div style={{ minHeight: '400px', position: 'relative' }}>
+        {loading && (
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '60px 20px',
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(2px)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'start',
+            paddingTop: '100px',
+            zIndex: 10,
+            borderRadius: '16px'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', color: '#9333ea' }}>
-              {activeTab === 'today' && <Calendar size={64} />}
-              {activeTab === 'tomorrow' && <CalendarDays size={64} />}
-              {activeTab === 'future' && <CalendarRange size={64} />}
-              {activeTab === 'past' && <History size={64} />}
-            </div>
-            <h3 style={{ fontSize: '20px', color: '#333', marginBottom: '8px' }}>
-              {appointments.length === 0
-                ? `No appointments ${activeTab === 'past' ? 'in the past' : `for ${activeTab}`}`
-                : 'No appointments match your filters'
-              }
-            </h3>
-            <p style={{ fontSize: '14px', color: '#666' }}>
-              {appointments.length === 0
-                ? (activeTab === 'past' ? 'Your appointment history will appear here' : 'Check back later for updates')
-                : 'Try adjusting your filters'
-              }
-            </p>
+            <div style={{ fontSize: '18px', color: '#fff', fontWeight: 'bold' }}>Loading appointments...</div>
           </div>
-        ) : (
-          <div>
-            <div style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
-              Showing {filteredAppointments.length} of {appointments.length} appointment{appointments.length !== 1 ? 's' : ''}
-            </div>
-            {filteredAppointments.map((appointment) => (
-              <div key={appointment.id} style={{ display: 'flex', gap: '12px', alignItems: 'start', marginBottom: '16px' }}>
-                <div style={{ paddingTop: '24px' }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedAppointments.includes(appointment.id)}
-                    onChange={() => toggleSelection(appointment.id)}
-                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <AppointmentCard
-                    appointment={appointment}
-                    onMarkAsDone={handleMarkAsDone}
-                    onViewNotes={handleViewNotes}
-                    onRemind={handleRemind}
-                    showActions={activeTab !== 'past' || appointment.medicalNotesCount > 0}
-                  />
-                </div>
+        )}
+
+        {(() => {
+          // Apply filters
+          const filteredAppointments = appointments.filter(apt => {
+            // Completion filter
+            if (completionFilter === 'completed' && !apt.isCompleted) return false;
+            if (completionFilter === 'not-completed' && apt.isCompleted) return false;
+
+            // Payment filter (only for completed appointments)
+            if (paymentFilter !== 'all' && apt.isCompleted) {
+              if (paymentFilter === 'paid' && apt.paymentStatus !== 'paid') return false;
+              if (paymentFilter === 'unpaid' && apt.paymentStatus !== 'unpaid') return false;
+            }
+
+            return true;
+          });
+
+          return filteredAppointments.length === 0 ? (
+            <div style={{
+              background: '#000000',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              borderRadius: '16px',
+              border: '1px solid rgba(155, 89, 182, 0.2)',
+              boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+              padding: '60px 20px',
+              textAlign: 'center'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', color: '#9333ea' }}>
+                {activeTab === 'today' && <Calendar size={64} />}
+                {activeTab === 'tomorrow' && <CalendarDays size={64} />}
+                {activeTab === 'future' && <CalendarRange size={64} />}
+                {activeTab === 'past' && <History size={64} />}
               </div>
-            ))}
-          </div>
-        );
-      })()}
+              <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px' }}>
+                {appointments.length === 0
+                  ? `No appointments ${activeTab === 'past' ? 'in the past' : `for ${activeTab}`}`
+                  : 'No appointments match your filters'
+                }
+              </h3>
+              <p style={{ fontSize: '14px', color: '#ccc' }}>
+                {appointments.length === 0
+                  ? (activeTab === 'past' ? 'Your appointment history will appear here' : 'Check back later for updates')
+                  : 'Try adjusting your filters'
+                }
+              </p>
+            </div>
+          ) : (
+            <div>
+              <div style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
+                Showing {filteredAppointments.length} of {appointments.length} appointment{appointments.length !== 1 ? 's' : ''}
+              </div>
+              {filteredAppointments.map((appointment) => (
+                <div key={appointment.id} style={{ display: 'flex', gap: '12px', alignItems: 'start', marginBottom: '16px' }}>
+                  <div style={{ paddingTop: '24px' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedAppointments.includes(appointment.id)}
+                      onChange={() => toggleSelection(appointment.id)}
+                      style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <AppointmentCard
+                      appointment={appointment}
+                      onMarkAsDone={handleMarkAsDone}
+                      onViewNotes={handleViewNotes}
+                      onRemind={handleRemind}
+                      showActions={activeTab !== 'past' || appointment.medicalNotesCount > 0}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          );
+        })()}
+      </div>
 
       {/* Bulk Action Bar */}
-      {selectedAppointments.length > 0 && (
-        <div style={{
-          position: 'fixed',
-          bottom: '32px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: '#1e293b',
-          color: 'white',
-          padding: '16px 32px',
-          borderRadius: '100px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '24px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-          zIndex: 1000,
-          animation: 'slideUp 0.3s ease-out'
-        }}>
-          <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
-            {selectedAppointments.length} selected
+      {
+        selectedAppointments.length > 0 && (
+          <div style={{
+            position: 'fixed',
+            bottom: '32px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#1e293b',
+            color: 'white',
+            padding: '16px 32px',
+            borderRadius: '100px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '24px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            zIndex: 1000,
+            animation: 'slideUp 0.3s ease-out'
+          }}>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
+              {selectedAppointments.length} selected
+            </div>
+            <div style={{ height: '24px', width: '1px', backgroundColor: '#475569' }}></div>
+            <button
+              onClick={handleRequestBulkComplete}
+              disabled={isBulkCompleting}
+              style={{
+                backgroundColor: '#10b981',
+                color: 'white',
+                border: 'none',
+                padding: '8px 20px',
+                borderRadius: '20px',
+                fontWeight: 'bold',
+                cursor: isBulkCompleting ? 'wait' : 'pointer',
+                transition: 'transform 0.1s'
+              }}
+            >
+              {isBulkCompleting ? 'Processing...' : <><Check size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Mark as Done</>}
+            </button>
+            <button
+              onClick={handleBulkRemind}
+              style={{
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                padding: '8px 20px',
+                borderRadius: '20px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'transform 0.1s'
+              }}
+            >
+              <Mail size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Send Reminders
+            </button>
+            <button
+              onClick={() => setSelectedAppointments([])}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#94a3b8',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '20px',
+                padding: '4px'
+              }}
+            >
+              <X size={20} />
+            </button>
           </div>
-          <div style={{ height: '24px', width: '1px', backgroundColor: '#475569' }}></div>
-          <button
-            onClick={handleRequestBulkComplete}
-            disabled={isBulkCompleting}
-            style={{
-              backgroundColor: '#10b981',
-              color: 'white',
-              border: 'none',
-              padding: '8px 20px',
-              borderRadius: '20px',
-              fontWeight: 'bold',
-              cursor: isBulkCompleting ? 'wait' : 'pointer',
-              transition: 'transform 0.1s'
-            }}
-          >
-            {isBulkCompleting ? 'Processing...' : <><Check size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Mark as Done</>}
-          </button>
-          <button
-            onClick={handleBulkRemind}
-            style={{
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              padding: '8px 20px',
-              borderRadius: '20px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'transform 0.1s'
-            }}
-          >
-            <Mail size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Send Reminders
-          </button>
-          <button
-            onClick={() => setSelectedAppointments([])}
-            style={{
-              backgroundColor: 'transparent',
-              color: '#94a3b8',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '20px',
-              padding: '4px'
-            }}
-          >
-            <X size={20} />
-          </button>
-        </div>
-      )}
+        )
+      }
 
       {/* Mark as Done Modal */}
-      {showMarkAsDoneModal && (
-        <MarkAsDoneModal
-          appointment={selectedAppointment}
-          onClose={() => setShowMarkAsDoneModal(false)}
-          onSubmit={handleSubmitCompletion}
-        />
-      )}
+      {
+        showMarkAsDoneModal && (
+          <MarkAsDoneModal
+            appointment={selectedAppointment}
+            onClose={() => setShowMarkAsDoneModal(false)}
+            onSubmit={handleSubmitCompletion}
+          />
+        )
+      }
 
       {/* Notes Modal */}
-      {showNotesModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }} onClick={() => setShowNotesModal(false)}>
+      {
+        showNotesModal && (
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            maxWidth: '800px',
-            width: '90%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px' }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#333' }}>
-                  Medical Notes
-                </h2>
-                <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#666' }}>
-                  {selectedAppointment?.patient?.fullName} - {new Date(selectedAppointment?.appointmentDate).toLocaleDateString()}
-                </p>
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }} onClick={() => setShowNotesModal(false)}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '800px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+            }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px' }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#333' }}>
+                    Medical Notes
+                  </h2>
+                  <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#666' }}>
+                    {selectedAppointment?.patient?.fullName} - {new Date(selectedAppointment?.appointmentDate).toLocaleDateString()}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowNotesModal(false)}
+                  style={{
+                    padding: '8px',
+                    fontSize: '20px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: '#999',
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <button
-                onClick={() => setShowNotesModal(false)}
-                style={{
-                  padding: '8px',
-                  fontSize: '20px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  color: '#999',
-                  cursor: 'pointer',
-                  borderRadius: '4px',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                <X size={20} />
-              </button>
-            </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <button
-                onClick={handleAddNote}
-                style={{
-                  padding: '10px 20px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  border: 'none',
-                  borderRadius: '8px',
-                  backgroundColor: '#667eea',
-                  color: 'white',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5568d3'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#667eea'}
-              >
-                <Plus size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Add New Note
-              </button>
-            </div>
+              <div style={{ marginBottom: '16px' }}>
+                <button
+                  onClick={handleAddNote}
+                  style={{
+                    padding: '10px 20px',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    borderRadius: '8px',
+                    backgroundColor: '#667eea',
+                    color: 'white',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5568d3'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#667eea'}
+                >
+                  <Plus size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Add New Note
+                </button>
+              </div>
 
-            <MedicalNotesList notes={appointmentNotes} onEdit={handleEditNote} />
+              <MedicalNotesList notes={appointmentNotes} onEdit={handleEditNote} />
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Add/Edit Note Modal */}
-      {showAddNoteModal && (
-        <AddNoteModal
-          appointment={selectedAppointment}
-          existingNote={selectedNote}
-          onClose={() => {
-            setShowAddNoteModal(false);
-            setShowNotesModal(true);
-          }}
-          onSubmit={handleSubmitNote}
-        />
-      )}
+      {
+        showAddNoteModal && (
+          <AddNoteModal
+            appointment={selectedAppointment}
+            existingNote={selectedNote}
+            onClose={() => {
+              setShowAddNoteModal(false);
+              setShowNotesModal(true);
+            }}
+            onSubmit={handleSubmitNote}
+          />
+        )
+      }
 
       <ConfirmationModal
         isOpen={showBulkCompleteModal}
@@ -944,7 +984,7 @@ const DoctorAppointments = () => {
         onCancel={() => setShowBulkCompleteModal(false)}
         type="info"
       />
-    </div>
+    </div >
   );
 };
 

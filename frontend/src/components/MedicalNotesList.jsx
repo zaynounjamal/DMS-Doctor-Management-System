@@ -1,4 +1,5 @@
 import React from 'react';
+import { FileText, Calendar, Pencil } from 'lucide-react';
 
 const MedicalNotesList = ({ notes, onEdit }) => {
   if (!notes || notes.length === 0) {
@@ -6,9 +7,17 @@ const MedicalNotesList = ({ notes, onEdit }) => {
       <div style={{
         textAlign: 'center',
         padding: '40px 20px',
-        color: '#999'
+        background: '#000000',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderRadius: '16px',
+        border: '1px solid rgba(155, 89, 182, 0.2)',
+        boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+        color: '#ccc'
       }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
+        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+          <FileText size={48} color="#9333ea" />
+        </div>
         <p>No medical notes yet</p>
       </div>
     );
@@ -20,10 +29,13 @@ const MedicalNotesList = ({ notes, onEdit }) => {
         <div
           key={note.id}
           style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '20px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            background: '#000000',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            borderRadius: '16px',
+            border: '1px solid rgba(155, 89, 182, 0.2)',
+            boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+            padding: '24px',
             borderLeft: '4px solid #667eea',
             transition: 'box-shadow 0.2s'
           }}
@@ -33,10 +45,10 @@ const MedicalNotesList = ({ notes, onEdit }) => {
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff' }}>
                 Dr. {note.doctorName}
               </div>
-              <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+              <div style={{ fontSize: '12px', color: '#ccc', marginTop: '4px' }}>
                 {new Date(note.createdAt).toLocaleString()}
                 {note.isEdited && (
                   <span style={{ marginLeft: '8px', color: '#f59e0b' }}>
@@ -45,8 +57,9 @@ const MedicalNotesList = ({ notes, onEdit }) => {
                 )}
               </div>
               {note.appointmentDate && (
-                <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                  📅 Appointment: {new Date(note.appointmentDate).toLocaleDateString()} at {note.appointmentTime}
+                <div style={{ fontSize: '12px', color: '#ccc', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Calendar size={12} color="#9333ea" />
+                  Appointment: {new Date(note.appointmentDate).toLocaleDateString()} at {note.appointmentTime}
                 </div>
               )}
             </div>
@@ -67,7 +80,10 @@ const MedicalNotesList = ({ notes, onEdit }) => {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5568d3'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#667eea'}
               >
-                ✏️ Edit
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Pencil size={12} color="#fff" />
+                  Edit
+                </div>
               </button>
             )}
           </div>
@@ -75,7 +91,7 @@ const MedicalNotesList = ({ notes, onEdit }) => {
           {/* Note Content */}
           <div style={{
             fontSize: '14px',
-            color: '#333',
+            color: '#fff',
             lineHeight: '1.6',
             whiteSpace: 'pre-wrap'
           }}>
