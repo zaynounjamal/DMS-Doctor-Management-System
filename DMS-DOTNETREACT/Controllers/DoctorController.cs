@@ -253,7 +253,10 @@ public class DoctorController : ControllerBase
             return NotFound("Doctor not found");
         }
 
-        var patient = await _context.Patients.FindAsync(patientId);
+
+        var patient = await _context.Patients
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.Id == patientId);
         if (patient == null)
         {
             return NotFound("Patient not found");
@@ -302,7 +305,8 @@ public class DoctorController : ControllerBase
                 patient.Phone,
                 patient.Gender,
                 patient.BirthDate,
-                patient.ProfilePhoto
+                patient.ProfilePhoto,
+                Email = patient.User?.Email
             },
             appointments,
             financialSummary = new

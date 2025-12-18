@@ -25,9 +25,30 @@ const DoctorPatientView = () => {
         getPatientDetails(patientId),
         getPatientNotes(patientId)
       ]);
-      setPatient(details.patient);
+      
+      // Normalize API response (PascalCase -> camelCase)
+      const normalizedPatient = {
+        ...details.patient,
+        id: details.patient.id || details.patient.Id,
+        fullName: details.patient.fullName || details.patient.FullName,
+        email: details.patient.email || details.patient.Email,
+        phone: details.patient.phone || details.patient.Phone,
+        phoneNumber: details.patient.phoneNumber || details.patient.Phone,
+        gender: details.patient.gender || details.patient.Gender,
+        birthDate: details.patient.birthDate || details.patient.BirthDate,
+        dateOfBirth: details.patient.dateOfBirth || details.patient.BirthDate,
+        profilePhoto: details.patient.profilePhoto || details.patient.ProfilePhoto
+      };
+      
+      
+      setPatient(normalizedPatient);
       setAppointments(details.appointments);
       setFinancialSummary(details.financialSummary);
+      
+      // Debug medical notes
+      console.log('Raw patientNotes from API:', patientNotes);
+      console.log('Notes length:', patientNotes?.length);
+      
       setNotes(patientNotes);
     } catch (error) {
       console.error('Failed to load patient:', error);
