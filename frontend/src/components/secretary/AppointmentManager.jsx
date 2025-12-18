@@ -238,7 +238,7 @@ const AppointmentManager = ({ selectedDoctor }) => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      {appt.status === 'scheduled' && (
+                      {appt.status === 'scheduled' && activeTab === 'today' && (
                         <button
                           onClick={() => handleStatusChange(appt.id, 'checked-in')}
                           className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded"

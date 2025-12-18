@@ -1,12 +1,13 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Calendar, Users, LayoutDashboard, LogOut, User, Menu, X, ChevronDown } from 'lucide-react';
+import { Calendar, Users, LayoutDashboard, LogOut, User, Menu, X, ChevronDown, Sun, Moon } from 'lucide-react';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getUnreadCount } from '../../chatApi';
 import { useToast } from '../../contexts/ToastContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { getChatHubConnection, isChatHubConnected, startChatHub } from '../../signalr/chatHub';
 
 const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
@@ -15,6 +16,7 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
     const { user, logout } = useAuth();
     const { showToast } = useToast();
     const { lang, toggle } = useLanguage();
+    const { theme, toggleTheme } = useTheme();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
@@ -40,10 +42,34 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                 const data = await getUnreadCount();
                 if (!mounted) return;
                 const next = data || { unreadMessages: 0, unreadConversations: 0 };
-                setUnreadSummary(next);
+                
+                // Frontend-only fix: For secretaries, filter out notifications for messages they sent
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const userRole = (user.role || '').toLowerCase();
+                
+                if (userRole === 'secretary') {
+                    // For secretaries, we need to be more careful about notifications
+                    // Since the backend doesn't distinguish between sent/received messages,
+                    // we'll use a conservative approach: only show notifications when
+                    // the secretary is not actively in the chat interface
+                    
+                    const isInChatPage = window.location.pathname === '/secretary/chat';
+                    
+                    if (isInChatPage) {
+                        // If secretary is actively in chat, don't show notifications in header
+                        // They can see the unread counts in the chat interface itself
+                        setUnreadSummary({ unreadMessages: 0, unreadConversations: 0 });
+                    } else {
+                        // If not in chat page, show notifications but be conservative
+                        setUnreadSummary(next);
+                    }
+                } else {
+                    // For patients and other roles, show notifications normally
+                    setUnreadSummary(next);
+                }
 
                 const prevUnreadMessages = prevUnreadMessagesRef.current || 0;
-                if (next.unreadMessages > prevUnreadMessages) {
+                if (next.unreadMessages > prevUnreadMessages && !window.location.pathname.includes('/chat')) {
                     showToast('New chat message received', 'info');
                 }
                 prevUnreadMessagesRef.current = next.unreadMessages;
@@ -74,10 +100,29 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
         const onUnread = (payload) => {
             if (!mounted) return;
             const next = payload || { unreadMessages: 0, unreadConversations: 0 };
-            setUnreadSummary(next);
+            
+            // Frontend-only fix: For secretaries, filter out notifications for messages they sent
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const userRole = (user.role || '').toLowerCase();
+            
+            if (userRole === 'secretary') {
+                // For secretaries, only show notifications when not in chat page
+                const isInChatPage = window.location.pathname === '/secretary/chat';
+                
+                if (isInChatPage) {
+                    // If secretary is actively in chat, don't show notifications in header
+                    setUnreadSummary({ unreadMessages: 0, unreadConversations: 0 });
+                } else {
+                    // If not in chat page, show notifications
+                    setUnreadSummary(next);
+                }
+            } else {
+                // For patients and other roles, show notifications normally
+                setUnreadSummary(next);
+            }
 
             const prevUnreadMessages = prevUnreadMessagesRef.current || 0;
-            if (Number(next.unreadMessages || 0) > prevUnreadMessages) {
+            if (Number(next.unreadMessages || 0) > prevUnreadMessages && !window.location.pathname.includes('/chat')) {
                 showToast('New chat message received', 'info');
             }
             prevUnreadMessagesRef.current = Number(next.unreadMessages || 0);
@@ -94,7 +139,7 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
     }, [showToast]);
 
     return (
-        <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-200">
+        <header className="sticky top-0 z-40 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Left: Logo and Mobile Menu Toggle */}
@@ -110,7 +155,7 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                                 D
                             </div>
                             <div className="ml-3 hidden sm:block">
-                                <h1 className="text-lg font-bold text-gray-900 leading-none">DMS</h1>
+                                <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-none">DMS</h1>
                                 <span className="text-xs text-indigo-600 font-medium font-mono uppercase tracking-wider">Secretary Panel</span>
                             </div>
                         </div>
@@ -132,7 +177,7 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                     }`}
                                 >
-                                    <Icon className={`w-4 h-4 mr-2 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
+                                    <Icon className={`w-4 h-4 mr-2 ${isActive ? 'text-indigo-600' : 'text-gray-400 dark:text-gray-500'}`} />
                                     <span className="relative">
                                         {item.label}
                                         {isChat && Number(unreadSummary.unreadConversations || 0) > 0 ? (
@@ -150,8 +195,21 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                     <div className="flex items-center space-x-3">
                         <button
                             type="button"
+                            onClick={toggleTheme}
+                            className="p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                            aria-label="Toggle theme"
+                        >
+                            {theme === 'dark' ? (
+                                <Sun className="w-5 h-5 text-yellow-500" />
+                            ) : (
+                                <Moon className="w-5 h-5 text-indigo-600" />
+                            )}
+                        </button>
+                        <button
+                            type="button"
                             onClick={toggle}
-                            className="px-3 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+                            className="px-3 h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             title="Language"
                             aria-label="Language"
                         >
@@ -161,7 +219,7 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                             <select
                                 value={selectedDoctor}
                                 onChange={(e) => onDoctorChange(e.target.value)}
-                                className="appearance-none pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                                className="appearance-none pl-10 pr-10 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                             >
                                 <option value="">All Doctors</option>
                                 {doctors.map(doc => (
@@ -170,8 +228,8 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                                     </option>
                                 ))}
                             </select>
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
                         </div>
 
                         {/* Profile Menu */}
@@ -184,10 +242,10 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                                     {user?.fullName?.charAt(0) || 'S'}
                                 </div>
                                 <div className="hidden sm:block text-left mr-1">
-                                    <p className="text-xs font-bold text-gray-900 leading-none">{user?.fullName || 'Secretary'}</p>
-                                    <p className="text-[10px] text-gray-500 mt-0.5 leading-none">Online</p>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-white leading-none">{user?.fullName || 'Secretary'}</p>
+                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 leading-none">Online</p>
                                 </div>
-                                <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                                <ChevronDown className={`w-3.5 h-3.5 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             <AnimatePresence>
@@ -199,13 +257,13 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                             transition={{ duration: 0.15 }}
-                                            className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-40 py-1"
+                                            className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-40 py-1"
                                         >
                                             <button
                                                 onClick={() => { navigate('/secretary/profile'); setIsProfileMenuOpen(false); }}
-                                                className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center transition-colors"
+                                                className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center transition-colors"
                                             >
-                                                <User className="w-4 h-4 mr-3 text-gray-400" />
+                                                <User className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
                                                 My Profile
                                             </button>
                                             <div className="h-px bg-gray-100 mx-4 my-1" />
@@ -241,15 +299,15 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                             animate={{ x: 0 }}
                             exit={{ x: '-100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="fixed top-0 left-0 bottom-0 w-[280px] bg-white border-r border-gray-200 z-50 flex flex-col md:hidden"
+                            className="fixed top-0 left-0 bottom-0 w-[280px] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-50 flex flex-col md:hidden"
                         >
                             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                                 <div className="flex items-center">
                                     <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center text-white font-bold">D</div>
-                                    <span className="ml-2 font-bold text-gray-900">Secretary</span>
+                                    <span className="ml-2 font-bold text-gray-900 dark:text-white">Secretary</span>
                                 </div>
                                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                                    <X className="w-5 h-5 text-gray-500" />
+                                    <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                                 </button>
                             </div>
 
@@ -268,7 +326,7 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                                                     : 'text-gray-600 hover:bg-gray-50'
                                             }`}
                                         >
-                                            <Icon className={`w-5 h-5 mr-3 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                                            <Icon className={`w-5 h-5 mr-3 ${isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`} />
                                             <span className="relative">
                                                 {item.label}
                                                 {isChat && Number(unreadSummary.unreadConversations || 0) > 0 ? (
@@ -283,11 +341,11 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                             </div>
 
                             <div className="p-4 border-t border-gray-100">
-                                <p className="text-xs font-bold text-gray-400 mb-3 px-4 uppercase tracking-widest">Doctor Selection</p>
+                                <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mb-3 px-4 uppercase tracking-widest">Doctor Selection</p>
                                 <select
                                     value={selectedDoctor}
                                     onChange={(e) => onDoctorChange(e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none"
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 outline-none"
                                 >
                                     <option value="">All Doctors</option>
                                     {doctors.map(doc => (

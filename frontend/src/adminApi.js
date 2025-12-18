@@ -1,5 +1,4 @@
-
-const API_URL = 'http://localhost:5024/api';
+import API_URL from './config';
 
 const getAuthHeaders = () => {
     const user = localStorage.getItem('user');
