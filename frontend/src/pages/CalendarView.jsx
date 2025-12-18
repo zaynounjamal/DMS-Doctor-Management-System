@@ -34,6 +34,8 @@ const CalendarView = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [loadedRanges, setLoadedRanges] = useState(new Set()); // Track loaded month ranges to avoid duplicate fetches
 
   useEffect(() => {
     const handleResize = () => {
@@ -45,23 +47,42 @@ const CalendarView = () => {
   }, []);
 
   useEffect(() => {
-    loadData();
+    loadData(currentDate);
     // Cleanup function to cancel any pending requests if component unmounts
     return () => {
       // Could add AbortController here if needed
     };
   }, []);
 
-  const loadData = async () => {
+  // Handle calendar navigation - refetch data for the new visible range
+  const handleNavigate = (newDate) => {
+    setCurrentDate(newDate);
+    
+    // Create a range key for the month being navigated to
+    const rangeKey = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+    
+    // Only fetch if we haven't loaded this range yet
+    if (!loadedRanges.has(rangeKey)) {
+      loadData(newDate, true); // true = append to existing events
+    }
+  };
+
+  const loadData = async (centerDate = new Date(), appendMode = false) => {
     try {
       setLoading(true);
 
-      // Load appointments - optimized to load current year
-      const currentYear = new Date().getFullYear();
+      // Calculate a 6-month window around the center date (3 months before, 3 months after)
+      const startDate = new Date(centerDate.getFullYear(), centerDate.getMonth() - 3, 1);
+      const endDate = new Date(centerDate.getFullYear(), centerDate.getMonth() + 4, 0); // Last day of 3 months ahead
+      
       const appointments = await searchAppointments({
-        startDate: new Date(currentYear, 0, 1).toISOString().split('T')[0],
-        endDate: new Date(currentYear, 11, 31).toISOString().split('T')[0]
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0]
       });
+      
+      // Mark this range as loaded
+      const rangeKey = `${centerDate.getFullYear()}-${centerDate.getMonth()}`;
+      setLoadedRanges(prev => new Set([...prev, rangeKey]));
 
       // Load off days
       const offDaysData = await getOffDays();
@@ -128,7 +149,16 @@ const CalendarView = () => {
         type: 'offDay'
       }));
 
-      setEvents([...appointmentEvents, ...offDayEvents]);
+      if (appendMode) {
+        // Merge new events with existing ones, avoiding duplicates
+        setEvents(prev => {
+          const existingIds = new Set(prev.map(e => e.id));
+          const newEvents = [...appointmentEvents, ...offDayEvents].filter(e => !existingIds.has(e.id));
+          return [...prev, ...newEvents];
+        });
+      } else {
+        setEvents([...appointmentEvents, ...offDayEvents]);
+      }
 
       // Debug logging for agenda view
       console.log('Loaded events:', [...appointmentEvents, ...offDayEvents]);
@@ -942,6 +972,8 @@ const CalendarView = () => {
               style={{ height: '650px', opacity: loading ? 0.5 : 1, transition: 'opacity 0.3s ease' }}
               eventPropGetter={eventStyleGetter}
               onSelectEvent={handleSelectEvent}
+              onNavigate={handleNavigate}
+              date={currentDate}
               views={['month', 'week', 'day', 'agenda']}
               length={90}
               popup

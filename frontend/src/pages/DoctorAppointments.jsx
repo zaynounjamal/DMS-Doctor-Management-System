@@ -732,22 +732,38 @@ const DoctorAppointments = () => {
         )}
       </div>
 
+      {/* Inline CSS for spinner animation */}
+      <style>{`
+        @keyframes appointmentSpinner {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+
       {/* Appointments List */}
       <div style={{ minHeight: '400px', position: 'relative' }}>
         {loading && (
           <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            backdropFilter: 'blur(2px)',
             display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
-            alignItems: 'start',
-            paddingTop: '100px',
-            zIndex: 10,
-            borderRadius: '16px'
+            padding: '12px',
+            marginBottom: '16px',
+            background: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(147, 51, 234, 0.05)',
+            borderRadius: '12px',
+            border: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(147, 51, 234, 0.1)'
           }}>
-            <div style={{ fontSize: '18px', color: '#fff', fontWeight: 'bold' }}>Loading appointments...</div>
+            <div style={{
+              width: '20px',
+              height: '20px',
+              border: theme === 'dark' ? '2px solid rgba(255, 255, 255, 0.2)' : '2px solid rgba(147, 51, 234, 0.2)',
+              borderTopColor: theme === 'dark' ? '#ffffff' : '#9333ea',
+              borderRadius: '50%',
+              animation: 'appointmentSpinner 0.8s linear infinite',
+              marginRight: '12px'
+            }} />
+            <span style={{ fontSize: '14px', color: theme === 'dark' ? '#ffffff' : '#9333ea', fontWeight: '600' }}>
+              Updating appointments...
+            </span>
           </div>
         )}
 
