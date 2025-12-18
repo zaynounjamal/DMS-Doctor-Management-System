@@ -3,15 +3,25 @@ import { MessageCircle, Send, X } from 'lucide-react';
 import { startChat, getConversationMessages, sendConversationMessage } from '../../chatApi';
 import { useToast } from '../../contexts/ToastContext';
 
-const PatientChatWidget = () => {
+const PatientChatWidget = ({ hideButton = false, open: controlledOpen, onOpenChange, onNewMessage }) => {
   const { showToast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
+  
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState(null);
   const [infoMessage, setInfoMessage] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const bottomRef = useRef(null);
+  const chatWindowRef = useRef(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const prevMessageCount = useRef(0);
 
   const canSend = useMemo(() => text.trim().length > 0 && !!conversationId, [text, conversationId]);
 
@@ -23,7 +33,19 @@ const PatientChatWidget = () => {
 
   const loadConversation = async (id) => {
     const msgs = await getConversationMessages(id);
-    setMessages(msgs || []);
+    const newMsgs = msgs || [];
+    
+    if (newMsgs.length > prevMessageCount.current) {
+      const addedCount = newMsgs.length - prevMessageCount.current;
+      // Only notify if there are new messages and it's not the initial load or from the user
+      const lastMsg = newMsgs[newMsgs.length - 1];
+      if (prevMessageCount.current > 0 && lastMsg && lastMsg.sender?.toLowerCase() !== 'patient') {
+        if (onNewMessage) onNewMessage(addedCount);
+      }
+      prevMessageCount.current = newMsgs.length;
+    }
+
+    setMessages(newMsgs);
     setTimeout(scrollToBottom, 50);
   };
 
@@ -42,13 +64,13 @@ const PatientChatWidget = () => {
   };
 
   useEffect(() => {
-    if (open && !conversationId) {
+    if (!conversationId) {
       initChat();
     }
-  }, [open]);
+  }, []);
 
   useEffect(() => {
-    if (!open || !conversationId) return;
+    if (!conversationId) return;
 
     const interval = setInterval(async () => {
       try {
@@ -58,7 +80,7 @@ const PatientChatWidget = () => {
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [open, conversationId]);
+  }, [conversationId]);
 
   const handleSend = async () => {
     if (!canSend) return;
@@ -75,21 +97,71 @@ const PatientChatWidget = () => {
     }
   };
 
+  // Drag handlers
+  const handleMouseDown = (e) => {
+    if (e.target.closest('button') || e.target.closest('input')) return;
+    setIsDragging(true);
+    dragStartPos.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    };
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e) => {
+      setPosition({
+        x: e.clientX - dragStartPos.current.x,
+        y: e.clientY - dragStartPos.current.y
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
   return (
-    <div className="fixed bottom-5 right-5 z-50">
+    <div className="fixed bottom-5 right-5 z-[9998]">
       {!open ? (
-        <button
-          onClick={() => setOpen(true)}
-          className="flex items-center gap-2 px-4 py-3 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700"
-        >
-          <MessageCircle className="w-5 h-5" />
-          Chat
-        </button>
+        !hideButton && (
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center gap-2 px-4 py-3 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Chat
+          </button>
+        )
       ) : (
-        <div className="w-[360px] max-w-[90vw] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 bg-indigo-600 text-white">
+        <div 
+          ref={chatWindowRef}
+          className="w-[360px] max-w-[90vw] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden"
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px)`,
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+          }}
+        >
+          <div 
+            className="flex items-center justify-between px-4 py-3 bg-indigo-600 text-white"
+            onMouseDown={handleMouseDown}
+            style={{ cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none' }}
+          >
             <div className="font-semibold">Secretary Support</div>
-            <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-white/10">
+            <button type="button" onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(false);
+            }} className="p-1 rounded hover:bg-white/10">
               <X className="w-5 h-5" />
             </button>
           </div>

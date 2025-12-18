@@ -60,24 +60,24 @@ const DoctorPatients = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-6 pr-12 py-4 rounded-xl outline-none transition-all"
           style={{
-            background: '#000000',
+            background: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
-            border: '3px solid #9333ea',
-            color: 'white',
-            boxShadow: '0 0 20px rgba(147, 51, 234, 0.3)',
+            border: '2px solid rgba(147, 51, 234, 0.2)',
+            color: '#111827',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
             fontSize: '1.1rem'
           }}
           onFocus={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 30px rgba(147, 51, 234, 0.5)';
-            e.currentTarget.style.borderColor = '#a855f7';
+            e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(147, 51, 234, 0.1)';
+            e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.5)';
           }}
           onBlur={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 20px rgba(147, 51, 234, 0.3)';
-            e.currentTarget.style.borderColor = '#9333ea';
+            e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
+            e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.2)';
           }}
         />
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-purple-500">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-purple-600">
           <Search size={24} />
         </div>
       </div>
@@ -85,22 +85,22 @@ const DoctorPatients = () => {
       {/* Patients Grid */}
       {filteredPatients.length === 0 ? (
         <div style={{
-          background: '#000000',
+          background: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
           borderRadius: '16px',
-          border: '1px solid rgba(155, 89, 182, 0.2)',
-          boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+          border: '1px solid rgba(147, 51, 234, 0.1)',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
           padding: '60px 20px',
           textAlign: 'center'
         }}>
           <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
             <Users size={64} className="text-gray-400" />
           </div>
-          <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px' }}>
+          <h3 style={{ fontSize: '20px', color: '#111827', marginBottom: '8px', fontWeight: 'bold' }}>
             {searchTerm ? 'No patients found' : 'No patients yet'}
           </h3>
-          <p style={{ fontSize: '14px', color: '#ccc' }}>
+          <p style={{ fontSize: '14px', color: '#6b7280' }}>
             {searchTerm ? 'Try a different search term' : 'Your patients will appear here'}
           </p>
         </div>
@@ -112,11 +112,19 @@ const DoctorPatients = () => {
               onClick={() => navigate(`/doctor/patients/${patient.id}`)}
               className="relative overflow-hidden rounded-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
               style={{
-                background: '#000000',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
-                border: '1px solid rgba(155, 89, 182, 0.2)',
-                boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)'
+                border: '1px solid rgba(147, 51, 234, 0.1)',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.4)';
+                e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(147, 51, 234, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.1)';
+                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
               }}
             >
               <div className={`
@@ -126,30 +134,30 @@ const DoctorPatients = () => {
 
               <div className="p-6 flex items-start gap-4">
                 <div className={`
-                w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0
-                bg-purple-900/30 text-purple-400 border border-purple-500/30
-              `}>
+                  w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0
+                  bg-purple-50 text-purple-600 border border-purple-100
+                `}>
                   {patient.fullName.charAt(0)}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-lg truncate mb-1 text-white">
+                  <h3 className="font-bold text-lg truncate mb-1 text-gray-900">
                     {patient.fullName}
                   </h3>
                   <div className="space-y-1">
-                    <p className="text-sm flex items-center gap-2 text-gray-400">
+                    <p className="text-sm flex items-center gap-2 text-gray-600">
                       <Mail size={16} className="flex-shrink-0" color="#9333ea" />
                       <span className="truncate">{patient.email}</span>
                     </p>
-                    <p className="text-sm flex items-center gap-2 text-gray-400">
+                    <p className="text-sm flex items-center gap-2 text-gray-600">
                       <Phone size={16} className="flex-shrink-0" color="#9333ea" />
                       {patient.phoneNumber || 'N/A'}
                     </p>
-                    <p className="text-sm flex items-center gap-2 text-gray-400">
+                    <p className="text-sm flex items-center gap-2 text-gray-600">
                       <Calendar size={16} className="flex-shrink-0" color="#9333ea" />
                       {patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A'}
                     </p>
-                    <p className="text-sm flex items-center gap-2 text-gray-400">
+                    <p className="text-sm flex items-center gap-2 text-gray-600">
                       <User size={16} className="flex-shrink-0" color="#9333ea" />
                       {patient.gender || 'N/A'}
                     </p>

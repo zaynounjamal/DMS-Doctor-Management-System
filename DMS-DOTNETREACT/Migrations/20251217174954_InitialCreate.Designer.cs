@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DMS_DOTNETREACT.Migrations
 {
     [DbContext(typeof(ClinicDbContext))]
-    [Migration("20251216144444_AddAdminDashboard")]
-    partial class AddAdminDashboard
+    [Migration("20251217174954_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -101,6 +101,111 @@ namespace DMS_DOTNETREACT.Migrations
                     b.ToTable("Appointments");
                 });
 
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.AuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AuditLogs");
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.ChatConversation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AssignedSecretaryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedSecretaryId");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("ChatConversations");
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.ChatMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ConversationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("SenderUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId");
+
+                    b.ToTable("ChatMessages");
+                });
+
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Doctor", b =>
                 {
                     b.Property<int>("Id")
@@ -141,6 +246,82 @@ namespace DMS_DOTNETREACT.Migrations
                         .IsUnique();
 
                     b.ToTable("Doctors");
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.EmailTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmailTemplates");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Body = "\r\n                    <h3>Welcome, {{FullName}}!</h3>\r\n                    <p>Thank you for registering with us. We are excited to have you on board.</p>\r\n                    <p>Your username is: <strong>{{UserName}}</strong></p>\r\n                    <br/>\r\n                    <p>Best Regards,</p>\r\n                    <p>The Clinic Team</p>",
+                            Description = "Sent to new users upon registration.",
+                            LastUpdated = new DateTime(2025, 12, 17, 17, 49, 53, 892, DateTimeKind.Utc).AddTicks(3882),
+                            Name = "WelcomeEmail",
+                            Subject = "Welcome to Our Clinic!"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Body = "\r\n                    <h3>Appointment Reminder</h3>\r\n                    <p>Dear {{FullName}},</p>\r\n                    <p>This is a reminder for your upcoming appointment.</p>\r\n                    <p><strong>Date:</strong> {{Date}}</p>\r\n                    <p><strong>Time:</strong> {{Time}}</p>\r\n                    <p><strong>Doctor:</strong> {{DoctorName}}</p>\r\n                    <br/>\r\n                    <p>Please contact us if you need to reschedule.</p>\r\n                    <p>The Clinic Team</p>",
+                            Description = "Automated reminder sent 1 day before appointment.",
+                            LastUpdated = new DateTime(2025, 12, 17, 17, 49, 53, 892, DateTimeKind.Utc).AddTicks(5551),
+                            Name = "AppointmentReminder",
+                            Subject = "Appointment Reminder"
+                        });
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Holiday", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsRecurring")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Holidays");
                 });
 
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.MedicalNote", b =>
@@ -383,6 +564,22 @@ namespace DMS_DOTNETREACT.Migrations
                     b.ToTable("Secretaries");
                 });
 
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.SecretaryAvailability", b =>
+                {
+                    b.Property<int>("SecretaryId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("SecretaryId");
+
+                    b.ToTable("SecretaryAvailabilities");
+                });
+
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.SystemSetting", b =>
                 {
                     b.Property<int>("Id")
@@ -493,6 +690,10 @@ namespace DMS_DOTNETREACT.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -536,6 +737,44 @@ namespace DMS_DOTNETREACT.Migrations
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.AuditLog", b =>
+                {
+                    b.HasOne("DMS_DOTNETREACT.DataModel.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.ChatConversation", b =>
+                {
+                    b.HasOne("DMS_DOTNETREACT.DataModel.Secretary", "AssignedSecretary")
+                        .WithMany()
+                        .HasForeignKey("AssignedSecretaryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("DMS_DOTNETREACT.DataModel.Patient", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AssignedSecretary");
+
+                    b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.ChatMessage", b =>
+                {
+                    b.HasOne("DMS_DOTNETREACT.DataModel.ChatConversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
                 });
 
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Doctor", b =>
@@ -657,6 +896,17 @@ namespace DMS_DOTNETREACT.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.SecretaryAvailability", b =>
+                {
+                    b.HasOne("DMS_DOTNETREACT.DataModel.Secretary", "Secretary")
+                        .WithOne()
+                        .HasForeignKey("DMS_DOTNETREACT.DataModel.SecretaryAvailability", "SecretaryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Secretary");
+                });
+
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Transaction", b =>
                 {
                     b.HasOne("DMS_DOTNETREACT.DataModel.Patient", "Patient")
@@ -673,6 +923,11 @@ namespace DMS_DOTNETREACT.Migrations
                     b.Navigation("MedicalNotes");
 
                     b.Navigation("Payment");
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.ChatConversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.Doctor", b =>

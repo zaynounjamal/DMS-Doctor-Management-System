@@ -34,13 +34,21 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, sho
 
   return (
     <div
-      className={`relative p-6 rounded-xl border transition-all duration-300 group ${appointment.isCompleted ? 'opacity-75 hover:opacity-100' : ''}`}
+      className={`relative p-6 rounded-xl transition-all duration-300 group ${appointment.isCompleted ? 'opacity-75 hover:opacity-100' : ''}`}
       style={{
-        background: '#000000',
+        background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        border: '1px solid rgba(155, 89, 182, 0.2)',
-        boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+        border: '1px solid rgba(147, 51, 234, 0.1)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.4)';
+        e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(147, 51, 234, 0.1)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.1)';
+        e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
       }}
     >
       {/* Status Bar */}
@@ -52,10 +60,10 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, sho
       {/* Header */}
       <div className="flex justify-between items-start mb-4 pl-4">
         <div>
-          <h3 className="text-lg font-bold mb-1 text-white">
+          <h3 className="text-lg font-bold mb-1 text-gray-900">
             {appointment.patient?.fullName || 'Unknown Patient'}
           </h3>
-          <div className="text-sm flex items-center gap-2 text-gray-400">
+          <div className="text-sm flex items-center gap-2 text-gray-600">
             <Phone size={16} className="flex-shrink-0" color="#9333ea" />
             {appointment.patient?.phone || 'N/A'}
           </div>
@@ -80,20 +88,20 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, sho
       <div className="flex flex-wrap gap-4 mb-4 pl-4">
         <div className="flex items-center gap-2">
           <Calendar size={16} className="flex-shrink-0" color="#9333ea" />
-          <span className="text-sm font-medium text-gray-300">
+          <span className="text-sm font-medium text-gray-700">
             {new Date(appointment.appointmentDate).toLocaleDateString()}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <Clock size={16} className="flex-shrink-0" color="#9333ea" />
-          <span className="text-sm font-medium text-gray-300">
+          <span className="text-sm font-medium text-gray-700">
             {appointment.appointmentTime}
           </span>
         </div>
         {appointment.medicalNotesCount > 0 && (
           <div className="flex items-center gap-2">
             <FileText size={16} className="flex-shrink-0" color="#9333ea" />
-            <span className="text-sm font-medium text-gray-300">
+            <span className="text-sm font-medium text-gray-700">
               {appointment.medicalNotesCount} note{appointment.medicalNotesCount > 1 ? 's' : ''}
             </span>
           </div>
@@ -105,7 +113,7 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, sho
         <div className="flex flex-wrap gap-4 mb-4 pl-4 items-center">
           <div className="flex items-center gap-2">
             <DollarSign size={16} className="flex-shrink-0" color="#9333ea" />
-            <span className="text-base font-bold text-white">
+            <span className="text-base font-bold text-gray-900">
               ${appointment.finalPrice.toFixed(2)}
             </span>
           </div>
@@ -142,7 +150,7 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, sho
 
       {/* Actions */}
       {showActions && (
-        <div className="flex gap-3 mt-4 pt-4 border-t pl-4 border-gray-700">
+        <div className="flex gap-3 mt-4 pt-4 border-t pl-4 border-gray-100">
           {!appointment.isCompleted && (
             <button
               onClick={() => onMarkAsDone(appointment)}
@@ -162,10 +170,10 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, sho
           </button>
 
           {!appointment.isCompleted && (
-            <div className="flex gap-2 border-l pl-3 dark:border-gray-700">
+            <div className="flex gap-2 border-l pl-3 border-gray-100">
               <button
                 onClick={() => onRemind && onRemind(appointment, 'email')}
-                className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-colors"
                 title="Send Email Reminder"
               >
                 <div className="flex gap-1 items-center">

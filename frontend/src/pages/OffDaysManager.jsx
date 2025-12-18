@@ -88,22 +88,22 @@ const OffDaysManager = () => {
 
       {/* Add New Off Day Card */}
       <div style={{
-        background: '#000000',
+        background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         borderRadius: '16px',
-        border: '1px solid rgba(155, 89, 182, 0.2)',
-        boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+        border: '1px solid rgba(147, 51, 234, 0.1)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
         padding: '24px'
       }}>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
-          <Plus size={20} className="text-purple-500" />
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900">
+          <Plus size={20} className="text-purple-600" />
           Add New Off Day
         </h2>
 
         <form onSubmit={handleAddOffDay} className="flex flex-col sm:flex-row gap-4 items-end">
           <div className="w-full sm:w-auto flex-1">
-            <label className="block text-sm font-medium mb-1.5 text-gray-300">
+            <label className="block text-sm font-bold mb-1.5 text-gray-700">
               Select Date
             </label>
             <input
@@ -112,15 +112,15 @@ const OffDaysManager = () => {
               onChange={(e) => setNewDate(e.target.value)}
               className="w-full px-4 py-2.5 rounded-lg outline-none transition-all"
               style={{
-                background: '#000000',
-                border: '1px solid rgba(155, 89, 182, 0.3)',
-                color: 'white'
+                background: '#ffffff',
+                border: '1px solid rgba(147, 51, 234, 0.1)',
+                color: '#111827'
               }}
               required
             />
           </div>
           <div className="w-full sm:w-auto flex-1">
-            <label className="block text-sm font-medium mb-1.5 text-gray-300">
+            <label className="block text-sm font-bold mb-1.5 text-gray-700">
               Description
             </label>
             <input
@@ -130,9 +130,9 @@ const OffDaysManager = () => {
               placeholder="Reason (optional)"
               className="w-full px-4 py-2.5 rounded-lg outline-none transition-all"
               style={{
-                background: '#000000',
-                border: '1px solid rgba(155, 89, 182, 0.3)',
-                color: 'white'
+                background: '#ffffff',
+                border: '1px solid rgba(147, 51, 234, 0.1)',
+                color: '#111827'
               }}
             />
           </div>
@@ -148,17 +148,17 @@ const OffDaysManager = () => {
 
       {/* Off Days List */}
       <div style={{
-        background: '#000000',
+        background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         borderRadius: '16px',
-        border: '1px solid rgba(155, 89, 182, 0.2)',
-        boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+        border: '1px solid rgba(147, 51, 234, 0.1)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
         overflow: 'hidden'
       }}>
-        <div className="px-6 py-4 border-b border-gray-800">
-          <h2 className="text-lg font-semibold flex items-center gap-2 text-white">
-            <CalendarIcon size={20} className="text-purple-500" />
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
+            <CalendarIcon size={20} className="text-purple-600" />
             Scheduled Off Days
           </h2>
         </div>
@@ -179,15 +179,15 @@ const OffDaysManager = () => {
                 role="row"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-800 text-purple-400">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-purple-50 text-purple-600">
                     <CalendarIcon size={18} />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-200">
+                    <p className="font-bold text-gray-900">
                       {new Date(day.offDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                     {day.reason && (
-                      <p className="text-sm text-gray-400 mt-1">
+                      <p className="text-sm text-gray-500 mt-1">
                         {day.reason}
                       </p>
                     )}

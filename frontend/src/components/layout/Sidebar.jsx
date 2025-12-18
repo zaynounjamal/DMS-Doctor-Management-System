@@ -16,12 +16,13 @@ const iconMap = {
   'Book Appointment': FileText
 };
 
-const Sidebar = ({ isOpen, onClose, navItems, variant = 'mobile' }) => {
+const Sidebar = ({ isOpen, onClose, navItems, variant = 'mobile', role = 'patient' }) => {
   const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   
   const isMobile = variant === 'mobile';
+  const isDoctor = role === 'doctor';
 
   const handleNavClick = (href) => {
     if (isMobile) onClose();
@@ -84,31 +85,37 @@ const Sidebar = ({ isOpen, onClose, navItems, variant = 'mobile' }) => {
             exit="exit"
             className={`${
               isMobile 
-                ? 'fixed top-16 left-0 bottom-0 z-30 shadow-2xl border-r w-64' 
+                ? isDoctor ? 'fixed top-16 left-0 bottom-0 z-30 w-64 shadow-2xl' : 'fixed top-0 left-0 bottom-0 right-0 z-50 w-full h-full' 
                 : 'relative w-full h-full' 
             } ${
-              theme === 'light'
-                ? 'bg-white/95 border-gray-200 text-gray-800'
-                : 'bg-gray-900/95 border-gray-800 text-white'
-            }`}
+              isDoctor
+                ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100'
+                : theme === 'light'
+                  ? 'bg-purple-600/80 backdrop-blur-xl border-purple-500/30 text-white'
+                  : 'bg-purple-900/80 backdrop-blur-xl border-purple-800/30 text-white'
+            } border-r`}
           >
-            {/* Close Button - Mobile Only */}
+            {/* Close Button - Visible on Mobile */}
             {isMobile && (
               <motion.button
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.2 }}
+                transition={{ delay: 0.1, duration: 0.2 }}
                 onClick={onClose}
-                className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all md:hidden"
+                className={`absolute top-4 right-4 p-2 rounded-full transition-all z-50 ${
+                  isDoctor
+                    ? 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    : 'bg-white/20 hover:bg-white/30 backdrop-blur-sm shadow-lg text-white'
+                }`}
                 aria-label="Close menu"
               >
-                <X size={20} className="text-gray-500" />
+                <X size={isDoctor ? 20 : 24} />
               </motion.button>
             )}
 
             {/* Navigation Items */}
-            <nav className="h-full overflow-y-auto py-6 px-3">
-              <ul className="space-y-1">
+            <nav className={`h-full overflow-y-auto ${isDoctor ? 'py-6 px-3' : 'flex items-center justify-center px-6 py-8'}`}>
+              <ul className={isDoctor ? 'space-y-1' : 'space-y-6 w-full max-w-md'}>
                 {navItems.map((item, index) => {
                   const Icon = iconMap[item.name] || FileText;
                   const isActive = location.pathname === item.href;
@@ -120,25 +127,33 @@ const Sidebar = ({ isOpen, onClose, navItems, variant = 'mobile' }) => {
                     >
                       <motion.button
                         onClick={() => handleNavClick(item.href)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group relative overflow-hidden ${
-                               theme === 'light' 
-                                 ? (isActive ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900')
-                                 : (isActive ? 'bg-purple-900/40 text-purple-300' : 'text-gray-400 hover:bg-gray-800 hover:text-white')
+                        className={`w-full transition-all duration-200 group relative overflow-hidden ${
+                          isDoctor
+                            ? `flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${
+                                isActive 
+                                  ? 'bg-primary-light/10 text-primary-light border-l-4 border-primary-light' 
+                                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-light'
+                              }`
+                            : `flex flex-col items-center justify-center gap-3 px-8 py-6 text-lg font-semibold rounded-2xl ${
+                                 isActive 
+                                   ? 'bg-white/30 text-white backdrop-blur-sm shadow-2xl scale-105' 
+                                   : 'text-white/80 hover:bg-white/20 hover:text-white hover:shadow-xl'
+                              }`
                         }`}
-                        whileHover={{ x: 4 }}
+                        whileHover={isDoctor ? { x: 4 } : { scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                         {isActive && (
+                         {isActive && !isDoctor && (
                             <motion.div
                                 layoutId="activeNavIndicator"
-                                className={`absolute left-0 top-0 bottom-0 w-1 ${theme === 'light' ? 'bg-purple-600' : 'bg-purple-400'}`}
+                                className="absolute inset-0 bg-white/10 rounded-2xl"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                             />
                          )}
-                         <Icon size={18} className={`transition-opacity ${isActive ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}`} />
-                         <span>{item.name}</span>
+                         <Icon size={isDoctor ? 18 : 32} className={`transition-opacity relative z-10 ${isActive ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}`} />
+                         <span className="relative z-10">{item.name}</span>
                       </motion.button>
                     </motion.li>
                   );

@@ -148,31 +148,34 @@ const CalendarView = () => {
       return { style: {} };
     }
 
-    let backgroundGradient = 'linear-gradient(135deg, #5b9bd5 0%, #4a7fb8 100%)';
+    let backgroundGradient = 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)';
+    let textColor = 'white';
+    let borderColor = 'rgba(255, 255, 255, 0.3)';
 
     if (event.type === 'offDay') {
-      backgroundGradient = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+      backgroundGradient = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
     } else if (event.resource?.isCompleted) {
-      // Completed appointments could have different styling
-      backgroundGradient = 'linear-gradient(135deg, #5b9bd5 0%, #4a7fb8 100%)';
+      backgroundGradient = 'rgba(147, 51, 234, 0.1)';
+      textColor = '#9333ea';
+      borderColor = 'rgba(147, 51, 234, 0.3)';
     } else if (event.resource?.status === 'cancelled') {
-      // Cancelled appointments could have different styling
-      backgroundGradient = 'linear-gradient(135deg, #5b9bd5 0%, #4a7fb8 100%)';
+      backgroundGradient = 'rgba(239, 68, 68, 0.1)';
+      textColor = '#ef4444';
+      borderColor = 'rgba(239, 68, 68, 0.3)';
     }
 
     return {
       style: {
         background: backgroundGradient,
         borderRadius: '8px',
-        opacity: 0.95,
-        color: 'white',
-        border: 'none',
-        borderLeft: '3px solid rgba(255, 255, 255, 0.5)',
+        opacity: 1,
+        color: textColor,
+        border: '1px solid ' + borderColor,
         display: 'block',
         padding: '6px 10px',
         fontSize: '12px',
-        fontWeight: '500',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+        fontWeight: '600',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
         transition: 'all 0.3s ease',
         cursor: 'pointer'
       }
@@ -257,12 +260,12 @@ const CalendarView = () => {
         
         /* Glass container */
         .calendar-glass-container {
-          background: #000000;
+          background: rgba(255, 255, 255, 0.95);
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
           border-radius: clamp(16px, 4vw, 20px);
-          border: 1px solid rgba(155, 89, 182, 0.2);
-          box-shadow: 0 20px 60px rgba(155, 89, 182, 0.15);
+          border: 1px solid rgba(147, 51, 234, 0.1);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
           padding: clamp(16px, 4vw, 30px);
           width: 100%;
           box-sizing: border-box;
@@ -271,17 +274,17 @@ const CalendarView = () => {
         /* Calendar base */
         .rbc-calendar {
           background: transparent !important;
-          color: #ffffff !important;
+          color: #111827 !important;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
         }
         
-        /* Day headers - Purple with shimmer */
+        /* Day headers */
         .rbc-header {
-          background: linear-gradient(135deg, #581c87 0%, #7e22ce 100%) !important;
-          color: #000000 !important;
+          background: #f9fafb !important;
+          color: #4b5563 !important;
           border: none !important;
-          border-bottom: 2px solid #9333ea !important;
-          border-right: 1px solid rgba(155, 89, 182, 0.3) !important;
+          border-bottom: 2px solid rgba(147, 51, 234, 0.2) !important;
+          border-right: 1px solid rgba(147, 51, 234, 0.1) !important;
           padding: 16px 8px !important;
           font-weight: 700 !important;
           text-transform: uppercase !important;
@@ -305,12 +308,12 @@ const CalendarView = () => {
           animation: shimmer 3s infinite;
         }
         
-        /* Calendar cells - Dark with hover effect */
+        /* Calendar cells */
         .rbc-day-bg {
-          background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%) !important;
+          background: #ffffff !important;
           border: none !important;
-          border-right: 1px solid rgba(155, 89, 182, 0.2) !important;
-          border-bottom: 1px solid rgba(155, 89, 182, 0.2) !important;
+          border-right: 1px solid rgba(147, 51, 234, 0.1) !important;
+          border-bottom: 1px solid rgba(147, 51, 234, 0.1) !important;
           transition: all 0.3s ease !important;
           position: relative !important;
         }
@@ -330,9 +333,8 @@ const CalendarView = () => {
         }
         
         .rbc-day-bg:hover {
-          transform: scale(1.02) !important;
-          box-shadow: 0 8px 25px rgba(155, 89, 182, 0.2) !important;
-          z-index: 10 !important;
+          background: rgba(147, 51, 234, 0.05) !important;
+          z-index: 1 !important;
         }
         
         .rbc-day-bg:hover::before {
@@ -341,7 +343,7 @@ const CalendarView = () => {
         
         /* Date numbers */
         .rbc-date-cell {
-          color: #ffffff !important;
+          color: #374151 !important;
           font-size: 16px !important;
           font-weight: 600 !important;
           padding: 12px 8px 8px 8px !important;
@@ -349,7 +351,7 @@ const CalendarView = () => {
         }
         
         .rbc-date-cell > a {
-          color: #ffffff !important;
+          color: #374151 !important;
           transition: all 0.3s ease !important;
         }
         
@@ -366,11 +368,11 @@ const CalendarView = () => {
           overflow: visible !important;
         }
         
-        /* Today's date - Purple with pulse animation */
+        /* Today's date */
         .rbc-today {
-          background: linear-gradient(135deg, #581c87 0%, #7e22ce 100%) !important;
-          border: 2px solid #9333ea !important;
-          box-shadow: 0 0 30px rgba(155, 89, 182, 0.5), inset 0 0 20px rgba(155, 89, 182, 0.1) !important;
+          background: rgba(147, 51, 234, 0.05) !important;
+          border: 2px solid rgba(147, 51, 234, 0.3) !important;
+          box-shadow: inset 0 0 20px rgba(147, 51, 234, 0.05) !important;
         }
         
         .rbc-today::after {
@@ -384,19 +386,18 @@ const CalendarView = () => {
         }
         
         .rbc-today .rbc-date-cell > a {
-          color: #000000 !important;
+          color: #9333ea !important;
           font-size: 18px !important;
           font-weight: 700 !important;
-          text-shadow: 0 0 10px rgba(155, 89, 182, 0.5) !important;
         }
         
         /* Toolbar */
         .rbc-toolbar {
           background: transparent !important;
-          color: #ffffff !important;
+          color: #111827 !important;
           padding: clamp(16px, 3vw, 20px) 0 !important;
           margin-bottom: clamp(16px, 3vw, 20px) !important;
-          border-bottom: 1px solid rgba(155, 89, 182, 0.2) !important;
+          border-bottom: 1px solid rgba(147, 51, 234, 0.1) !important;
           display: flex !important;
           flex-wrap: wrap !important;
           align-items: center !important;
@@ -405,10 +406,7 @@ const CalendarView = () => {
         }
         
         .rbc-toolbar-label {
-          background: linear-gradient(135deg, #ffffff 0%, #9333ea 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          color: #111827 !important;
           font-weight: 700 !important;
           font-size: clamp(18px, 4vw, 24px) !important;
           letter-spacing: -0.5px !important;
@@ -417,9 +415,9 @@ const CalendarView = () => {
         /* Buttons - Modern gradient with hover effects */
         .rbc-btn-group button,
         .rbc-toolbar button {
-          background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
-          color: #ffffff !important;
-          border: 1px solid rgba(155, 89, 182, 0.3) !important;
+          background: #ffffff !important;
+          color: #374151 !important;
+          border: 1px solid rgba(147, 51, 234, 0.2) !important;
           border-radius: 10px !important;
           padding: 10px 20px !important;
           font-weight: 500 !important;
@@ -444,10 +442,10 @@ const CalendarView = () => {
         
         .rbc-btn-group button:hover,
         .rbc-toolbar button:hover {
-          background: linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%) !important;
-          border-color: rgba(155, 89, 182, 0.6) !important;
+          background: #f9fafb !important;
+          border-color: rgba(147, 51, 234, 0.5) !important;
           transform: translateY(-2px) !important;
-          box-shadow: 0 5px 15px rgba(155, 89, 182, 0.3) !important;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
         }
         
         .rbc-btn-group button:hover::before,
@@ -458,9 +456,9 @@ const CalendarView = () => {
         .rbc-btn-group button.rbc-active,
         .rbc-toolbar button.rbc-active {
           background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%) !important;
-          color: #000000 !important;
+          color: #ffffff !important;
           border-color: #9333ea !important;
-          box-shadow: 0 4px 12px rgba(155, 89, 182, 0.5) !important;
+          box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3) !important;
         }
         
         /* Events - Enhanced with hover */
@@ -474,8 +472,7 @@ const CalendarView = () => {
         }
         
         .rbc-event:hover {
-          transform: translateX(3px) !important;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
         }
         
         .rbc-event-content {
@@ -484,8 +481,8 @@ const CalendarView = () => {
         
         /* Off-range days */
         .rbc-off-range-bg {
-          background: linear-gradient(135deg, #050505 0%, #0f0f0f 100%) !important;
-          opacity: 0.5 !important;
+          background: #f3f4f6 !important;
+          opacity: 0.6 !important;
         }
         
         .rbc-off-range {
@@ -504,9 +501,9 @@ const CalendarView = () => {
         }
         
         .rbc-time-content {
-          border-top: 1px solid rgba(155, 89, 182, 0.3) !important;
+          border-top: 1px solid rgba(147, 51, 234, 0.1) !important;
           border-left: none !important;
-          background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%) !important;
+          background: #ffffff !important;
         }
         
         .rbc-time-gutter {
@@ -540,7 +537,7 @@ const CalendarView = () => {
         
         .rbc-agenda-view table {
           background: transparent !important;
-          color: #ffffff !important;
+          color: #111827 !important;
           border: none !important;
           border-collapse: separate !important;
           border-spacing: 0 8px !important;
@@ -551,28 +548,27 @@ const CalendarView = () => {
         }
         
         .rbc-agenda-view table thead tr th {
-          color: #000000 !important;
+          color: #ffffff !important;
           font-weight: 700 !important;
           border: none !important;
           padding: 12px !important;
         }
         
         .rbc-agenda-view table tbody tr {
-          background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%) !important;
-          border: none !important;
+          background: #ffffff !important;
+          border: 1px solid rgba(147, 51, 234, 0.1) !important;
           border-radius: 8px !important;
           transition: all 0.3s ease !important;
         }
         
         .rbc-agenda-view table tbody tr:hover {
-          background: radial-gradient(circle at center, rgba(155, 89, 182, 0.1), transparent);
-          transform: scale(1.01) !important;
+          background: rgba(147, 51, 234, 0.05) !important;
         }
         
         .rbc-agenda-date-cell,
         .rbc-agenda-time-cell,
         .rbc-agenda-event-cell {
-          color: #ffffff !important;
+          color: #374151 !important;
           padding: 12px !important;
           border: none !important;
         }
@@ -587,11 +583,10 @@ const CalendarView = () => {
         
         /* Empty agenda message */
         .rbc-agenda-empty {
-          color: #ffffff !important;
+          color: #6b7280 !important;
           text-align: center !important;
           padding: 40px !important;
           font-size: 16px !important;
-          opacity: 0.7 !important;
         }
         
         /* Week/Day view time column */
@@ -903,7 +898,7 @@ const CalendarView = () => {
             }}>
               Calendar
             </h1>
-            <p style={{ margin: '8px 0 0 0', fontSize: 'clamp(14px, 2vw, 16px)', color: '#ffffff', opacity: 0.8 }}>
+            <p style={{ margin: '8px 0 0 0', fontSize: 'clamp(14px, 2vw, 16px)', color: '#4b5563' }}>
               View your schedule and off days
             </p>
           </div>
@@ -931,12 +926,12 @@ const CalendarView = () => {
                 <div style={{
                   width: '48px',
                   height: '48px',
-                  border: '4px solid rgba(155, 89, 182, 0.2)',
-                  borderTop: '4px solid #9333ea',
+                   border: '4px solid rgba(147, 51, 234, 0.1)',
+                   borderTop: '4px solid #9333ea',
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite'
                 }}></div>
-                <p style={{ color: '#ffffff', fontSize: '16px', opacity: 0.8 }}>Loading calendar...</p>
+                 <p style={{ color: '#6b7280', fontSize: '16px' }}>Loading calendar...</p>
               </div>
             ) : null}
             <Calendar
@@ -970,19 +965,19 @@ const CalendarView = () => {
             justifyContent: 'center',
             zIndex: 1000
           }} onClick={() => setSelectedEvent(null)}>
-            <div className="calendar-event-modal" style={{
-              background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
-              border: '1px solid rgba(155, 89, 182, 0.3)',
-              borderRadius: '20px',
-              padding: 'clamp(20px, 4vw, 30px)',
-              maxWidth: '500px',
-              width: '90%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              boxShadow: '0 20px 60px rgba(155, 89, 182, 0.3)',
-              color: '#ffffff',
-              margin: '20px'
-            }} onClick={(e) => e.stopPropagation()}>
+             <div className="calendar-event-modal" style={{
+               background: '#ffffff',
+               border: '1px solid rgba(147, 51, 234, 0.1)',
+               borderRadius: '20px',
+               padding: 'clamp(20px, 4vw, 30px)',
+               maxWidth: '500px',
+               width: '90%',
+               maxHeight: '90vh',
+               overflowY: 'auto',
+               boxShadow: '0 10px 25px -5px rgba(147, 51, 234, 0.1)',
+               color: '#111827',
+               margin: '20px'
+             }} onClick={(e) => e.stopPropagation()}>
               <h2 style={{
                 marginTop: 0,
                 color: '#9333ea',
@@ -991,20 +986,20 @@ const CalendarView = () => {
               }}>
                 Appointment Details
               </h2>
-              <div style={{ marginBottom: '16px', fontSize: '15px' }}>
-                <strong style={{ color: '#9333ea' }}>Patient:</strong> {selectedEvent?.patient?.fullName || selectedEvent?.patient?.FullName || 'Unknown'}
-              </div>
-              <div style={{ marginBottom: '16px', fontSize: '15px' }}>
-                <strong style={{ color: '#9333ea' }}>Date:</strong> {selectedEvent?.appointmentDate || selectedEvent?.AppointmentDate} at {selectedEvent?.appointmentTime || selectedEvent?.AppointmentTime}
-              </div>
-              <div style={{ marginBottom: '16px', fontSize: '15px' }}>
-                <strong style={{ color: '#9333ea' }}>Status:</strong> {(selectedEvent?.isCompleted ?? selectedEvent?.IsCompleted) ? 'Completed' : (selectedEvent?.status || selectedEvent?.Status)}
-              </div>
-              {selectedEvent.finalPrice && (
-                <div style={{ marginBottom: '16px', fontSize: '15px' }}>
-                  <strong style={{ color: '#9333ea' }}>Price:</strong> ${selectedEvent.finalPrice}
-                </div>
-              )}
+               <div style={{ marginBottom: '16px', fontSize: '15px' }}>
+                 <strong style={{ color: '#9333ea' }}>Patient:</strong> <span style={{ color: '#374151' }}>{selectedEvent?.patient?.fullName || selectedEvent?.patient?.FullName || 'Unknown'}</span>
+               </div>
+               <div style={{ marginBottom: '16px', fontSize: '15px' }}>
+                 <strong style={{ color: '#9333ea' }}>Date:</strong> <span style={{ color: '#374151' }}>{selectedEvent?.appointmentDate || selectedEvent?.AppointmentDate} at {selectedEvent?.appointmentTime || selectedEvent?.AppointmentTime}</span>
+               </div>
+               <div style={{ marginBottom: '16px', fontSize: '15px' }}>
+                 <strong style={{ color: '#9333ea' }}>Status:</strong> <span style={{ color: '#374151' }}>{(selectedEvent?.isCompleted ?? selectedEvent?.IsCompleted) ? 'Completed' : (selectedEvent?.status || selectedEvent?.Status)}</span>
+               </div>
+               {selectedEvent.finalPrice && (
+                 <div style={{ marginBottom: '16px', fontSize: '15px' }}>
+                   <strong style={{ color: '#9333ea' }}>Price:</strong> <span style={{ color: '#374151' }}>${selectedEvent.finalPrice}</span>
+                 </div>
+               )}
 
               <div style={{
                 display: 'flex',
@@ -1068,31 +1063,31 @@ const CalendarView = () => {
                   WhatsApp
                 </button>
 
-                <button
-                  onClick={() => setSelectedEvent(null)}
-                  style={{
-                    padding: 'clamp(8px, 2vw, 10px) clamp(16px, 4vw, 20px)',
-                    background: 'linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%)',
-                    color: '#ffffff',
-                    border: '1px solid rgba(155, 89, 182, 0.3)',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    transition: 'all 0.3s ease',
-                    width: isMobile ? '100%' : 'auto',
-                    fontSize: 'clamp(13px, 2vw, 14px)'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.borderColor = 'rgba(155, 89, 182, 0.6)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = 'rgba(155, 89, 182, 0.3)';
-                  }}
-                >
-                  Close
-                </button>
+                 <button
+                   onClick={() => setSelectedEvent(null)}
+                   style={{
+                     padding: 'clamp(8px, 2vw, 10px) clamp(16px, 4vw, 20px)',
+                     backgroundColor: '#ffffff',
+                     color: '#374151',
+                     border: '1px solid rgba(147, 51, 234, 0.2)',
+                     borderRadius: '10px',
+                     cursor: 'pointer',
+                     fontWeight: '600',
+                     transition: 'all 0.3s ease',
+                     width: isMobile ? '100%' : 'auto',
+                     fontSize: 'clamp(13px, 2vw, 14px)'
+                   }}
+                   onMouseOver={(e) => {
+                     e.currentTarget.style.transform = 'translateY(-2px)';
+                     e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.5)';
+                   }}
+                   onMouseOut={(e) => {
+                     e.currentTarget.style.transform = 'translateY(0)';
+                     e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.2)';
+                   }}
+                 >
+                   Close
+                 </button>
               </div>
             </div>
           </div>
