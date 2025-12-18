@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DMS_DOTNETREACT.Migrations
 {
     [DbContext(typeof(ClinicDbContext))]
-    [Migration("20251217174954_InitialCreate")]
+    [Migration("20251218115251_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -133,6 +133,37 @@ namespace DMS_DOTNETREACT.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AuditLogs");
+                });
+
+            modelBuilder.Entity("DMS_DOTNETREACT.DataModel.BlockedPhoneNumber", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NormalizedPhone")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedPhone")
+                        .IsUnique();
+
+                    b.ToTable("BlockedPhoneNumbers");
                 });
 
             modelBuilder.Entity("DMS_DOTNETREACT.DataModel.ChatConversation", b =>
@@ -285,7 +316,7 @@ namespace DMS_DOTNETREACT.Migrations
                             Id = 1,
                             Body = "\r\n                    <h3>Welcome, {{FullName}}!</h3>\r\n                    <p>Thank you for registering with us. We are excited to have you on board.</p>\r\n                    <p>Your username is: <strong>{{UserName}}</strong></p>\r\n                    <br/>\r\n                    <p>Best Regards,</p>\r\n                    <p>The Clinic Team</p>",
                             Description = "Sent to new users upon registration.",
-                            LastUpdated = new DateTime(2025, 12, 17, 17, 49, 53, 892, DateTimeKind.Utc).AddTicks(3882),
+                            LastUpdated = new DateTime(2025, 12, 18, 11, 52, 49, 809, DateTimeKind.Utc).AddTicks(6685),
                             Name = "WelcomeEmail",
                             Subject = "Welcome to Our Clinic!"
                         },
@@ -294,7 +325,7 @@ namespace DMS_DOTNETREACT.Migrations
                             Id = 2,
                             Body = "\r\n                    <h3>Appointment Reminder</h3>\r\n                    <p>Dear {{FullName}},</p>\r\n                    <p>This is a reminder for your upcoming appointment.</p>\r\n                    <p><strong>Date:</strong> {{Date}}</p>\r\n                    <p><strong>Time:</strong> {{Time}}</p>\r\n                    <p><strong>Doctor:</strong> {{DoctorName}}</p>\r\n                    <br/>\r\n                    <p>Please contact us if you need to reschedule.</p>\r\n                    <p>The Clinic Team</p>",
                             Description = "Automated reminder sent 1 day before appointment.",
-                            LastUpdated = new DateTime(2025, 12, 17, 17, 49, 53, 892, DateTimeKind.Utc).AddTicks(5551),
+                            LastUpdated = new DateTime(2025, 12, 18, 11, 52, 49, 809, DateTimeKind.Utc).AddTicks(9478),
                             Name = "AppointmentReminder",
                             Subject = "Appointment Reminder"
                         });
@@ -687,6 +718,16 @@ namespace DMS_DOTNETREACT.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("BlockReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("BlockedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("BlockedByUserId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -696,6 +737,15 @@ namespace DMS_DOTNETREACT.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsBookingBlocked")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsLoginBlocked")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("NoShowCount")
+                        .HasColumnType("int");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
