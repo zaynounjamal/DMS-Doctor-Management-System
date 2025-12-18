@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, RefreshCw, Send } from 'lucide-react';
+import { MessageSquare, RefreshCw, Send, ChevronLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { getSecretaryInbox, getConversationMessages, sendConversationMessage, setSecretaryAvailability } from '../chatApi';
 import { useToast } from '../contexts/ToastContext';
 
@@ -22,8 +23,8 @@ const SecretaryChat = () => {
     [inbox, selectedConversationId]
   );
 
-  const loadInbox = async (nextTab = tab) => {
-    setLoadingInbox(true);
+  const loadInbox = async (nextTab = tab, silent = false) => {
+    if (!silent) setLoadingInbox(true);
     try {
       const data = await getSecretaryInbox(nextTab);
       setInbox(data || []);
@@ -31,22 +32,22 @@ const SecretaryChat = () => {
         setSelectedConversationId(data[0].id);
       }
     } catch (e) {
-      showToast(e.message || 'Failed to load inbox', 'error');
+      if (!silent) showToast(e.message || 'Failed to load inbox', 'error');
     } finally {
-      setLoadingInbox(false);
+      if (!silent) setLoadingInbox(false);
     }
   };
 
-  const loadMessages = async (conversationId) => {
+  const loadMessages = async (conversationId, silent = false) => {
     if (!conversationId) return;
-    setLoadingMessages(true);
+    if (!silent) setLoadingMessages(true);
     try {
       const data = await getConversationMessages(conversationId);
       setMessages(data || []);
     } catch (e) {
-      showToast(e.message || 'Failed to load messages', 'error');
+      if (!silent) showToast(e.message || 'Failed to load messages', 'error');
     } finally {
-      setLoadingMessages(false);
+      if (!silent) setLoadingMessages(false);
     }
   };
 
@@ -63,9 +64,9 @@ const SecretaryChat = () => {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        await loadInbox(tab);
+        await loadInbox(tab, true);
         if (selectedConversationId) {
-          await loadMessages(selectedConversationId);
+          await loadMessages(selectedConversationId, true);
         }
       } catch {
       }
@@ -102,14 +103,19 @@ const SecretaryChat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center justify-between">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        >
           <div>
             <button
               onClick={() => navigate('/secretary-dashboard')}
-              className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              className="flex items-center text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors mb-2"
             >
+              <ChevronLeft className="w-4 h-4 mr-1" />
               Back to Dashboard
             </button>
             <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">Chat Inbox</h1>
@@ -138,7 +144,7 @@ const SecretaryChat = () => {
               Refresh
             </button>
           </div>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">

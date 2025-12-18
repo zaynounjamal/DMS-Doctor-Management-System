@@ -242,20 +242,20 @@ const DoctorDashboard = () => {
 
         {todayAppointments.length === 0 ? (
           <div style={{
-            background: '#000000',
+            background: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
             borderRadius: '16px',
-            border: '1px solid rgba(155, 89, 182, 0.2)',
-            boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+            border: '1px solid rgba(147, 51, 234, 0.1)',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
             padding: '60px 20px',
             textAlign: 'center'
           }}>
             <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
               <Calendar size={64} style={{ color: '#9333ea' }} />
             </div>
-            <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px' }}>No appointments today</h3>
-            <p style={{ fontSize: '14px', color: '#ccc' }}>Enjoy your free time!</p>
+            <h3 style={{ fontSize: '20px', color: '#111827', marginBottom: '8px', fontWeight: 'bold' }}>No appointments today</h3>
+            <p style={{ fontSize: '14px', color: '#6b7280' }}>Enjoy your free time!</p>
           </div>
         ) : (
           <div>

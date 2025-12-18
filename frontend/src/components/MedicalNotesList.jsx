@@ -7,13 +7,13 @@ const MedicalNotesList = ({ notes, onEdit }) => {
       <div style={{
         textAlign: 'center',
         padding: '40px 20px',
-        background: '#000000',
+        background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         borderRadius: '16px',
-        border: '1px solid rgba(155, 89, 182, 0.2)',
-        boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
-        color: '#ccc'
+        border: '1px solid rgba(147, 51, 234, 0.1)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+        color: '#6b7280'
       }}>
         <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
           <FileText size={48} color="#9333ea" />
@@ -29,26 +29,32 @@ const MedicalNotesList = ({ notes, onEdit }) => {
         <div
           key={note.id}
           style={{
-            background: '#000000',
+            background: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
             borderRadius: '16px',
-            border: '1px solid rgba(155, 89, 182, 0.2)',
-            boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
+            border: '1px solid rgba(147, 51, 234, 0.1)',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
             padding: '24px',
-            borderLeft: '4px solid #667eea',
-            transition: 'box-shadow 0.2s'
+            borderLeft: '4px solid #9333ea',
+            transition: 'all 0.2s'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'}
-          onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(147, 51, 234, 0.1)';
+            e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
+            e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.1)';
+          }}
         >
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#111827' }}>
                 Dr. {note.doctorName}
               </div>
-              <div style={{ fontSize: '12px', color: '#ccc', marginTop: '4px' }}>
+              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                 {new Date(note.createdAt).toLocaleString()}
                 {note.isEdited && (
                   <span style={{ marginLeft: '8px', color: '#f59e0b' }}>
@@ -57,7 +63,7 @@ const MedicalNotesList = ({ notes, onEdit }) => {
                 )}
               </div>
               {note.appointmentDate && (
-                <div style={{ fontSize: '12px', color: '#ccc', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Calendar size={12} color="#9333ea" />
                   Appointment: {new Date(note.appointmentDate).toLocaleDateString()} at {note.appointmentTime}
                 </div>
@@ -72,16 +78,16 @@ const MedicalNotesList = ({ notes, onEdit }) => {
                   fontWeight: 'bold',
                   border: 'none',
                   borderRadius: '6px',
-                  backgroundColor: '#667eea',
-                  color: 'white',
+                  backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                  color: '#9333ea',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5568d3'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#667eea'}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(147, 51, 234, 0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(147, 51, 234, 0.1)'}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Pencil size={12} color="#fff" />
+                  <Pencil size={12} color="#9333ea" />
                   Edit
                 </div>
               </button>
@@ -91,7 +97,7 @@ const MedicalNotesList = ({ notes, onEdit }) => {
           {/* Note Content */}
           <div style={{
             fontSize: '14px',
-            color: '#fff',
+            color: '#374151',
             lineHeight: '1.6',
             whiteSpace: 'pre-wrap'
           }}>

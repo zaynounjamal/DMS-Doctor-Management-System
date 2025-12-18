@@ -7,8 +7,13 @@ const DEFAULT_SUGGESTIONS = [
   { en: 'What treatments do you provide?', ar: 'ما هي العلاجات المتوفرة؟' },
 ];
 
-const AIChatWidget = ({ bottomOffsetPx = 20 }) => {
-  const [open, setOpen] = useState(false);
+const AIChatWidget = ({ bottomOffsetPx = 20, hideButton = false, open: controlledOpen, onOpenChange, onNewMessage }) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [input, setInput] = useState('');
@@ -20,6 +25,10 @@ const AIChatWidget = ({ bottomOffsetPx = 20 }) => {
   ]);
 
   const listRef = useRef(null);
+  const chatWindowRef = useRef(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
 
   const aiBaseUrl = useMemo(() => (AI_URL || 'http://localhost:8001').replace(/\/$/, ''), []);
 
@@ -28,6 +37,39 @@ const AIChatWidget = ({ bottomOffsetPx = 20 }) => {
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [open, messages]);
+
+  // Drag handlers
+  const handleMouseDown = (e) => {
+    if (e.target.closest('button') || e.target.closest('input')) return; // Don't drag if clicking buttons or inputs
+    setIsDragging(true);
+    dragStartPos.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    };
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e) => {
+      setPosition({
+        x: e.clientX - dragStartPos.current.x,
+        y: e.clientY - dragStartPos.current.y
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
 
   const send = async (text) => {
     const message = (text ?? input).trim();
@@ -53,7 +95,8 @@ const AIChatWidget = ({ bottomOffsetPx = 20 }) => {
         throw new Error(detail);
       }
 
-      setMessages((prev) => [...prev, { role: 'assistant', content: data?.answer ?? '' }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.answer }]);
+      if (onNewMessage) onNewMessage(1);
     } catch (e) {
       setError(e?.message || 'Failed to contact AI service');
       setMessages((prev) => [
@@ -72,18 +115,36 @@ const AIChatWidget = ({ bottomOffsetPx = 20 }) => {
   return (
     <div className="fixed right-5 z-[9999]" style={{ bottom: bottomOffsetPx }}>
       {!open ? (
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded-full px-4 py-3 bg-primary-light dark:bg-primary-dark text-white shadow-lg hover:shadow-xl transition"
-        >
-          AI Chat
-        </button>
+        !hideButton && (
+          <button
+            onClick={() => setOpen(true)}
+            className="rounded-full px-4 py-3 bg-primary-light dark:bg-primary-dark text-white shadow-lg hover:shadow-xl transition"
+          >
+            AI Chat
+          </button>
+        )
       ) : (
-        <div className="w-[320px] sm:w-[380px] h-[520px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div 
+          ref={chatWindowRef}
+          className="w-[320px] sm:w-[380px] h-[520px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden"
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px)`,
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+          }}
+        >
+          <div 
+            className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between"
+            onMouseDown={handleMouseDown}
+            style={{ cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none' }}
+          >
             <div className="font-semibold text-gray-900 dark:text-white">Clinic AI</div>
             <button
-              onClick={() => setOpen(false)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setOpen(false);
+              }}
               className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               Close

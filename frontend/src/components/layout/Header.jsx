@@ -144,6 +144,7 @@ const Header = ({ onLoginClick, user, onLogout }) => {
         navItems={navItems}
         user={user}
         onLogout={onLogout}
+        role="patient"
       />
     </>
   );

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getSecretaryAppointments, updateAppointmentStatus, markAsPaid, rescheduleAppointment } from '../../secretaryApi';
 import { useToast } from '../../contexts/ToastContext';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Calendar, Clock, CreditCard, ChevronDown, CheckCircle2, XCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const AppointmentManager = ({ selectedDoctor }) => {
   const { showToast } = useToast();
@@ -99,67 +100,80 @@ const AppointmentManager = ({ selectedDoctor }) => {
 
   return (
     <div className="space-y-6">
-      {/* Search and Filters */}
-      <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-        <div className="flex flex-wrap gap-4">
-          {/* Search */}
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search by patient name or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-          
-          {/* Payment Filter */}
-          <select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="all">All Payments</option>
-            <option value="paid">Paid Only</option>
-            <option value="unpaid">Unpaid Only</option>
-          </select>
-          
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="all">All Statuses</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="checked-in">Checked In</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-        
-        <div className="text-sm text-gray-600">
-          Showing {filteredAppointments.length} of {appointments.length} appointments
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b border-gray-100 mb-6">
+        <div className="flex overflow-x-auto scrollbar-hide">
+          {tabs.map(tab => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative px-6 py-4 text-sm font-bold min-w-[100px] transition-all whitespace-nowrap ${
+                  isActive ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                {tab.label}
+                {isActive && (
+                  <motion.div 
+                    layoutId="activeApptTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 font-medium transition-colors duration-200 ${
-              activeTab === tab.id 
-                ? 'border-b-2 border-blue-600 text-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Search and Filters */}
+      <div className="bg-gray-50/50 p-6 border-b border-gray-100">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by patient name or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+            />
+          </div>
+          
+          <div className="flex flex-wrap gap-4">
+            {/* Payment Filter */}
+            <div className="relative flex-1 sm:flex-none sm:min-w-[160px]">
+              <select
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value)}
+                className="w-full appearance-none pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+              >
+                <option value="all">All Payments</option>
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+              </select>
+              <CreditCard className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+            
+            {/* Status Filter */}
+            <div className="relative flex-1 sm:flex-none sm:min-w-[160px]">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full appearance-none pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+              >
+                <option value="all">All Statuses</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="checked-in">Checked In</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {loading ? (

@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -7,6 +7,7 @@ import Header from './components/layout/Header';
 import LoginModal from './components/auth/LoginModal';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import Footer from './components/layout/Footer';
+import UnifiedChatManager from './components/chat/UnifiedChatManager';
 
 import usePreventNavigation from './hooks/usePreventNavigation';
 import BookAppointment from './pages/BookAppointment';
@@ -81,7 +82,7 @@ const AppContent = () => {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 overflow-x-hidden">
 
 
       <Routes>
@@ -161,6 +162,7 @@ function App() {
         <ToastProvider>
           <Router>
             <AppContent />
+            <UnifiedChatManager />
           </Router>
         </ToastProvider>
       </AuthProvider>

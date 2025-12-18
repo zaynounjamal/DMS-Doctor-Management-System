@@ -73,6 +73,7 @@ const DoctorLayout = () => {
                                 onClose={closeSidebar}
                                 navItems={navItems}
                                 variant="desktop" // New prop to disable fixed positioning
+                                role="doctor"
                             />
                         </div>
                     </div>
@@ -84,6 +85,7 @@ const DoctorLayout = () => {
                             onClose={closeSidebar}
                             navItems={navItems}
                             variant="mobile"
+                            role="doctor"
                         />
                     </div>
 

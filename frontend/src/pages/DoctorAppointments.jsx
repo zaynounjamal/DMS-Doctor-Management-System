@@ -329,10 +329,10 @@ const DoctorAppointments = () => {
             style={{
               padding: '10px 12px',
               fontSize: '14px',
-              border: '1px solid rgba(155, 89, 182, 0.3)',
+              border: '1px solid rgba(147, 51, 234, 0.2)',
               borderRadius: '6px',
-              background: '#000000',
-              color: 'white',
+              background: 'rgba(255, 255, 255, 0.95)',
+              color: '#111827',
               cursor: 'pointer',
               outline: 'none'
             }}
@@ -394,12 +394,12 @@ const DoctorAppointments = () => {
       <div style={{
         marginBottom: '24px',
         padding: '24px',
-        background: '#000000',
+        background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         borderRadius: '16px',
-        border: '1px solid rgba(155, 89, 182, 0.3)',
-        boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)'
+        border: '1px solid rgba(147, 51, 234, 0.1)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
       }}>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'end' }}>
           <div style={{ flex: 1, minWidth: '200px' }}>
@@ -420,21 +420,19 @@ const DoctorAppointments = () => {
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: '10px',
-                border: '1px solid rgba(155, 89, 182, 0.3)',
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: '#ffffff',
+                border: '1px solid rgba(147, 51, 234, 0.2)',
+                background: '#fff',
+                color: '#111827',
                 fontSize: '14px',
                 outline: 'none',
                 transition: 'all 0.3s ease'
               }}
               onFocus={(e) => {
                 e.currentTarget.style.border = '1px solid #9333ea';
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(155, 89, 182, 0.1)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(147, 51, 234, 0.1)';
               }}
               onBlur={(e) => {
-                e.currentTarget.style.border = '1px solid rgba(155, 89, 182, 0.3)';
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.border = '1px solid rgba(147, 51, 234, 0.2)';
                 e.currentTarget.style.boxShadow = 'none';
               }}
             />
@@ -455,12 +453,11 @@ const DoctorAppointments = () => {
               style={{
                 padding: '12px 16px',
                 borderRadius: '10px',
-                border: '1px solid rgba(155, 89, 182, 0.3)',
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: '#ffffff',
+                border: '1px solid rgba(147, 51, 234, 0.2)',
+                background: '#fff',
+                color: '#111827',
                 fontSize: '14px',
-                outline: 'none',
-                colorScheme: 'dark'
+                outline: 'none'
               }}
             />
           </div>
@@ -480,12 +477,11 @@ const DoctorAppointments = () => {
               style={{
                 padding: '12px 16px',
                 borderRadius: '10px',
-                border: '1px solid rgba(155, 89, 182, 0.3)',
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: '#ffffff',
+                border: '1px solid rgba(147, 51, 234, 0.2)',
+                background: '#fff',
+                color: '#111827',
                 fontSize: '14px',
-                outline: 'none',
-                colorScheme: 'dark'
+                outline: 'none'
               }}
             />
           </div>
@@ -504,19 +500,19 @@ const DoctorAppointments = () => {
               style={{
                 padding: '12px 16px',
                 borderRadius: '10px',
-                border: '1px solid rgba(155, 89, 182, 0.3)',
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: '#ffffff',
+                border: '1px solid rgba(147, 51, 234, 0.2)',
+                background: '#fff',
+                color: '#111827',
                 fontSize: '14px',
                 minWidth: '140px',
                 outline: 'none',
                 cursor: 'pointer'
               }}
             >
-              <option value="" style={{ background: '#1a1a1a', color: '#ffffff' }}>All</option>
-              <option value="pending" style={{ background: '#1a1a1a', color: '#ffffff' }}>Pending</option>
-              <option value="completed" style={{ background: '#1a1a1a', color: '#ffffff' }}>Completed</option>
-              <option value="cancelled" style={{ background: '#1a1a1a', color: '#ffffff' }}>Cancelled</option>
+              <option value="">All</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </div>
           <button
@@ -549,9 +545,9 @@ const DoctorAppointments = () => {
               onClick={clearSearch}
               style={{
                 padding: '12px 24px',
-                background: 'linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%)',
-                color: '#ffffff',
-                border: '1px solid rgba(155, 89, 182, 0.3)',
+                backgroundColor: '#fff',
+                color: '#374151',
+                border: '1px solid rgba(147, 51, 234, 0.2)',
                 borderRadius: '10px',
                 fontWeight: '700',
                 cursor: 'pointer',
@@ -560,11 +556,11 @@ const DoctorAppointments = () => {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.borderColor = 'rgba(155, 89, 182, 0.6)';
+                e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.5)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(155, 89, 182, 0.3)';
+                e.currentTarget.style.borderColor = 'rgba(147, 51, 234, 0.2)';
               }}
             >
               Clear
@@ -578,14 +574,14 @@ const DoctorAppointments = () => {
         display: 'flex',
         gap: '8px',
         marginBottom: '24px',
-        border: '1px solid rgba(155, 89, 182, 0.2)',
+        border: '1px solid rgba(147, 51, 234, 0.1)',
         overflowX: 'auto',
         padding: '8px',
-        background: '#000000',
+        background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         borderRadius: '16px',
-        boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)'
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
       }}>
         {tabs.map((tab) => (
           <button
@@ -597,8 +593,8 @@ const DoctorAppointments = () => {
               fontWeight: 'bold',
               border: 'none',
               borderRadius: '8px',
-              backgroundColor: activeTab === tab.id ? 'rgba(147, 51, 234, 0.2)' : 'transparent',
-              color: activeTab === tab.id ? '#9333ea' : '#aaa',
+               backgroundColor: activeTab === tab.id ? 'rgba(147, 51, 234, 0.1)' : 'transparent',
+               color: activeTab === tab.id ? '#9333ea' : '#6b7280',
               cursor: 'pointer',
               transition: 'all 0.2s',
               whiteSpace: 'nowrap',
@@ -608,14 +604,14 @@ const DoctorAppointments = () => {
             }}
             onMouseEnter={(e) => {
               if (activeTab !== tab.id) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                e.currentTarget.style.color = '#fff';
+                 e.currentTarget.style.backgroundColor = 'rgba(147, 51, 234, 0.05)';
+                 e.currentTarget.style.color = '#9333ea';
               }
             }}
             onMouseLeave={(e) => {
               if (activeTab !== tab.id) {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#aaa';
+                 e.currentTarget.style.backgroundColor = 'transparent';
+                 e.currentTarget.style.color = '#6b7280';
               }
             }}
           >
@@ -642,10 +638,10 @@ const DoctorAppointments = () => {
             style={{
               padding: '8px 12px',
               fontSize: '14px',
-              border: '1px solid rgba(155, 89, 182, 0.3)',
+              border: '1px solid rgba(147, 51, 234, 0.2)',
               borderRadius: '6px',
-              background: '#000000',
-              color: 'white',
+              background: '#fff',
+              color: '#111827',
               cursor: 'pointer',
               outline: 'none',
               fontWeight: '600'
@@ -666,10 +662,10 @@ const DoctorAppointments = () => {
             style={{
               padding: '8px 12px',
               fontSize: '14px',
-              border: '1px solid rgba(155, 89, 182, 0.3)',
+              border: '1px solid rgba(147, 51, 234, 0.2)',
               borderRadius: '6px',
-              background: '#000000',
-              color: 'white',
+              background: '#fff',
+              color: '#111827',
               cursor: 'pointer',
               outline: 'none',
               fontWeight: '600'
@@ -749,34 +745,34 @@ const DoctorAppointments = () => {
           });
 
           return filteredAppointments.length === 0 ? (
-            <div style={{
-              background: '#000000',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              borderRadius: '16px',
-              border: '1px solid rgba(155, 89, 182, 0.2)',
-              boxShadow: '0 8px 32px rgba(155, 89, 182, 0.2)',
-              padding: '60px 20px',
-              textAlign: 'center'
-            }}>
+             <div style={{
+               background: 'rgba(255, 255, 255, 0.95)',
+               backdropFilter: 'blur(10px)',
+               WebkitBackdropFilter: 'blur(10px)',
+               borderRadius: '16px',
+               border: '1px solid rgba(147, 51, 234, 0.1)',
+               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+               padding: '60px 20px',
+               textAlign: 'center'
+             }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', color: '#9333ea' }}>
                 {activeTab === 'today' && <Calendar size={64} />}
                 {activeTab === 'tomorrow' && <CalendarDays size={64} />}
                 {activeTab === 'future' && <CalendarRange size={64} />}
                 {activeTab === 'past' && <History size={64} />}
               </div>
-              <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px' }}>
-                {appointments.length === 0
-                  ? `No appointments ${activeTab === 'past' ? 'in the past' : `for ${activeTab}`}`
-                  : 'No appointments match your filters'
-                }
-              </h3>
-              <p style={{ fontSize: '14px', color: '#ccc' }}>
-                {appointments.length === 0
-                  ? (activeTab === 'past' ? 'Your appointment history will appear here' : 'Check back later for updates')
-                  : 'Try adjusting your filters'
-                }
-              </p>
+               <h3 style={{ fontSize: '20px', color: '#111827', marginBottom: '8px', fontWeight: 'bold' }}>
+                 {appointments.length === 0
+                   ? `No appointments ${activeTab === 'past' ? 'in the past' : `for ${activeTab}`}`
+                   : 'No appointments match your filters'
+                 }
+               </h3>
+               <p style={{ fontSize: '14px', color: '#6b7280' }}>
+                 {appointments.length === 0
+                   ? (activeTab === 'past' ? 'Your appointment history will appear here' : 'Check back later for updates')
+                   : 'Try adjusting your filters'
+                 }
+               </p>
             </div>
           ) : (
             <div>

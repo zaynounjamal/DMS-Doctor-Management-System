@@ -8,6 +8,8 @@ import AppointmentManager from '../components/secretary/AppointmentManager';
 import PatientManager from '../components/secretary/PatientManager';
 import PatientForm from '../components/secretary/PatientForm';
 import StatCard from '../components/StatCard';
+import { Plus, CreditCard, Calendar, Clock, Activity } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const SecretaryDashboard = () => {
     const navigate = useNavigate();
@@ -66,114 +68,106 @@ const SecretaryDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 pb-12">
             <SecretaryHeader 
-                selectedDoctor={selectedDoctor}
+                selectedDoctor={selectedDoctor} 
                 onDoctorChange={setSelectedDoctor}
                 doctors={doctors}
             />
-            
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="md:flex md:items-center md:justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">
-                            {selectedDoctor ? `Dr. ${doctors.find(d => d.id == selectedDoctor)?.fullName}'s Dashboard` : 'All Doctors Dashboard'}
-                        </h1>
-                        <p className="mt-1 text-sm text-gray-500">Manage patients, appointments, and payments.</p>
-                    </div>
-                    <div className="mt-4 md:mt-0 flex space-x-3">
-                        <button
-                            onClick={() => setShowWalkInModal(true)}
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
-                        >
-                            + Walk-In Appointment
-                        </button>
-                        <button
-                            onClick={() => loadDashboard()}
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
-                        >
-                            Refresh
-                        </button>
-                    </div>
+
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Dynamic Dashboard Header */}
+                <div className="mb-8 pl-1">
+                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                        {selectedDoctor 
+                            ? `Dr. ${doctors.find(d => d.id == selectedDoctor)?.fullName}'s Dashboard` 
+                            : 'All Doctors Dashboard'}
+                    </h1>
+                    <p className="text-gray-500 mt-1 font-medium italic">
+                        Hospital Oversight & Patient Flow
+                    </p>
                 </div>
 
-                {/* Stats Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                {/* Patient Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
                     <StatCard 
-                        title="Daily Cash" 
-                        value={`$${stats?.dailyCash || 0}`} 
-                        subtitle="Collected Today"
-                        icon="💵"
-                        color="#10b981"
+                        title="Daily Cash Collected" 
+                        value={`$${stats?.dailyCash || '0'}`} 
+                        icon={<CreditCard className="w-6 h-6" />} 
+                        color="green"
                     />
                     <StatCard 
-                        title="Today's Appts" 
-                        value={stats?.todayAppointments || 0} 
-                        subtitle="Expected"
-                        icon="📅"
-                        color="#3b82f6"
+                        title="Today's Appointments" 
+                        value={stats?.todayAppointments || '0'} 
+                        icon={<Calendar className="w-6 h-6" />} 
+                        color="indigo"
                     />
                     <StatCard 
-                        title="Tomorrow" 
-                        value={stats?.tomorrowAppointments || 0} 
-                        subtitle="Scheduled"
-                        icon="📆"
-                        color="#8b5cf6"
+                        title="Tomorrow's Schedule" 
+                        value={stats?.tomorrowAppointments || '0'} 
+                        icon={<Activity className="w-6 h-6" />} 
+                        color="purple"
                     />
                     <StatCard 
                         title="Waiting Room" 
-                        value={stats?.waitingCount || 0} 
-                        subtitle="Checked In"
-                        icon="⏳"
-                        color="#f59e0b"
+                        value={stats?.waitingCount || '0'} 
+                        icon={<Clock className="w-6 h-6" />} 
+                        color="orange"
                     />
                 </div>
-
                 {/* Main Content Tabs */}
-                <div className="bg-white shadow rounded-lg min-h-[500px]">
-                    <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+                    <div className="flex flex-col sm:flex-row border-b border-gray-200">
+                        <div className="flex overflow-x-auto scrollbar-hide flex-1">
+                            {[
+                                { id: 'overview', label: 'Overview & Waiting Room' },
+                                { id: 'appointments', label: 'Appointment Management' },
+                                { id: 'patients', label: 'Patient Management' },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`px-6 py-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
+                                        activeTab === tab.id 
+                                            ? 'border-indigo-600 text-indigo-600 bg-indigo-50/30' 
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="p-3 sm:border-l border-gray-100 flex items-center justify-end">
                             <button
-                                onClick={() => setActiveTab('overview')}
-                                className={`${activeTab === 'overview' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                onClick={() => setShowWalkInModal(true)}
+                                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition-all shadow-md active:scale-95"
                             >
-                                Overview & Waiting Room
+                                <Plus className="w-4 h-4" />
+                                New Walk-In
                             </button>
-                            <button
-                                onClick={() => setActiveTab('appointments')}
-                                className={`${activeTab === 'appointments' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                            >
-                                Appointment Management
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('patients')}
-                                className={`${activeTab === 'patients' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                            >
-                                Patient Management
-                            </button>
-                        </nav>
+                        </div>
                     </div>
 
                     <div className="p-6">
                         {activeTab === 'overview' && (
-                            <div className="space-y-8">
+                            <div className="space-y-12">
                                 <div>
-                                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Waiting Room (Checked In)</h3>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-6">Waiting Room (Checked In)</h3>
                                     <WaitingRoomLoader selectedDoctor={selectedDoctor} />
                                 </div>
                                 
                                 <div>
-                                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-6 underline decoration-indigo-500 underline-offset-8">
                                         {selectedDoctor ? `Dr. ${doctors.find(d => d.id == selectedDoctor)?.fullName}'s Off Days` : "Doctors' Off Days"}
                                     </h3>
                                     {offDays.length === 0 ? (
-                                        <p className="text-gray-500">No upcoming off days.</p>
+                                        <p className="text-gray-500 bg-gray-50 p-6 rounded-xl border border-dashed border-gray-200 text-center">No upcoming off days.</p>
                                     ) : (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {offDays.map((day, idx) => (
-                                                <div key={idx} className="bg-red-50 p-4 rounded border border-red-100 text-red-700">
-                                                    <div className="font-bold">{day.date}</div>
-                                                    <div className="text-sm">{day.reason}</div>
+                                                <div key={idx} className="bg-red-50 p-5 rounded-xl border border-red-100 text-red-700 shadow-sm">
+                                                    <div className="font-bold text-lg">{day.date}</div>
+                                                    <div className="text-sm opacity-90 mt-1">{day.reason}</div>
                                                 </div>
                                             ))}
                                         </div>
@@ -182,21 +176,27 @@ const SecretaryDashboard = () => {
                             </div>
                         )}
 
-                        {activeTab === 'appointments' && <AppointmentManager selectedDoctor={selectedDoctor} />}
-                        
-                        {activeTab === 'patients' && <PatientManager />}
+                        {activeTab === 'appointments' && (
+                            <AppointmentManager selectedDoctor={selectedDoctor} />
+                        )}
+
+                        {activeTab === 'patients' && (
+                            <PatientManager />
+                        )}
                     </div>
                 </div>
 
                 {/* Walk In Modal */}
-                {showWalkInModal && (
-                    <WalkInModal 
-                        onClose={() => setShowWalkInModal(false)} 
-                        doctors={doctors}
-                        defaultDoctor={selectedDoctor}
-                    />
-                )}
-            </div>
+                <AnimatePresence>
+                    {showWalkInModal && (
+                        <WalkInModal 
+                            onClose={() => setShowWalkInModal(false)} 
+                            doctors={doctors}
+                            defaultDoctor={selectedDoctor}
+                        />
+                    )}
+                </AnimatePresence>
+            </main>
         </div>
     );
 };
