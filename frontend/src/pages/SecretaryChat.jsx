@@ -4,6 +4,7 @@ import { MessageSquare, RefreshCw, Send, ChevronLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getSecretaryInbox, getConversationMessages, sendConversationMessage, setSecretaryAvailability, markConversationRead, getUnreadCount } from '../chatApi';
 import { useToast } from '../contexts/ToastContext';
+import { getChatHubConnection, isChatHubConnected, joinConversationGroup, leaveConversationGroup, startChatHub } from '../signalr/chatHub';
 
 const SecretaryChat = () => {
   const navigate = useNavigate();
@@ -77,11 +78,13 @@ const SecretaryChat = () => {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        await loadInbox(tab, true);
-        await loadUnreadSummary(true);
-        if (selectedConversationId) {
-          await loadMessages(selectedConversationId, true);
-          await markConversationRead(selectedConversationId);
+        if (!isChatHubConnected()) {
+          await loadInbox(tab, true);
+          await loadUnreadSummary(true);
+          if (selectedConversationId) {
+            await loadMessages(selectedConversationId, true);
+            await markConversationRead(selectedConversationId);
+          }
         }
       } catch {
       }
@@ -89,6 +92,53 @@ const SecretaryChat = () => {
 
     return () => clearInterval(interval);
   }, [tab, selectedConversationId]);
+
+  useEffect(() => {
+    let mounted = true;
+    const conn = getChatHubConnection();
+
+    const onUnread = (payload) => {
+      if (!mounted) return;
+      setUnreadSummary(payload || { unreadMessages: 0, unreadConversations: 0 });
+    };
+
+    const onMessage = (m) => {
+      if (!mounted || !m) return;
+      const msgConvId = Number(m.conversationId ?? m.ConversationId);
+      if (!msgConvId) return;
+
+      if (selectedConversationId && msgConvId === Number(selectedConversationId)) {
+        setMessages((prev) => {
+          const id = m.id ?? m.Id;
+          if (prev.some(x => (x.id ?? x.Id) === id)) return prev;
+          return [...prev, m];
+        });
+        markConversationRead(msgConvId).catch(() => {
+        });
+      } else {
+        loadInbox(tab, true);
+      }
+    };
+
+    startChatHub().catch(() => {
+    });
+    conn.on('chat:unread', onUnread);
+    conn.on('chat:message', onMessage);
+
+    return () => {
+      mounted = false;
+      conn.off('chat:unread', onUnread);
+      conn.off('chat:message', onMessage);
+    };
+  }, [tab, selectedConversationId]);
+
+  useEffect(() => {
+    if (!selectedConversationId) return;
+    joinConversationGroup(selectedConversationId);
+    return () => {
+      leaveConversationGroup(selectedConversationId);
+    };
+  }, [selectedConversationId]);
 
   const handleSend = async () => {
     if (!selectedConversationId || text.trim().length === 0) return;

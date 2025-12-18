@@ -4,9 +4,11 @@ import { Menu, Stethoscope, ChevronDown, User, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import ConfirmationModal from '../ui/ConfirmationModal';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const DoctorHeader = ({ onToggleSidebar, user, onLogout }) => {
   const { theme } = useTheme();
+  const { lang, toggle } = useLanguage();
   const [showLogo, setShowLogo] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -64,6 +66,15 @@ const DoctorHeader = ({ onToggleSidebar, user, onLogout }) => {
 
           {/* Right Side: Profile Button */}
           <div className="flex items-center space-x-3">
+             <button
+               type="button"
+               onClick={toggle}
+               className="px-3 h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+               title="Language"
+               aria-label="Language"
+             >
+               {lang === 'ar' ? 'AR' : 'EN'}
+             </button>
              <div className="relative">
                 <button 
                   onClick={() => setShowProfile((p) => !p)} 

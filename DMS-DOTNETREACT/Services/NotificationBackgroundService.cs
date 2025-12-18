@@ -50,7 +50,7 @@ public class NotificationBackgroundService : BackgroundService
                 .Include(a => a.Patient)
                     .ThenInclude(p => p.User)
                 .Include(a => a.Doctor)
-                .Where(a => a.AppointmentDate == tomorrow && a.Status == "Scheduled")
+                .Where(a => a.AppointmentDate == tomorrow && a.Status == "scheduled")
                 .ToListAsync();
 
             _logger.LogInformation($"Found {appointments.Count} appointments for {tomorrow}.");

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AspNetCoreRateLimit;
+using DMS_DOTNETREACT.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,9 @@ builder.Services.AddScoped<ExportService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.AddHostedService<NotificationBackgroundService>();
+
+// SignalR
+builder.Services.AddSignalR();
 
 // JWT Authentication with validation
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"] 
@@ -60,6 +64,23 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
         ClockSkew = TimeSpan.Zero // Remove default 5 minute clock skew
+    };
+
+    // Allow JWT tokens over WebSockets for SignalR
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"].ToString();
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/chat"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -194,6 +215,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 app.MapGet("/api/health", () => "OK").AllowAnonymous();
 
 // Seed database
@@ -204,7 +226,7 @@ using (var scope = app.Services.CreateScope())
         var context = scope.ServiceProvider.GetRequiredService<ClinicDbContext>();
         var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
 
-        context.Database.EnsureCreated();
+        context.Database.Migrate();
 
         // Ensure Email column exists (for existing databases)
         try

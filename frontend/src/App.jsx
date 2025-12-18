@@ -42,13 +42,116 @@ import AdminPatients from './pages/AdminPatients';
 import AdminTreatments from './pages/AdminTreatments';
 import AdminSettings from './pages/AdminSettings';
 import AdminEmailTemplates from './pages/AdminEmailTemplates';
+import AdminBlockedPhones from './pages/AdminBlockedPhones';
 import AdminLayout from './components/layout/AdminLayout';
 import './App.css';
 import DoctorLayout from './components/layout/DoctorLayout';
+import { getPublicSettings } from './api';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      const message = this.state.error?.message || String(this.state.error);
+      return (
+        <div className="min-h-screen p-6 bg-white text-gray-900">
+          <div className="max-w-3xl mx-auto rounded-2xl border border-red-200 bg-red-50 p-6">
+            <div className="text-sm font-bold text-red-700 uppercase tracking-widest">Application Error</div>
+            <div className="mt-2 text-lg font-extrabold text-red-900">{message}</div>
+            <pre className="mt-4 text-xs whitespace-pre-wrap text-red-900/80">{this.state.error?.stack}</pre>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 const AppContent = () => {
   const { user, login, logout, isLoginModalOpen, openLoginModal, closeLoginModal, loading } = useAuth();
   const location = useLocation();
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    const toRgbTriplet = (input) => {
+      if (typeof window === 'undefined') return null;
+      if (typeof input !== 'string') return null;
+      const v = input.trim();
+      if (!v) return null;
+
+      const tripletMatch = v.match(/^\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s*$/);
+      if (tripletMatch) {
+        const r = Number(tripletMatch[1]);
+        const g = Number(tripletMatch[2]);
+        const b = Number(tripletMatch[3]);
+        if ([r, g, b].every((n) => Number.isFinite(n) && n >= 0 && n <= 255)) {
+          return `${r} ${g} ${b}`;
+        }
+      }
+
+      try {
+        const el = document.createElement('span');
+        el.style.color = v;
+        document.body.appendChild(el);
+        const computed = getComputedStyle(el).color;
+        document.body.removeChild(el);
+
+        const m = computed.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d*(?:\.\d+)?))?\)$/);
+        if (!m) return null;
+        return `${Number(m[1])} ${Number(m[2])} ${Number(m[3])}`;
+      } catch {
+        return null;
+      }
+    };
+
+    const applyThemeVars = (data) => {
+      if (!data) return;
+
+      const map = {
+        ThemePrimaryLight: '--primary-light',
+        ThemePrimaryDark: '--primary-dark',
+        ThemeSecondaryLight: '--secondary-light',
+        ThemeSecondaryDark: '--secondary-dark',
+        ThemeAccentLight: '--accent-light',
+        ThemeAccentDark: '--accent-dark',
+        ThemeMutedLight: '--muted-light',
+        ThemeMutedDark: '--muted-dark'
+      };
+
+      Object.entries(map).forEach(([key, cssVar]) => {
+        const value = data[key];
+        if (typeof value === 'string' && value.trim()) {
+          const triplet = toRgbTriplet(value);
+          if (triplet) {
+            document.documentElement.style.setProperty(cssVar, triplet);
+          }
+        }
+      });
+    };
+
+    (async () => {
+      try {
+        const data = await getPublicSettings();
+        if (!mounted) return;
+        applyThemeVars(data);
+      } catch {
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Prevent browser back/forward navigation
   usePreventNavigation(true);
@@ -82,76 +185,79 @@ const AppContent = () => {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 overflow-x-hidden">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 overflow-x-hidden">
 
 
-      <Routes>
-        {/* Public & Patient Routes - Wrapped in PublicLayout */}
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/treatments" element={<TreatmentsPage />} />
-          <Route path="/book-appointment" element={<BookAppointment />} />
+        <Routes>
+          {/* Public & Patient Routes - Wrapped in PublicLayout */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/treatments" element={<TreatmentsPage />} />
+            <Route path="/book-appointment" element={<BookAppointment />} />
 
-          {/* Protected Routes (Any Authenticated User) */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/my-appointments" element={<MyAppointments />} />
-            <Route path="/financial-summary" element={<FinancialSummary />} />
-            <Route path="/edit-profile" element={<EditProfile />} />
-            <Route path="/change-password" element={<ChangePassword />} />
+            {/* Protected Routes (Any Authenticated User) */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/my-appointments" element={<MyAppointments />} />
+              <Route path="/financial-summary" element={<FinancialSummary />} />
+              <Route path="/edit-profile" element={<EditProfile />} />
+              <Route path="/change-password" element={<ChangePassword />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Doctor Routes Only - Wrapped in DoctorLayout */}
-        <Route element={<ProtectedRoute allowedRoles={['doctor']} />}>
-          <Route element={<DoctorLayout />}>
-            <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-            <Route path="/doctor/appointments" element={<DoctorAppointments />} />
-            <Route path="/doctor/patients" element={<DoctorPatients />} />
-            <Route path="/doctor/patients/:patientId" element={<DoctorPatientView />} />
-            <Route path="/doctor/profit" element={<DoctorProfitAnalytics />} />
-            <Route path="/doctor/offdays" element={<OffDaysManager />} />
-            <Route path="/doctor/calendar" element={<CalendarView />} />
+          {/* Doctor Routes Only - Wrapped in DoctorLayout */}
+          <Route element={<ProtectedRoute allowedRoles={['doctor']} />}>
+            <Route element={<DoctorLayout />}>
+              <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+              <Route path="/doctor/appointments" element={<DoctorAppointments />} />
+              <Route path="/doctor/patients" element={<DoctorPatients />} />
+              <Route path="/doctor/patients/:patientId" element={<DoctorPatientView />} />
+              <Route path="/doctor/profit" element={<DoctorProfitAnalytics />} />
+              <Route path="/doctor/offdays" element={<OffDaysManager />} />
+              <Route path="/doctor/calendar" element={<CalendarView />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Secretary Routes Only */}
-        <Route element={<ProtectedRoute allowedRoles={['secretary']} />}>
-          <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
-          <Route path="/secretary/profile" element={<SecretaryProfile />} />
-          <Route path="/secretary/chat" element={<SecretaryChat />} />
-          <Route path="/secretary/payments" element={
-            <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
-              <PaymentReports />
-            </Suspense>
-          } />
-          <Route path="/secretary/schedule" element={<DailySchedule />} />
-        </Route>
-
-
-        {/* Admin Routes */}
-        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-          <Route element={<AdminLayout />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
-            <Route path="/admin/schedule" element={<AdminSchedule />} />
-            <Route path="/admin/patients" element={<AdminPatients />} />
-            <Route path="/admin/treatments" element={<AdminTreatments />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
+          {/* Secretary Routes Only */}
+          <Route element={<ProtectedRoute allowedRoles={['secretary']} />}>
+            <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
+            <Route path="/secretary/profile" element={<SecretaryProfile />} />
+            <Route path="/secretary/chat" element={<SecretaryChat />} />
+            <Route path="/secretary/payments" element={
+              <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
+                <PaymentReports />
+              </Suspense>
+            } />
+            <Route path="/secretary/schedule" element={<DailySchedule />} />
           </Route>
-        </Route>
 
-      </Routes>
 
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={closeLoginModal}
-        onLogin={login}
-      />
-    </div>
+          {/* Admin Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/blocked-phones" element={<AdminBlockedPhones />} />
+              <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+              <Route path="/admin/reports" element={<AdminReports />} />
+              <Route path="/admin/schedule" element={<AdminSchedule />} />
+              <Route path="/admin/patients" element={<AdminPatients />} />
+              <Route path="/admin/treatments" element={<AdminTreatments />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
+            </Route>
+          </Route>
+
+        </Routes>
+
+        <LoginModal
+          isOpen={isLoginModalOpen}
+          onClose={closeLoginModal}
+          onLogin={login}
+        />
+      </div>
+    </ErrorBoundary>
   );
 };
 

@@ -136,6 +136,22 @@ const AdminSettings = () => {
                             </div>
                         )}
                     </div>
+                ) : type === "color" ? (
+                    <div className="flex items-center gap-3">
+                        <input
+                            type="color"
+                            value={(formData[key] || '').toString().startsWith('#') ? formData[key] : '#6d28d9'}
+                            onChange={(e) => handleChange(key, e.target.value)}
+                            className="h-12 w-14 rounded-2xl border border-gray-200 bg-white shadow-inner"
+                        />
+                        <input
+                            type="text"
+                            value={formData[key] || ''}
+                            onChange={(e) => handleChange(key, e.target.value)}
+                            className="flex-1 px-6 py-4 bg-gray-50 border-none rounded-[24px] focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all font-bold text-gray-900 shadow-inner placeholder:text-gray-300"
+                            placeholder={`Enter ${label.toLowerCase()}...`}
+                        />
+                    </div>
                 ) : (
                     <input
                         type={type}
@@ -285,6 +301,59 @@ const AdminSettings = () => {
                                                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hero Asset</h3>
                                             </div>
                                             {renderField('HeroImageUrl', 'Hero Background Vector', 'file')}
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-6 border-t border-gray-50">
+                                        <div className="flex items-center gap-2 px-2 mb-6">
+                                            <Sparkles size={14} className="text-indigo-400" />
+                                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Theme Colors</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {renderField('ThemePrimaryLight', 'Primary (Light)', 'color')}
+                                            {renderField('ThemePrimaryDark', 'Primary (Dark)', 'color')}
+                                            {renderField('ThemeAccentLight', 'Accent (Light)', 'color')}
+                                            {renderField('ThemeAccentDark', 'Accent (Dark)', 'color')}
+                                            {renderField('ThemeSecondaryLight', 'Secondary (Light)', 'color')}
+                                            {renderField('ThemeSecondaryDark', 'Secondary (Dark)', 'color')}
+                                            {renderField('ThemeMutedLight', 'Muted (Light)', 'color')}
+                                            {renderField('ThemeMutedDark', 'Muted (Dark)', 'color')}
+                                        </div>
+                                        <div className="mt-6 space-y-3">
+                                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                                <p className="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-1">
+                                                    Light vs Dark Mode Colors
+                                                </p>
+                                                <p className="text-xs text-blue-600">
+                                                    Set separate colors for light mode (e.g., Primary Light) and dark mode (e.g., Primary Dark). 
+                                                    Users will see Light colors in light mode and Dark colors in dark mode. 
+                                                    Toggle the theme button in the header to preview both modes.
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                    Use HEX (e.g. #6d28d9) or any valid CSS color.
+                                                </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const defaults = {
+                                                        ThemePrimaryLight: 'hsl(262, 52%, 47%)',
+                                                        ThemePrimaryDark: 'hsl(262, 65%, 60%)',
+                                                        ThemeSecondaryLight: 'hsl(220, 25%, 95%)',
+                                                        ThemeSecondaryDark: 'hsl(220, 15%, 20%)',
+                                                        ThemeAccentLight: 'hsl(199, 89%, 48%)',
+                                                        ThemeAccentDark: 'hsl(199, 89%, 58%)',
+                                                        ThemeMutedLight: 'hsl(240, 10%, 85%)',
+                                                        ThemeMutedDark: 'hsl(240, 5%, 40%)'
+                                                    };
+                                                    setFormData(prev => ({ ...prev, ...defaults }));
+                                                }}
+                                                className="px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.25em] text-white shadow-xl shadow-black/10 transition-all bg-gradient-to-r from-gray-900 via-gray-800 to-black hover:from-black hover:via-gray-900 hover:to-gray-800 hover:-translate-y-0.5 active:translate-y-0"
+                                            >
+                                                Revert to Defaults
+                                            </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>

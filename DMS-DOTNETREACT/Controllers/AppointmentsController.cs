@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System;
+using System.Linq;
 
 namespace DMS_DOTNETREACT.Controllers;
 
@@ -16,6 +17,12 @@ public class AppointmentsController : ControllerBase
 {
     private readonly ClinicDbContext _context;
     private readonly AuditService _auditService;
+
+    private static string NormalizePhone(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return string.Empty;
+        return new string(phone.Where(char.IsDigit).ToArray());
+    }
 
     public AppointmentsController(ClinicDbContext context, AuditService auditService)
     {
@@ -147,7 +154,7 @@ public class AppointmentsController : ControllerBase
 
             // Get existing appointments for this doctor on this date
             var existingAppointments = await _context.Appointments
-                .Where(a => a.DoctorId == doctorId && a.AppointmentDate == parsedDate && a.Status != "Cancelled")
+                .Where(a => a.DoctorId == doctorId && a.AppointmentDate == parsedDate && (a.Status ?? "").ToLower() != "cancelled")
                 .Select(a => a.AppointmentTime)
                 .ToListAsync();
 
@@ -198,11 +205,31 @@ public class AppointmentsController : ControllerBase
         }
 
         var patient = await _context.Patients
+            .Include(p => p.User)
             .FirstOrDefaultAsync(p => p.UserId == userId);
 
         if (patient == null)
         {
             return NotFound("Patient profile not found");
+        }
+
+        if (patient.User.IsBookingBlocked)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                string.IsNullOrWhiteSpace(patient.User.BlockReason)
+                    ? "Booking is blocked for this account"
+                    : patient.User.BlockReason);
+        }
+
+        var normalizedPhone = NormalizePhone(patient.Phone);
+        if (!string.IsNullOrEmpty(normalizedPhone))
+        {
+            var phoneBlocked = await _context.BlockedPhoneNumbers
+                .AnyAsync(x => x.NormalizedPhone == normalizedPhone);
+            if (phoneBlocked)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "This phone number is blocked");
+            }
         }
 
         // Validate doctor exists
@@ -230,7 +257,7 @@ public class AppointmentsController : ControllerBase
             .AnyAsync(a => a.DoctorId == model.DoctorId 
                         && a.AppointmentDate == model.AppointmentDate 
                         && a.AppointmentTime == model.AppointmentTime
-                        && a.Status != "Cancelled");
+                        && a.Status.ToLower() != "cancelled");
 
         if (slotTaken)
         {
@@ -265,7 +292,7 @@ public class AppointmentsController : ControllerBase
             AppointmentDate = model.AppointmentDate,
             AppointmentTime = model.AppointmentTime,
             Notes = model.Notes,
-            Status = "Scheduled",
+            Status = "scheduled",
             CreatedAt = DateTime.UtcNow
         };
 
@@ -307,10 +334,10 @@ public class AppointmentsController : ControllerBase
         // Ensure appointment belongs to this patient
         if (appointment.PatientId != patient.Id)
         {
-            return Forbid("You can only cancel your own appointments");
+            return StatusCode(StatusCodes.Status403Forbidden, "You can only cancel your own appointments");
         }
 
-        if (appointment.Status == "Cancelled")
+        if (appointment.Status.ToLower() == "cancelled")
         {
             return BadRequest("Appointment is already cancelled");
         }
@@ -322,13 +349,77 @@ public class AppointmentsController : ControllerBase
             return BadRequest("Appointments can only be cancelled at least 12 hours in advance.");
         }
 
-        appointment.Status = "Cancelled";
+        appointment.Status = "cancelled";
         appointment.CancelReason = "Patient cancelled via portal";
         
         await _context.SaveChangesAsync();
         await _auditService.LogActionAsync(userId, "APPOINTMENT_CANCELLED", $"Patient {patient.FullName} cancelled appointment #{id}");
 
         return Ok(new { Message = "Appointment cancelled successfully" });
+    }
+
+    public class UpdateAppointmentStatusRequest
+    {
+        public string Status { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Update appointment status (Doctor only) - supports marking as no-show
+    /// </summary>
+    [HttpPut("doctor/appointments/{id}/status")]
+    [Authorize(Policy = "DoctorOnly")]
+    public async Task<ActionResult> UpdateAppointmentStatusDoctor(int id, [FromBody] UpdateAppointmentStatusRequest request)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (doctor == null) return NotFound("Doctor not found");
+
+        var appt = await _context.Appointments.FindAsync(id);
+        if (appt == null) return NotFound("Appointment not found");
+
+        if (appt.DoctorId != doctor.Id)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, "You can only update your own appointments");
+        }
+
+        var oldStatus = (appt.Status ?? string.Empty).ToLowerInvariant();
+        var newStatus = (request.Status ?? string.Empty).ToLowerInvariant();
+
+        if (string.IsNullOrWhiteSpace(newStatus))
+        {
+            return BadRequest("Status is required");
+        }
+
+        appt.Status = newStatus;
+
+        if (oldStatus != "no-show" && newStatus == "no-show")
+        {
+            var patient = await _context.Patients
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.Id == appt.PatientId);
+
+            if (patient != null)
+            {
+                patient.User.NoShowCount += 1;
+
+                if (patient.User.NoShowCount >= 3)
+                {
+                    patient.User.IsLoginBlocked = true;
+                    patient.User.IsBookingBlocked = true;
+                    patient.User.BlockReason = "Auto-blocked due to 3+ no-shows";
+                    patient.User.BlockedAt = DateTime.UtcNow;
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(userId, "APPOINTMENT_STATUS_UPDATE_DOCTOR", $"Doctor {doctor.FullName} updated appointment #{id} status to {newStatus}");
+        return Ok(new { message = "Status updated", status = appt.Status });
     }
 
     /// <summary>
@@ -620,7 +711,7 @@ public class AppointmentsController : ControllerBase
 
         if (appointment.DoctorId != doctor.Id)
         {
-            return Forbid("You can only complete your own appointments");
+            return StatusCode(StatusCodes.Status403Forbidden, "You can only complete your own appointments");
         }
 
         if (appointment.IsCompleted)
@@ -669,7 +760,7 @@ public class AppointmentsController : ControllerBase
 
         if (appointment.DoctorId != doctor.Id)
         {
-            return Forbid("You can only update your own appointments");
+            return StatusCode(StatusCodes.Status403Forbidden, "You can only update your own appointments");
         }
 
         // Validate status

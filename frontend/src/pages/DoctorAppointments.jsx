@@ -9,6 +9,7 @@ import {
   getFutureAppointments,
   getPastAppointments,
   completeAppointment,
+  updateAppointmentStatusDoctor,
   getAppointmentNotes,
   addMedicalNote,
   editMedicalNote,
@@ -41,6 +42,9 @@ const DoctorAppointments = () => {
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const [appointmentNotes, setAppointmentNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
+
+  const [showNoShowModal, setShowNoShowModal] = useState(false);
+  const [noShowAppointment, setNoShowAppointment] = useState(null);
 
   // Filter states
   const [completionFilter, setCompletionFilter] = useState('all'); // 'all', 'completed', 'not-completed'
@@ -105,6 +109,25 @@ const DoctorAppointments = () => {
   const handleMarkAsDone = (appointment) => {
     setSelectedAppointment(appointment);
     setShowMarkAsDoneModal(true);
+  };
+
+  const handleRequestNoShow = (appointment) => {
+    setNoShowAppointment(appointment);
+    setShowNoShowModal(true);
+  };
+
+  const confirmNoShow = async () => {
+    if (!noShowAppointment) return;
+    try {
+      await updateAppointmentStatusDoctor(noShowAppointment.id, 'no-show');
+      success('Appointment marked as no-show');
+      setShowNoShowModal(false);
+      setNoShowAppointment(null);
+      await loadAppointments(activeTab);
+    } catch (e) {
+      console.error(e);
+      toastError(e?.message || 'Failed to mark as no-show');
+    }
   };
 
   const handleExport = async (format) => {
@@ -793,6 +816,8 @@ const DoctorAppointments = () => {
                     <AppointmentCard
                       appointment={appointment}
                       onMarkAsDone={handleMarkAsDone}
+                      onMarkNoShow={handleRequestNoShow}
+                      allowNoShow={true}
                       onViewNotes={handleViewNotes}
                       onRemind={handleRemind}
                       showActions={activeTab !== 'past' || appointment.medicalNotesCount > 0}
@@ -876,6 +901,20 @@ const DoctorAppointments = () => {
           </div>
         )
       }
+
+      <ConfirmationModal
+        isOpen={showNoShowModal}
+        title="Mark as No-Show"
+        message={`Are you sure you want to mark ${noShowAppointment?.patient?.fullName || 'this patient'} as a no-show? This will increase their no-show count and may auto-block them after 3+ no-shows.`}
+        onConfirm={confirmNoShow}
+        onCancel={() => {
+          setShowNoShowModal(false);
+          setNoShowAppointment(null);
+        }}
+        confirmText="Yes, Mark No-Show"
+        cancelText="Cancel"
+        type="danger"
+      />
 
       {/* Mark as Done Modal */}
       {

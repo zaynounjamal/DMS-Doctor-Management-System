@@ -6,12 +6,15 @@ import ConfirmationModal from '../ui/ConfirmationModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getUnreadCount } from '../../chatApi';
 import { useToast } from '../../contexts/ToastContext';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { getChatHubConnection, isChatHubConnected, startChatHub } from '../../signalr/chatHub';
 
 const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
     const { showToast } = useToast();
+    const { lang, toggle } = useLanguage();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
@@ -53,12 +56,40 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
 
         refreshUnread(true);
         const interval = setInterval(() => {
-            refreshUnread(true);
+            if (!isChatHubConnected()) {
+                refreshUnread(true);
+            }
         }, 6000);
 
         return () => {
             mounted = false;
             clearInterval(interval);
+        };
+    }, [showToast]);
+
+    React.useEffect(() => {
+        let mounted = true;
+        const conn = getChatHubConnection();
+
+        const onUnread = (payload) => {
+            if (!mounted) return;
+            const next = payload || { unreadMessages: 0, unreadConversations: 0 };
+            setUnreadSummary(next);
+
+            const prevUnreadMessages = prevUnreadMessagesRef.current || 0;
+            if (Number(next.unreadMessages || 0) > prevUnreadMessages) {
+                showToast('New chat message received', 'info');
+            }
+            prevUnreadMessagesRef.current = Number(next.unreadMessages || 0);
+        };
+
+        startChatHub().catch(() => {
+        });
+        conn.on('chat:unread', onUnread);
+
+        return () => {
+            mounted = false;
+            conn.off('chat:unread', onUnread);
         };
     }, [showToast]);
 
@@ -117,6 +148,15 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
 
                     {/* Right: Doctor Filter & Profile */}
                     <div className="flex items-center space-x-3">
+                        <button
+                            type="button"
+                            onClick={toggle}
+                            className="px-3 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+                            title="Language"
+                            aria-label="Language"
+                        >
+                            {lang === 'ar' ? 'AR' : 'EN'}
+                        </button>
                         <div className="hidden lg:block relative">
                             <select
                                 value={selectedDoctor}

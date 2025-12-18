@@ -18,6 +18,12 @@ public class AuthController : ControllerBase
     private readonly PasswordHasher _passwordHasher;
     private readonly EmailService _emailService;
 
+    private static string NormalizePhone(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return string.Empty;
+        return new string(phone.Where(char.IsDigit).ToArray());
+    }
+
     public AuthController(ClinicDbContext context, JwtService jwtService, PasswordHasher passwordHasher, EmailService emailService)
     {
         _context = context;
@@ -45,6 +51,13 @@ public class AuthController : ControllerBase
         if (!user.IsActive)
         {
             return Unauthorized("User is inactive");
+        }
+
+        if (user.IsLoginBlocked)
+        {
+            return Unauthorized(string.IsNullOrWhiteSpace(user.BlockReason)
+                ? "User is blocked"
+                : user.BlockReason);
         }
 
         var token = _jwtService.GenerateToken(user.Id, user.Username, user.Role);
@@ -78,6 +91,19 @@ public class AuthController : ControllerBase
         if (await _context.Users.AnyAsync(u => u.Username == model.Username))
         {
             return BadRequest("Username is already taken");
+        }
+
+        var normalizedPhone = NormalizePhone(model.Phone);
+        if (string.IsNullOrEmpty(normalizedPhone))
+        {
+            return BadRequest("Phone is required");
+        }
+
+        var phoneBlocked = await _context.BlockedPhoneNumbers
+            .AnyAsync(x => x.NormalizedPhone == normalizedPhone);
+        if (phoneBlocked)
+        {
+            return BadRequest("This phone number is blocked");
         }
 
         // Normalize email: convert empty string to null

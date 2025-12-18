@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, Stethoscope } from 'lucide-react';
+import { Menu, Stethoscope, Sun, Moon } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import Sidebar from './Sidebar';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 import { getPublicSettings } from '../../api';
 
 const Header = ({ onLoginClick, user, onLogout }) => {
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
+  const { lang, toggle, t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showLogo, setShowLogo] = useState(false);
@@ -117,13 +119,31 @@ const Header = ({ onLoginClick, user, onLogout }) => {
 
             {/* Right Side: Profile Button or Sign Up */}
             <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-white/15 backdrop-blur-md text-white border border-white/20 shadow-lg shadow-black/10 hover:bg-white/25 hover:border-white/30 transition-all focus:outline-none focus:ring-2 focus:ring-white/50"
+                aria-label="Toggle theme"
+                title="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              <button
+                type="button"
+                onClick={toggle}
+                className="flex items-center justify-center px-3 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white font-bold hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+                aria-label={t('language')}
+                title={t('language')}
+              >
+                <span className="text-sm">{lang === 'ar' ? 'AR' : 'EN'}</span>
+              </button>
               {user ? (
                 <Link
                   to="/profile"
                   className="flex items-center justify-center px-4 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white font-bold hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
                   aria-label="Profile"
                 >
-                  <span className="text-sm">Profile</span>
+                  <span className="text-sm">{t('profile')}</span>
                 </Link>
               ) : (
                 <button
@@ -131,7 +151,7 @@ const Header = ({ onLoginClick, user, onLogout }) => {
                   className="flex items-center justify-center px-4 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white font-bold hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
                   aria-label="Sign Up"
                 >
-                  <span className="text-sm">Sign Up</span>
+                  <span className="text-sm">{t('signUp')}</span>
                 </button>
               )}
             </div>

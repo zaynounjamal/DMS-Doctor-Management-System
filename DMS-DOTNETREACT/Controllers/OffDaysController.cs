@@ -99,7 +99,7 @@ public class OffDaysController : ControllerBase
 
         // Check if there are appointments on this day
         var hasAppointments = await _context.Appointments
-            .AnyAsync(a => a.DoctorId == doctor.Id && a.AppointmentDate == offDate && a.Status != "Cancelled");
+            .AnyAsync(a => a.DoctorId == doctor.Id && a.AppointmentDate == offDate && (a.Status ?? "").ToLower() != "cancelled");
 
         if (hasAppointments)
         {
@@ -150,7 +150,7 @@ public class OffDaysController : ControllerBase
 
         if (offDay.CreatedByUser != userId)
         {
-            return Forbid("You can only remove your own off days");
+            return StatusCode(StatusCodes.Status403Forbidden, "You can only remove your own off days");
         }
 
         _context.OffDays.Remove(offDay);

@@ -47,7 +47,7 @@ public class MedicalNotesController : ControllerBase
 
         if (appointment.DoctorId != doctor.Id)
         {
-            return Forbid("You can only add notes to your own appointments");
+            return StatusCode(StatusCodes.Status403Forbidden, "You can only add notes to your own appointments");
         }
 
         var note = new MedicalNote
@@ -101,7 +101,7 @@ public class MedicalNotesController : ControllerBase
         // Only the doctor who created the note can edit it
         if (note.DoctorId != doctor.Id)
         {
-            return Forbid("You can only edit your own notes");
+            return StatusCode(StatusCodes.Status403Forbidden, "You can only edit your own notes");
         }
 
         note.Note = model.Note;
@@ -149,7 +149,7 @@ public class MedicalNotesController : ControllerBase
 
         if (appointment.DoctorId != doctor.Id)
         {
-            return Forbid("You can only view notes for your own appointments");
+            return StatusCode(StatusCodes.Status403Forbidden, "You can only view notes for your own appointments");
         }
 
         var notes = await _context.MedicalNotes

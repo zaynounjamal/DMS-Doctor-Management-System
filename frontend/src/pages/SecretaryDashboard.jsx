@@ -10,10 +10,23 @@ import PatientForm from '../components/secretary/PatientForm';
 import StatCard from '../components/StatCard';
 import { Plus, CreditCard, Calendar, Clock, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import AnimatedBackground from '../components/AnimatedBackground';
 
 const SecretaryDashboard = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
+
+    return (
+        <div className="relative min-h-screen">
+            <AnimatedBackground />
+            <div className="relative z-10">
+                <SecretaryDashboardContent navigate={navigate} showToast={showToast} />
+            </div>
+        </div>
+    );
+};
+
+const SecretaryDashboardContent = ({ navigate, showToast }) => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');

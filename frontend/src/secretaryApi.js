@@ -144,10 +144,15 @@ export const searchPatients = async (query) => {
 };
 
 export const createPatient = async (patientData) => {
+    const payload = {
+        ...patientData,
+        gender: patientData?.gender ? patientData.gender : null,
+        birthDate: patientData?.birthDate ? patientData.birthDate : null
+    };
     const response = await fetch(`${API_URL}/secretary/patients`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify(patientData)
+        body: JSON.stringify(payload)
     });
     if (!response.ok) {
         const error = await response.text();

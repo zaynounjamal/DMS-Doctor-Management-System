@@ -4,6 +4,8 @@ using DMS_DOTNETREACT.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Security.Claims;
 
 namespace DMS_DOTNETREACT.Controllers;
 
@@ -16,11 +18,118 @@ public class AdminController : ControllerBase
     private readonly PasswordHasher _passwordHasher;
     private readonly AuditService _auditService;
 
+    private static string NormalizePhone(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return string.Empty;
+        return new string(phone.Where(char.IsDigit).ToArray());
+    }
+
     public AdminController(ClinicDbContext context, PasswordHasher passwordHasher, AuditService auditService)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _auditService = auditService;
+    }
+
+    public class BlockUserRequest
+    {
+        public bool BlockLogin { get; set; } = true;
+        public bool BlockBooking { get; set; } = true;
+        public string? Reason { get; set; }
+    }
+
+    [HttpPost("users/{id}/block")]
+    public async Task<ActionResult> BlockUser(int id, [FromBody] BlockUserRequest request)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound("User not found");
+
+        user.IsLoginBlocked = request.BlockLogin;
+        user.IsBookingBlocked = request.BlockBooking;
+        user.BlockReason = string.IsNullOrWhiteSpace(request.Reason) ? "Blocked by admin" : request.Reason;
+        user.BlockedAt = DateTime.UtcNow;
+        user.BlockedByUserId = int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var adminUserId)
+            ? adminUserId
+            : null;
+
+        await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(user.Id, "USER_BLOCKED", $"User {user.Username} blocked. Login={user.IsLoginBlocked}, Booking={user.IsBookingBlocked}");
+        return Ok(new { message = "User blocked" });
+    }
+
+    [HttpPost("users/{id}/unblock")]
+    public async Task<ActionResult> UnblockUser(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound("User not found");
+
+        user.IsLoginBlocked = false;
+        user.IsBookingBlocked = false;
+        user.BlockReason = null;
+        user.BlockedAt = null;
+        user.BlockedByUserId = null;
+        user.NoShowCount = 0;
+
+        await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(user.Id, "USER_UNBLOCKED", $"User {user.Username} unblocked and no-show count reset.");
+        return Ok(new { message = "User unblocked" });
+    }
+
+    public class BlockPhoneRequest
+    {
+        public string Phone { get; set; } = string.Empty;
+        public string? Reason { get; set; }
+    }
+
+    [HttpGet("blocked-phones")]
+    public async Task<ActionResult> GetBlockedPhones()
+    {
+        var items = await _context.BlockedPhoneNumbers
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
+        return Ok(items);
+    }
+
+    [HttpPost("blocked-phones")]
+    public async Task<ActionResult> AddBlockedPhone([FromBody] BlockPhoneRequest request)
+    {
+        var normalized = NormalizePhone(request.Phone);
+        if (string.IsNullOrEmpty(normalized)) return BadRequest("Phone is required");
+
+        var exists = await _context.BlockedPhoneNumbers.AnyAsync(x => x.NormalizedPhone == normalized);
+        if (exists) return BadRequest("Phone number is already blocked");
+
+        var createdByUserId = int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid)
+            ? uid
+            : (int?)null;
+        var item = new BlockedPhoneNumber
+        {
+            NormalizedPhone = normalized,
+            Reason = request.Reason,
+            CreatedByUserId = createdByUserId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.BlockedPhoneNumbers.Add(item);
+        await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(createdByUserId, "PHONE_BLOCKED", $"Phone {normalized} blocked");
+        return Ok(item);
+    }
+
+    [HttpDelete("blocked-phones/{id}")]
+    public async Task<ActionResult> RemoveBlockedPhone(int id)
+    {
+        var item = await _context.BlockedPhoneNumbers.FindAsync(id);
+        if (item == null) return NotFound("Blocked phone not found");
+
+        _context.BlockedPhoneNumbers.Remove(item);
+        await _context.SaveChangesAsync();
+
+        var removedBy = int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid)
+            ? uid
+            : (int?)null;
+        await _auditService.LogActionAsync(removedBy, "PHONE_UNBLOCKED", $"Phone {item.NormalizedPhone} unblocked");
+        return Ok(new { message = "Phone unblocked" });
     }
 
     /// <summary>
@@ -187,7 +296,13 @@ public class AdminController : ControllerBase
                 u.Email,
                 u.Role,
                 u.IsActive,
+                u.IsLoginBlocked,
+                u.IsBookingBlocked,
+                u.BlockReason,
+                u.BlockedAt,
+                u.NoShowCount,
                 u.CreatedAt,
+                Phone = u.Patient != null ? u.Patient.Phone : (u.Doctor != null ? u.Doctor.Phone : (u.Secretary != null ? u.Secretary.Phone : null)),
                 FullName = u.Doctor != null ? u.Doctor.FullName :
                            u.Secretary != null ? u.Secretary.FullName :
                            u.Patient != null ? u.Patient.FullName : "System User"
