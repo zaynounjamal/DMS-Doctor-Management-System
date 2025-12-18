@@ -14,6 +14,22 @@ namespace DMS_DOTNETREACT.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "BlockedPhoneNumbers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    NormalizedPhone = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedByUserId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BlockedPhoneNumbers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "EmailTemplates",
                 columns: table => new
                 {
@@ -90,6 +106,12 @@ namespace DMS_DOTNETREACT.Migrations
                     Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Role = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsLoginBlocked = table.Column<bool>(type: "bit", nullable: false),
+                    IsBookingBlocked = table.Column<bool>(type: "bit", nullable: false),
+                    BlockReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    BlockedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    BlockedByUserId = table.Column<int>(type: "int", nullable: true),
+                    NoShowCount = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -472,8 +494,8 @@ namespace DMS_DOTNETREACT.Migrations
                 columns: new[] { "Id", "Body", "Description", "LastUpdated", "Name", "Subject" },
                 values: new object[,]
                 {
-                    { 1, "\r\n                    <h3>Welcome, {{FullName}}!</h3>\r\n                    <p>Thank you for registering with us. We are excited to have you on board.</p>\r\n                    <p>Your username is: <strong>{{UserName}}</strong></p>\r\n                    <br/>\r\n                    <p>Best Regards,</p>\r\n                    <p>The Clinic Team</p>", "Sent to new users upon registration.", new DateTime(2025, 12, 17, 17, 49, 53, 892, DateTimeKind.Utc).AddTicks(3882), "WelcomeEmail", "Welcome to Our Clinic!" },
-                    { 2, "\r\n                    <h3>Appointment Reminder</h3>\r\n                    <p>Dear {{FullName}},</p>\r\n                    <p>This is a reminder for your upcoming appointment.</p>\r\n                    <p><strong>Date:</strong> {{Date}}</p>\r\n                    <p><strong>Time:</strong> {{Time}}</p>\r\n                    <p><strong>Doctor:</strong> {{DoctorName}}</p>\r\n                    <br/>\r\n                    <p>Please contact us if you need to reschedule.</p>\r\n                    <p>The Clinic Team</p>", "Automated reminder sent 1 day before appointment.", new DateTime(2025, 12, 17, 17, 49, 53, 892, DateTimeKind.Utc).AddTicks(5551), "AppointmentReminder", "Appointment Reminder" }
+                    { 1, "\r\n                    <h3>Welcome, {{FullName}}!</h3>\r\n                    <p>Thank you for registering with us. We are excited to have you on board.</p>\r\n                    <p>Your username is: <strong>{{UserName}}</strong></p>\r\n                    <br/>\r\n                    <p>Best Regards,</p>\r\n                    <p>The Clinic Team</p>", "Sent to new users upon registration.", new DateTime(2025, 12, 18, 11, 52, 49, 809, DateTimeKind.Utc).AddTicks(6685), "WelcomeEmail", "Welcome to Our Clinic!" },
+                    { 2, "\r\n                    <h3>Appointment Reminder</h3>\r\n                    <p>Dear {{FullName}},</p>\r\n                    <p>This is a reminder for your upcoming appointment.</p>\r\n                    <p><strong>Date:</strong> {{Date}}</p>\r\n                    <p><strong>Time:</strong> {{Time}}</p>\r\n                    <p><strong>Doctor:</strong> {{DoctorName}}</p>\r\n                    <br/>\r\n                    <p>Please contact us if you need to reschedule.</p>\r\n                    <p>The Clinic Team</p>", "Automated reminder sent 1 day before appointment.", new DateTime(2025, 12, 18, 11, 52, 49, 809, DateTimeKind.Utc).AddTicks(9478), "AppointmentReminder", "Appointment Reminder" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -490,6 +512,12 @@ namespace DMS_DOTNETREACT.Migrations
                 name: "IX_AuditLogs_UserId",
                 table: "AuditLogs",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BlockedPhoneNumbers_NormalizedPhone",
+                table: "BlockedPhoneNumbers",
+                column: "NormalizedPhone",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChatConversations_AssignedSecretaryId",
@@ -587,6 +615,9 @@ namespace DMS_DOTNETREACT.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AuditLogs");
+
+            migrationBuilder.DropTable(
+                name: "BlockedPhoneNumbers");
 
             migrationBuilder.DropTable(
                 name: "ChatMessages");

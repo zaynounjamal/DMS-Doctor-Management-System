@@ -21,7 +21,19 @@ const DoctorPatients = () => {
     try {
       setLoading(true);
       const data = await getDoctorPatients();
-      setPatients(data);
+      
+      // Normalize API data to match UI component props
+      const normalizedData = (data || []).map(p => ({
+        ...p,
+        id: p.id || p.Id,
+        fullName: p.fullName || p.FullName,
+        email: p.email || p.Email || 'N/A',
+        phoneNumber: p.phoneNumber || p.Phone || p.phone,
+        dateOfBirth: p.dateOfBirth || p.BirthDate || p.birthDate,
+        gender: p.gender || p.Gender
+      }));
+
+      setPatients(normalizedData);
     } catch (error) {
       console.error('Failed to load patients:', error);
       toastError('Failed to load patients');
@@ -145,10 +157,6 @@ const DoctorPatients = () => {
                     {patient.fullName}
                   </h3>
                   <div className="space-y-1">
-                    <p className="text-sm flex items-center gap-2 text-gray-600">
-                      <Mail size={16} className="flex-shrink-0" color="#9333ea" />
-                      <span className="truncate">{patient.email}</span>
-                    </p>
                     <p className="text-sm flex items-center gap-2 text-gray-600">
                       <Phone size={16} className="flex-shrink-0" color="#9333ea" />
                       {patient.phoneNumber || 'N/A'}

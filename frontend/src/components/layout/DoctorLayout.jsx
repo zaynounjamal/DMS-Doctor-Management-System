@@ -32,9 +32,9 @@ const DoctorLayout = () => {
     const navItems = getNavItems();
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 relative">
+        <div className="h-screen overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-900 relative">
             <FloatingDotsBackground />
-            <div className="relative z-10 flex flex-col min-h-screen">
+            <div className="relative z-10 flex flex-col h-full">
                 {/* Header always fixed at top */}
                 <DoctorHeader
                     onToggleSidebar={toggleSidebar}
@@ -43,7 +43,7 @@ const DoctorLayout = () => {
                 />
 
                 {/* Main content area below header (pt-16 = 64px) */}
-                <div className="flex flex-1 pt-16">
+                <div className="flex flex-1 pt-16 overflow-hidden">
 
                     {/* Sidebar Wrapper */}
                     {/* 
@@ -90,7 +90,7 @@ const DoctorLayout = () => {
                     </div>
 
                     {/* Main Content */}
-                    <main className="flex-1 overflow-x-hidden p-6 transition-all duration-300">
+                    <main className="flex-1 overflow-x-hidden overflow-y-auto h-full p-6 transition-all duration-300">
                         <Outlet />
                     </main>
                 </div>
