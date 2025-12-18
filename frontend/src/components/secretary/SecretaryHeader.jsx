@@ -4,14 +4,19 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Calendar, Users, LayoutDashboard, LogOut, User, Menu, X, ChevronDown } from 'lucide-react';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getUnreadCount } from '../../chatApi';
+import { useToast } from '../../contexts/ToastContext';
 
 const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
+    const { showToast } = useToast();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
+    const [unreadSummary, setUnreadSummary] = React.useState({ unreadMessages: 0, unreadConversations: 0 });
+    const prevUnreadMessagesRef = React.useRef(0);
 
     const handleLogout = () => {
         setIsLogoutModalOpen(true);
@@ -23,6 +28,39 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
         { path: '/secretary/payments', label: 'Payments', icon: Calendar },
         { path: '/secretary/chat', label: 'Chat', icon: Users },
     ];
+
+    React.useEffect(() => {
+        let mounted = true;
+
+        const refreshUnread = async (silent = true) => {
+            try {
+                const data = await getUnreadCount();
+                if (!mounted) return;
+                const next = data || { unreadMessages: 0, unreadConversations: 0 };
+                setUnreadSummary(next);
+
+                const prevUnreadMessages = prevUnreadMessagesRef.current || 0;
+                if (next.unreadMessages > prevUnreadMessages) {
+                    showToast('New chat message received', 'info');
+                }
+                prevUnreadMessagesRef.current = next.unreadMessages;
+            } catch (e) {
+                if (!silent) {
+                    showToast(e.message || 'Failed to load unread count', 'error');
+                }
+            }
+        };
+
+        refreshUnread(true);
+        const interval = setInterval(() => {
+            refreshUnread(true);
+        }, 6000);
+
+        return () => {
+            mounted = false;
+            clearInterval(interval);
+        };
+    }, [showToast]);
 
     return (
         <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-200">
@@ -52,6 +90,7 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                         {navItems.map(item => {
                             const Icon = item.icon;
                             const isActive = location.pathname === item.path;
+                            const isChat = item.path === '/secretary/chat';
                             return (
                                 <button
                                     key={item.path}
@@ -63,7 +102,14 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                                     }`}
                                 >
                                     <Icon className={`w-4 h-4 mr-2 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
-                                    {item.label}
+                                    <span className="relative">
+                                        {item.label}
+                                        {isChat && Number(unreadSummary.unreadConversations || 0) > 0 ? (
+                                            <span className="absolute -top-2 -right-4 inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                                                {Number(unreadSummary.unreadConversations || 0)}
+                                            </span>
+                                        ) : null}
+                                    </span>
                                 </button>
                             );
                         })}
@@ -171,6 +217,7 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                                 {navItems.map(item => {
                                     const Icon = item.icon;
                                     const isActive = location.pathname === item.path;
+                                    const isChat = item.path === '/secretary/chat';
                                     return (
                                         <button
                                             key={item.path}
@@ -182,7 +229,14 @@ const SecretaryHeader = ({ selectedDoctor, onDoctorChange, doctors }) => {
                                             }`}
                                         >
                                             <Icon className={`w-5 h-5 mr-3 ${isActive ? 'text-white' : 'text-gray-400'}`} />
-                                            {item.label}
+                                            <span className="relative">
+                                                {item.label}
+                                                {isChat && Number(unreadSummary.unreadConversations || 0) > 0 ? (
+                                                    <span className="absolute -top-2 -right-4 inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                                                        {Number(unreadSummary.unreadConversations || 0)}
+                                                    </span>
+                                                ) : null}
+                                            </span>
                                         </button>
                                     );
                                 })}

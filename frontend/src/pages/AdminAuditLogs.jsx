@@ -47,9 +47,9 @@ const AdminAuditLogs = () => {
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-8 pb-10">
+        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 pb-10 px-4">
             {/* Header & Main Stats */}
-            <div className="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100 relative overflow-hidden">
+            <div className="bg-white rounded-[24px] md:rounded-[40px] p-6 md:p-8 shadow-sm border border-gray-100 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-gray-50/50 rounded-full blur-3xl -mr-40 -mt-40 z-0" />
                 
                 <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-10">
@@ -67,13 +67,13 @@ const AdminAuditLogs = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-4">
-                        <div className="flex flex-col sm:flex-row gap-4 bg-gray-50 p-3 rounded-[32px] w-full xl:w-auto">
-                            <div className="relative flex-1 group min-w-[280px]">
+                        <div className="flex flex-col sm:flex-row gap-4 bg-gray-50 p-3 rounded-[24px] md:rounded-[32px] w-full xl:w-auto">
+                            <div className="relative flex-1 group min-w-0 sm:min-w-[280px]">
                                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-indigo-600 transition-colors" />
                                 <input
                                     type="text"
                                     placeholder="Search user, action, hardware..."
-                                    className="w-full pl-12 pr-6 py-4 bg-white border-none rounded-[24px] focus:ring-2 focus:ring-indigo-500/20 shadow-sm font-bold text-gray-900 placeholder:text-gray-300 transition-all"
+                                    className="w-full pl-12 pr-6 py-3.5 md:py-4 bg-white border-none rounded-[20px] md:rounded-[24px] focus:ring-2 focus:ring-indigo-500/20 shadow-sm font-bold text-gray-900 placeholder:text-gray-300 transition-all"
                                     value={filters.search}
                                     onChange={(e) => setFilters({...filters, search: e.target.value})}
                                 />
@@ -81,7 +81,7 @@ const AdminAuditLogs = () => {
                             <div className="flex items-center gap-4">
                                 <button 
                                     onClick={loadLogs}
-                                    className={`p-4 bg-white text-gray-900 rounded-[24px] shadow-sm hover:shadow-md transition-all active:scale-95 ${loading ? 'animate-spin' : ''}`}
+                                    className={`p-3.5 md:p-4 bg-white text-gray-900 rounded-[20px] md:rounded-[24px] shadow-sm hover:shadow-md transition-all active:scale-95 ${loading ? 'animate-spin' : ''}`}
                                 >
                                     <RefreshCw size={20} />
                                 </button>
@@ -99,7 +99,7 @@ const AdminAuditLogs = () => {
             </div>
 
             {/* Filter Surface */}
-            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+            <div className="bg-white p-6 md:p-8 rounded-[24px] md:rounded-[40px] shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2 mb-6 px-1">
                     <Filter size={14} className="text-gray-400" />
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Parameter Configuration</h3>
@@ -146,9 +146,9 @@ const AdminAuditLogs = () => {
             </div>
 
             {/* Log Grid */}
-            <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-[24px] md:rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto overflow-y-hidden">
-                    <table className="w-full border-collapse">
+                    <table className="w-full border-collapse min-w-[980px]">
                         <thead>
                             <tr className="bg-gray-50/50">
                                 <th className="px-8 py-6 text-left text-xs font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Event Signature</th>

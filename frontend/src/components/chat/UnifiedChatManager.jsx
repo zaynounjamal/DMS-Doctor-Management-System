@@ -1,21 +1,27 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MessageSquare, Bot, MessageCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIChatWidget from './AIChatWidget';
 import PatientChatWidget from './PatientChatWidget';
 import { useAuth } from '../../contexts/AuthContext';
+import { getUnreadCount } from '../../chatApi';
 
 const UnifiedChatManager = () => {
   const { user } = useAuth();
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [activeChat, setActiveChat] = useState(null); // 'ai' | 'secretary' | null
   const [unreadCount, setUnreadCount] = useState(0);
+  const prevUnreadRef = useRef(0);
 
-  const isPatient = user?.role?.toLowerCase() === 'patient';
+  const role = (user?.role ?? '').toString().toLowerCase();
+  const isPatient = role === 'patient';
+  const isSecretary = role === 'secretary';
+  const isDoctor = role === 'doctor';
+  const isAdmin = role === 'admin';
 
   const handleOpenSelector = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     setIsSelectorOpen(!isSelectorOpen);
   };
 
@@ -23,6 +29,7 @@ const UnifiedChatManager = () => {
     setActiveChat(chatType);
     setIsSelectorOpen(false);
     setUnreadCount(0); // Clear on open
+    prevUnreadRef.current = 0;
   };
 
   const handleCloseChat = () => {
@@ -30,13 +37,47 @@ const UnifiedChatManager = () => {
   };
 
   const handleNewMessage = (count = 1) => {
-    // Only increment if chat is NOT open or it's a different chat?
-    // User requirement: "Clear the notification when: The user opens any chat"
-    // "When a new message arrives and chat is closed: Show the badge"
     if (!activeChat) {
-      setUnreadCount(prev => prev + count);
+      setUnreadCount((prev) => prev + count);
     }
   };
+
+  // Poll unread count from backend (patient only).
+  // This makes badge accurate even if message arrives when widget isn't polling yet.
+  useEffect(() => {
+    if (!isPatient) return;
+
+    let mounted = true;
+
+    const refresh = async () => {
+      try {
+        const data = await getUnreadCount();
+        const next = Number(data?.unreadMessages || 0);
+        if (!mounted) return;
+
+        // Only show badge when no chat is open (matches requirement)
+        if (!activeChat) {
+          setUnreadCount(next);
+        }
+
+        prevUnreadRef.current = next;
+      } catch {
+      }
+    };
+
+    refresh();
+    const interval = setInterval(refresh, 6000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [isPatient, activeChat]);
+
+  // Don't show the unified floating selector for staff panels
+  if (isSecretary || isDoctor || isAdmin) {
+    return null;
+  }
 
   return (
     <>
@@ -45,7 +86,7 @@ const UnifiedChatManager = () => {
         <button
           type="button"
           onClick={handleOpenSelector}
-          className="flex items-center justify-center w-14 h-14 rounded-full bg-primary-light dark:bg-primary-dark text-white shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 relative"
+          className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 relative"
           aria-label="Open Messages"
         >
           <MessageSquare className="w-6 h-6" />

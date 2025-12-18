@@ -52,6 +52,21 @@ export const sendConversationMessage = async (conversationId, text) => {
   return handleResponse(response);
 };
 
+export const markConversationRead = async (conversationId) => {
+  const response = await fetch(`${API_URL}/chat/conversations/${conversationId}/read`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  return handleResponse(response);
+};
+
+export const getUnreadCount = async () => {
+  const response = await fetch(`${API_URL}/chat/unread-count`, {
+    headers: getAuthHeaders()
+  });
+  return handleResponse(response);
+};
+
 export const getSecretaryInbox = async (tab = 'open') => {
   const response = await fetch(`${API_URL}/chat/secretary/inbox?tab=${encodeURIComponent(tab)}`, {
     headers: getAuthHeaders()
