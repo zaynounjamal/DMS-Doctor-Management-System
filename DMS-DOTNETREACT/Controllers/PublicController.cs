@@ -253,4 +253,22 @@ public class PublicController : ControllerBase
             }
         });
     }
+
+    [HttpGet("holidays")]
+    public async Task<ActionResult> GetHolidays()
+    {
+        var holidays = await _context.Holidays
+            .AsNoTracking()
+            .OrderBy(h => h.Date)
+            .Select(h => new 
+            {
+                h.Id,
+                h.Name,
+                h.Date,
+                h.IsRecurring
+            })
+            .ToListAsync();
+            
+        return Ok(holidays);
+    }
 }

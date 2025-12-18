@@ -138,10 +138,43 @@ public class AppointmentsController : ControllerBase
 
             Console.WriteLine($"[GetTimeSlots] Successfully parsed date: {parsedDate}");
 
-            // Define working hours: 9 AM to 5 PM, 30-minute slots
+            // Get doctor's working hours
+            var doctor = await _context.Doctors
+                .Include(d => d.User)
+                .FirstOrDefaultAsync(d => d.Id == doctorId);
+
+            if (doctor == null)
+            {
+                return NotFound("Doctor not found");
+            }
+
+            // Use doctor's working hours or get admin-configurable defaults
+            var startTime = doctor.StartHour ?? new TimeOnly(9, 0);
+            var endTime = doctor.EndHour ?? new TimeOnly(17, 0);
+
+            // If doctor hasn't set working hours, use admin defaults from system settings
+            if (doctor.StartHour == null || doctor.EndHour == null)
+            {
+                var defaultStartSetting = await _context.SystemSettings
+                    .FirstOrDefaultAsync(s => s.Key == "DefaultDoctorStartHour");
+                var defaultEndSetting = await _context.SystemSettings
+                    .FirstOrDefaultAsync(s => s.Key == "DefaultDoctorEndHour");
+
+                if (doctor.StartHour == null && TimeOnly.TryParse(defaultStartSetting?.Value, out var defaultStart))
+                {
+                    startTime = defaultStart;
+                }
+                
+                if (doctor.EndHour == null && TimeOnly.TryParse(defaultEndSetting?.Value, out var defaultEnd))
+                {
+                    endTime = defaultEnd;
+                }
+            }
+
+            Console.WriteLine($"[GetTimeSlots] Using working hours: {startTime} - {endTime} for Doctor {doctor.FullName}");
+
+            // Define time slots list
             var timeSlots = new List<object>();
-            var startTime = new TimeOnly(9, 0);
-            var endTime = new TimeOnly(17, 0);
 
             // Check for off day
             var isOffDay = await _context.OffDays

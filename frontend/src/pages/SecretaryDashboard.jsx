@@ -6,6 +6,7 @@ import SecretaryHeader from '../components/secretary/SecretaryHeader';
 import WaitingRoom from '../components/secretary/WaitingRoom';
 import AppointmentManager from '../components/secretary/AppointmentManager';
 import PatientManager from '../components/secretary/PatientManager';
+import PaymentHistory from '../components/secretary/PaymentHistory';
 import PatientForm from '../components/secretary/PatientForm';
 import StatCard from '../components/StatCard';
 import { Plus, CreditCard, Calendar, Clock, Activity } from 'lucide-react';
@@ -34,16 +35,17 @@ const SecretaryDashboardContent = ({ navigate, showToast }) => {
     const [showWalkInModal, setShowWalkInModal] = useState(false);
     const [doctors, setDoctors] = useState([]);
     const [selectedDoctor, setSelectedDoctor] = useState(''); // '' means all doctors
+    const [refreshTrigger, setRefreshTrigger] = useState(0); // Lifted state for dynamic refresh
     const didInitRef = useRef(false);
 
     useEffect(() => {
         loadInitialData();
-    }, []);
+    }, [refreshTrigger]); // Reload dashboard stats when trigger updates
 
     useEffect(() => {
         if (!didInitRef.current) return;
         loadDashboard();
-    }, [selectedDoctor]);
+    }, [selectedDoctor, refreshTrigger]);
 
     const loadInitialData = async () => {
         setLoading(true);
@@ -137,6 +139,7 @@ const SecretaryDashboardContent = ({ navigate, showToast }) => {
                                 { id: 'overview', label: 'Overview & Waiting Room' },
                                 { id: 'appointments', label: 'Appointment Management' },
                                 { id: 'patients', label: 'Patient Management' },
+                                { id: 'payments', label: 'Payment History' },
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
@@ -191,11 +194,15 @@ const SecretaryDashboardContent = ({ navigate, showToast }) => {
                         )}
 
                         {activeTab === 'appointments' && (
-                            <AppointmentManager selectedDoctor={selectedDoctor} />
+                            <AppointmentManager selectedDoctor={selectedDoctor} refreshTrigger={refreshTrigger} />
                         )}
 
                         {activeTab === 'patients' && (
                             <PatientManager />
+                        )}
+
+                        {activeTab === 'payments' && (
+                            <PaymentHistory selectedDoctor={selectedDoctor} />
                         )}
                     </div>
                 </div>
@@ -207,6 +214,7 @@ const SecretaryDashboardContent = ({ navigate, showToast }) => {
                             onClose={() => setShowWalkInModal(false)} 
                             doctors={doctors}
                             defaultDoctor={selectedDoctor}
+                            onSuccess={() => setRefreshTrigger(prev => prev + 1)}
                         />
                     )}
                 </AnimatePresence>
@@ -248,7 +256,7 @@ const WaitingRoomLoader = ({ selectedDoctor }) => {
 };
 
 // Walk In Modal Component
-const WalkInModal = ({ onClose, doctors, defaultDoctor }) => {
+const WalkInModal = ({ onClose, doctors, defaultDoctor, onSuccess }) => {
     const { showToast } = useToast();
     const [step, setStep] = useState(1);
     const [query, setQuery] = useState('');
@@ -282,7 +290,7 @@ const WalkInModal = ({ onClose, doctors, defaultDoctor }) => {
             await createAppointment(selectedDoctor, selectedPatient.id, date, time, price ? parseFloat(price) : null);
             showToast('Appointment scheduled successfully!', 'success');
             onClose();
-            window.location.reload();
+            if (onSuccess) onSuccess(); // Dynamic refresh
         } catch(e) { 
             showToast(e.message || 'Failed to create appointment', 'error');
         }

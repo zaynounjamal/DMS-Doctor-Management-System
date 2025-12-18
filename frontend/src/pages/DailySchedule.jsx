@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSecretaryAppointments, getDoctors } from '../secretaryApi';
+import { getSecretaryAppointments, getDoctors, getHolidays } from '../secretaryApi';
 import { useToast } from '../contexts/ToastContext';
 import { Calendar, ChevronLeft, ChevronRight, Clock, User, Phone, Printer } from 'lucide-react';
 
@@ -19,6 +19,7 @@ const DailySchedule = () => {
     const [selectedDate, setSelectedDate] = useState(formatLocalDate(new Date()));
     const [appointments, setAppointments] = useState([]);
     const [doctors, setDoctors] = useState([]);
+    const [holidays, setHolidays] = useState([]);
     const [selectedDoctor, setSelectedDoctor] = useState('');
     const [loading, setLoading] = useState(true);
 
@@ -30,6 +31,7 @@ const DailySchedule = () => {
 
     useEffect(() => {
         loadDoctors();
+        loadHolidays();
     }, []);
 
     useEffect(() => {
@@ -42,6 +44,15 @@ const DailySchedule = () => {
             setDoctors(doctorsList);
         } catch (error) {
             showToast('Failed to load doctors', 'error');
+        }
+    };
+
+    const loadHolidays = async () => {
+        try {
+            const data = await getHolidays();
+            setHolidays(data);
+        } catch (error) {
+            console.error('Failed to load holidays:', error);
         }
     };
 
@@ -117,9 +128,11 @@ const DailySchedule = () => {
     };
 
     const getAppointmentForSlot = (timeSlot) => {
+        const slotHour = timeSlot.substring(0, 2); // "09" from "09:00"
         return appointments.filter(appt => {
-            const apptTime = (appt.appointmentTime || '').substring(0, 5);
-            return apptTime === timeSlot;
+            const apptTime = (appt.appointmentTime || '');
+            // Match if the appointment starts with the same hour "09:"
+            return apptTime.startsWith(`${slotHour}:`);
         });
     };
 
@@ -225,6 +238,21 @@ const DailySchedule = () => {
                     </div>
                 </div>
 
+                {/* Holiday Banner */}
+                {holidays.find(h => h.date === selectedDate || (h.isRecurring && h.date.substring(5) === selectedDate.substring(5))) && (
+                    <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3 text-amber-800">
+                        <div className="p-2 bg-amber-100 rounded-full">
+                            <Calendar className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold">Public Holiday</h3>
+                            <p className="text-sm">
+                                {holidays.find(h => h.date === selectedDate || (h.isRecurring && h.date.substring(5) === selectedDate.substring(5))).name}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Schedule Grid */}
                 <div className="bg-white shadow rounded-lg overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-200 print:py-2">
@@ -271,6 +299,9 @@ const DailySchedule = () => {
                                                             <div className="flex justify-between items-start">
                                                                 <div className="flex-1">
                                                                     <div className="flex items-center gap-2 mb-1">
+                                                                        <span className="text-xs font-bold text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded bg-gray-50">
+                                                                            {(appt.appointmentTime || '').substring(0, 5)}
+                                                                        </span>
                                                                         <User className="w-4 h-4 print:hidden" />
                                                                         <span className="font-medium">{appt.patient.fullName}</span>
                                                                         <span className={`px-2 py-0.5 text-xs rounded-full ${

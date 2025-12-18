@@ -65,7 +65,9 @@ public class ProfileController : ControllerBase
                 user.Doctor.FullName,
                 user.Doctor.Specialty,
                 user.Doctor.Phone,
-                user.Doctor.ProfilePhoto
+                user.Doctor.ProfilePhoto,
+                user.Doctor.StartHour,
+                user.Doctor.EndHour
             };
         }
         else if (user.Role == "secretary" && user.Secretary != null)
@@ -221,11 +223,50 @@ public class ProfileController : ControllerBase
         doctor.User.Email = model.Email; // Update Email
         doctor.Specialty = model.Specialty;
         doctor.Phone = model.Phone;
-        doctor.StartHour = model.StartHour;
-        doctor.EndHour = model.EndHour;
+        Console.WriteLine($"[UpdateDoctorProfile] Incoming Data - StartHour: '{model.StartHour}', EndHour: '{model.EndHour}'");
+
+        if (!string.IsNullOrEmpty(model.StartHour))
+        {
+            try 
+            {
+                // Ensure format HH:mm:ss strictly if needed, or allow flexible.
+                // Trimming just in case.
+                var cleanStart = model.StartHour.Trim();
+                doctor.StartHour = TimeOnly.Parse(cleanStart); 
+                Console.WriteLine($"[UpdateDoctorProfile] Successfully set StartHour: {doctor.StartHour}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UpdateDoctorProfile] Failed to parse StartHour '{model.StartHour}': {ex.Message}");
+            }
+        }
+        else 
+        {
+            Console.WriteLine("[UpdateDoctorProfile] StartHour is null or empty. Skipping update.");
+        }
+
+        if (!string.IsNullOrEmpty(model.EndHour))
+        {
+            try 
+            {
+                var cleanEnd = model.EndHour.Trim();
+                doctor.EndHour = TimeOnly.Parse(cleanEnd);
+                Console.WriteLine($"[UpdateDoctorProfile] Successfully set EndHour: {doctor.EndHour}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UpdateDoctorProfile] Failed to parse EndHour '{model.EndHour}': {ex.Message}");
+            }
+        }
+        else
+        {
+             Console.WriteLine("[UpdateDoctorProfile] EndHour is null or empty. Skipping update.");
+        }
+
         doctor.ProfilePhoto = model.ProfilePhoto;
 
         await _context.SaveChangesAsync();
+        Console.WriteLine("[UpdateDoctorProfile] Saved changes to database.");
 
         return Ok(new 
         { 

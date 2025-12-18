@@ -313,7 +313,7 @@ namespace DMS_DOTNETREACT.Migrations
                             Id = 1,
                             Body = "\r\n                    <h3>Welcome, {{FullName}}!</h3>\r\n                    <p>Thank you for registering with us. We are excited to have you on board.</p>\r\n                    <p>Your username is: <strong>{{UserName}}</strong></p>\r\n                    <br/>\r\n                    <p>Best Regards,</p>\r\n                    <p>The Clinic Team</p>",
                             Description = "Sent to new users upon registration.",
-                            LastUpdated = new DateTime(2025, 12, 18, 11, 52, 49, 809, DateTimeKind.Utc).AddTicks(6685),
+                            LastUpdated = new DateTime(2025, 12, 18, 18, 39, 28, 809, DateTimeKind.Utc).AddTicks(9576),
                             Name = "WelcomeEmail",
                             Subject = "Welcome to Our Clinic!"
                         },
@@ -322,7 +322,7 @@ namespace DMS_DOTNETREACT.Migrations
                             Id = 2,
                             Body = "\r\n                    <h3>Appointment Reminder</h3>\r\n                    <p>Dear {{FullName}},</p>\r\n                    <p>This is a reminder for your upcoming appointment.</p>\r\n                    <p><strong>Date:</strong> {{Date}}</p>\r\n                    <p><strong>Time:</strong> {{Time}}</p>\r\n                    <p><strong>Doctor:</strong> {{DoctorName}}</p>\r\n                    <br/>\r\n                    <p>Please contact us if you need to reschedule.</p>\r\n                    <p>The Clinic Team</p>",
                             Description = "Automated reminder sent 1 day before appointment.",
-                            LastUpdated = new DateTime(2025, 12, 18, 11, 52, 49, 809, DateTimeKind.Utc).AddTicks(9478),
+                            LastUpdated = new DateTime(2025, 12, 18, 18, 39, 28, 810, DateTimeKind.Utc).AddTicks(2196),
                             Name = "AppointmentReminder",
                             Subject = "Appointment Reminder"
                         });

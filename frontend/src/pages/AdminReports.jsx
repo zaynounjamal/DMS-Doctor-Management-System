@@ -124,12 +124,15 @@ const AdminReports = () => {
                             <div className="w-full flex justify-center relative">
                                 <motion.div 
                                     initial={{ height: 0 }}
-                                    animate={{ height: `${(item.revenue / maxRevenue) * 240}px` }}
+                                    animate={{ height: `${(item.revenue / maxRevenue) * 180}px` }}
                                     transition={{ duration: 1, delay: index * 0.05, ease: "circOut" }}
                                     className="w-full max-w-[50px] bg-emerald-50 group-hover/bar:bg-emerald-100 rounded-2xl transition-all duration-500 relative flex justify-center"
                                 >
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-12 bg-gray-900 text-white font-black text-[10px] py-2 px-3 rounded-xl opacity-0 group-hover/bar:opacity-100 transition-all scale-75 group-hover/bar:scale-100 whitespace-nowrap shadow-xl z-20">
-                                        ${item.revenue.toLocaleString()}
+                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full pb-2 pointer-events-none opacity-0 group-hover/bar:opacity-100 transition-all scale-75 group-hover/bar:scale-100 whitespace-nowrap z-50">
+                                        <div className="bg-gray-900 text-white font-black text-[10px] py-2 px-3 rounded-xl shadow-xl">
+                                            ${item.revenue.toLocaleString()}
+                                        </div>
+                                        <div className="w-2 h-2 bg-gray-900 rotate-45 absolute bottom-1 left-1/2 -translate-x-1/2"></div>
                                     </div>
                                     <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-emerald-500 to-emerald-400 rounded-b-2xl rounded-t-sm" />
                                 </motion.div>
