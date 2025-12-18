@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Linq;
 
 namespace DMS_DOTNETREACT.Controllers;
 
@@ -18,6 +19,12 @@ public class SecretaryController : ControllerBase
     private readonly ClinicDbContext _context;
     private readonly PasswordHasher _passwordHasher;
     private readonly AuditService _auditService;
+
+    private static string NormalizePhone(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return string.Empty;
+        return new string(phone.Where(char.IsDigit).ToArray());
+    }
 
     public SecretaryController(ClinicDbContext context, PasswordHasher passwordHasher, AuditService auditService)
     {
@@ -143,11 +150,33 @@ public class SecretaryController : ControllerBase
         var appt = await _context.Appointments.FindAsync(id);
         if (appt == null) return NotFound();
 
-        appt.Status = model.Status; // "checked-in", "cancelled", "scheduled"
+        var oldStatus = (appt.Status ?? string.Empty).ToLowerInvariant();
+        var newStatus = (model.Status ?? string.Empty).ToLowerInvariant();
+        appt.Status = newStatus; // "checked-in", "cancelled", "scheduled", "no-show"
         
-        if (model.Status == "cancelled")
+        if (newStatus == "cancelled")
         {
             appt.CancelReason = model.Reason;
+        }
+
+        if (oldStatus != "no-show" && newStatus == "no-show")
+        {
+            var patient = await _context.Patients
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.Id == appt.PatientId);
+
+            if (patient != null)
+            {
+                patient.User.NoShowCount += 1;
+
+                if (patient.User.NoShowCount >= 3)
+                {
+                    patient.User.IsLoginBlocked = true;
+                    patient.User.IsBookingBlocked = true;
+                    patient.User.BlockReason = "Auto-blocked due to 3+ no-shows";
+                    patient.User.BlockedAt = DateTime.UtcNow;
+                }
+            }
         }
 
         await _context.SaveChangesAsync();
@@ -191,6 +220,30 @@ public class SecretaryController : ControllerBase
         // 1. Check Doctor exists
         var doctor = await _context.Doctors.FindAsync(model.DoctorId);
         if (doctor == null) return BadRequest("Doctor not found");
+
+        var patient = await _context.Patients
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.Id == model.PatientId);
+        if (patient == null) return BadRequest("Patient not found");
+
+        if (patient.User.IsBookingBlocked)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                string.IsNullOrWhiteSpace(patient.User.BlockReason)
+                    ? "Booking is blocked for this account"
+                    : patient.User.BlockReason);
+        }
+
+        var normalizedPhone = NormalizePhone(patient.Phone);
+        if (!string.IsNullOrEmpty(normalizedPhone))
+        {
+            var phoneBlocked = await _context.BlockedPhoneNumbers
+                .AnyAsync(x => x.NormalizedPhone == normalizedPhone);
+            if (phoneBlocked)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "This phone number is blocked");
+            }
+        }
 
         var proposedDateTime = model.Date.ToDateTime(model.Time);
         if (proposedDateTime < DateTime.Now)
@@ -266,6 +319,17 @@ public class SecretaryController : ControllerBase
         if (await _context.Users.AnyAsync(u => u.Username == model.Username))
         {
             return BadRequest("Username already taken");
+        }
+
+        var normalizedPhone = NormalizePhone(model.Phone);
+        if (!string.IsNullOrEmpty(normalizedPhone))
+        {
+            var phoneBlocked = await _context.BlockedPhoneNumbers
+                .AnyAsync(x => x.NormalizedPhone == normalizedPhone);
+            if (phoneBlocked)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "This phone number is blocked");
+            }
         }
 
         var user = new User

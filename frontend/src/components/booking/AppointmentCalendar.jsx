@@ -70,7 +70,7 @@ const AppointmentCalendar = ({ selectedDate, onChange, availableDates = [], disa
         {/* Legend */}
         <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 flex flex-wrap gap-3">
           <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-green-100 border border-green-200"></span> Available</span>
-          <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-primary-light"></span> Selected</span>
+          <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-primary-light dark:bg-primary-dark"></span> Selected</span>
           <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-gray-100"></span> Unavailable</span>
         </div>
       </div>

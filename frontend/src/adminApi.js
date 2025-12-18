@@ -181,6 +181,52 @@ export const resetPassword = async (id, newPassword) => {
     return response.json();
 };
 
+export const blockUser = async (id, { blockLogin = true, blockBooking = true, reason = '' } = {}) => {
+    const response = await fetch(`${API_URL}/admin/users/${id}/block`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ blockLogin, blockBooking, reason })
+    });
+    if (!response.ok) throw new Error('Failed to block user');
+    return response.json();
+};
+
+export const unblockUser = async (id) => {
+    const response = await fetch(`${API_URL}/admin/users/${id}/unblock`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to unblock user');
+    return response.json();
+};
+
+export const getBlockedPhones = async () => {
+    const response = await fetch(`${API_URL}/admin/blocked-phones`, {
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch blocked phones');
+    return response.json();
+};
+
+export const addBlockedPhone = async ({ phone, reason = '' }) => {
+    const response = await fetch(`${API_URL}/admin/blocked-phones`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ phone, reason })
+    });
+    if (!response.ok) throw new Error('Failed to block phone');
+    return response.json();
+};
+
+export const removeBlockedPhone = async (id) => {
+    const response = await fetch(`${API_URL}/admin/blocked-phones/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to unblock phone');
+    return response.json();
+};
+
 // --- HOLIDAYS ---
 export const getHolidays = async () => {
     const response = await fetch(`${API_URL}/admin/holidays`, { headers: getAuthHeaders() });

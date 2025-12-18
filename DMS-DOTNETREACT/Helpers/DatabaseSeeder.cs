@@ -22,6 +22,9 @@ public static class DatabaseSeeder
                 Email = "dr.smith@clinic.com",
                 Role = "doctor",
                 IsActive = true,
+                IsLoginBlocked = false,
+                IsBookingBlocked = false,
+                NoShowCount = 0,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -32,6 +35,9 @@ public static class DatabaseSeeder
                 Email = "dr.johnson@clinic.com",
                 Role = "doctor",
                 IsActive = true,
+                IsLoginBlocked = false,
+                IsBookingBlocked = false,
+                NoShowCount = 0,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -42,6 +48,9 @@ public static class DatabaseSeeder
                 Email = "dr.williams@clinic.com",
                 Role = "doctor",
                 IsActive = true,
+                IsLoginBlocked = false,
+                IsBookingBlocked = false,
+                NoShowCount = 0,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -120,6 +129,9 @@ public static class DatabaseSeeder
                  Email = "secretary@clinic.com",
                  Role = "secretary",
                  IsActive = true,
+                 IsLoginBlocked = false,
+                 IsBookingBlocked = false,
+                 NoShowCount = 0,
                  CreatedAt = DateTime.UtcNow
              };
 
@@ -160,7 +172,7 @@ public static class DatabaseSeeder
         if (!context.Patients.Any())
         {
             Console.WriteLine("Seeding Patients...");
-            var patientUser = new User { Username = "testpatient", PasswordHash = passwordHasher.HashPassword("Patient123!"), Email = "patient@example.com", Role = "patient", IsActive = true };
+            var patientUser = new User { Username = "testpatient", PasswordHash = passwordHasher.HashPassword("Patient123!"), Email = "patient@example.com", Role = "patient", IsActive = true, IsLoginBlocked = false, IsBookingBlocked = false, NoShowCount = 0 };
             context.Users.Add(patientUser);
             context.SaveChanges();
 
@@ -178,9 +190,10 @@ public static class DatabaseSeeder
                     PatientId = patient.Id, 
                     DoctorId = doctor1.Id, 
                     AppointmentDate = today.AddDays(2), 
+                    AppointmentTime = new TimeOnly(10, 0),
                     StartTime = new TimeOnly(10, 0), 
                     EndTime = new TimeOnly(10, 30),
-                    Status = "Scheduled", 
+                    Status = "scheduled", 
                     Price = 150.00m, 
                     PaymentStatus = "paid" 
                 };
@@ -225,6 +238,9 @@ public static class DatabaseSeeder
                     Email = defaultEmail,
                     Role = "patient",
                     IsActive = true,
+                    IsLoginBlocked = false,
+                    IsBookingBlocked = false,
+                    NoShowCount = 0,
                     CreatedAt = DateTime.UtcNow
                 };
                 context.Users.Add(u);
@@ -251,7 +267,10 @@ public static class DatabaseSeeder
                 Email = "admin@clinic.com",
                 Role = "admin",
                 CreatedAt = DateTime.UtcNow,
-                IsActive = true
+                IsActive = true,
+                IsLoginBlocked = false,
+                IsBookingBlocked = false,
+                NoShowCount = 0
             };
             context.Users.Add(adminUser);
             await context.SaveChangesAsync();
@@ -273,6 +292,29 @@ public static class DatabaseSeeder
             await context.SaveChangesAsync();
             Console.WriteLine("System settings seeded.");
         }
+
+        var themeDefaults = new List<SystemSetting>
+        {
+            new SystemSetting { Key = "ThemePrimaryLight", Value = "hsl(262, 52%, 47%)", Description = "UI theme primary (light)" },
+            new SystemSetting { Key = "ThemePrimaryDark", Value = "hsl(262, 65%, 60%)", Description = "UI theme primary (dark)" },
+            new SystemSetting { Key = "ThemeSecondaryLight", Value = "hsl(220, 25%, 95%)", Description = "UI theme secondary (light)" },
+            new SystemSetting { Key = "ThemeSecondaryDark", Value = "hsl(220, 15%, 20%)", Description = "UI theme secondary (dark)" },
+            new SystemSetting { Key = "ThemeAccentLight", Value = "hsl(199, 89%, 48%)", Description = "UI theme accent (light)" },
+            new SystemSetting { Key = "ThemeAccentDark", Value = "hsl(199, 89%, 58%)", Description = "UI theme accent (dark)" },
+            new SystemSetting { Key = "ThemeMutedLight", Value = "hsl(240, 10%, 85%)", Description = "UI theme muted (light)" },
+            new SystemSetting { Key = "ThemeMutedDark", Value = "hsl(240, 5%, 40%)", Description = "UI theme muted (dark)" }
+        };
+
+        foreach (var s in themeDefaults)
+        {
+            var exists = await context.SystemSettings.AnyAsync(x => x.Key == s.Key);
+            if (!exists)
+            {
+                context.SystemSettings.Add(s);
+            }
+        }
+
+        await context.SaveChangesAsync();
         // 7. Seed Email Templates
         if (!context.EmailTemplates.Any(t => t.Name == "WelcomeEmail"))
         {

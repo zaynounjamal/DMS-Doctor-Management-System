@@ -168,7 +168,7 @@ public class PublicController : ControllerBase
 
         var existingAppointments = await _context.Appointments
             .AsNoTracking()
-            .Where(a => a.DoctorId == doctorId && a.AppointmentDate == parsedDate && a.Status != "Cancelled" && a.Status != "cancelled")
+            .Where(a => a.DoctorId == doctorId && a.AppointmentDate == parsedDate && (a.Status ?? "").ToLower() != "cancelled")
             .Select(a => a.AppointmentTime)
             .ToListAsync();
 

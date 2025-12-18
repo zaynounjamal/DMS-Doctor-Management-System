@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MessageCircle, Send, X } from 'lucide-react';
 import { startChat, getConversationMessages, sendConversationMessage, markConversationRead, getUnreadCount } from '../../chatApi';
 import { useToast } from '../../contexts/ToastContext';
+import { getChatHubConnection, isChatHubConnected, joinConversationGroup, leaveConversationGroup, startChatHub } from '../../signalr/chatHub';
 
 const PatientChatWidget = ({ hideButton = false, open: controlledOpen, onOpenChange, onNewMessage }) => {
   const { showToast } = useToast();
@@ -77,7 +78,9 @@ const PatientChatWidget = ({ hideButton = false, open: controlledOpen, onOpenCha
     if (!open) {
       refreshUnread();
       const interval = setInterval(() => {
-        refreshUnread();
+        if (!isChatHubConnected()) {
+          refreshUnread();
+        }
       }, 6000);
       return () => clearInterval(interval);
     }
@@ -96,6 +99,7 @@ const PatientChatWidget = ({ hideButton = false, open: controlledOpen, onOpenCha
     if (!conversationId) return;
 
     const interval = setInterval(async () => {
+      if (isChatHubConnected()) return;
       try {
         await loadConversation(conversationId);
       } catch {
@@ -103,6 +107,58 @@ const PatientChatWidget = ({ hideButton = false, open: controlledOpen, onOpenCha
     }, 6000);
 
     return () => clearInterval(interval);
+  }, [conversationId]);
+
+  // SignalR: live unread + live messages
+  useEffect(() => {
+    let mounted = true;
+    const conn = getChatHubConnection();
+
+    const onUnread = (payload) => {
+      if (!mounted) return;
+      const next = Number(payload?.unreadMessages || 0);
+      setUnreadCount((prev) => {
+        if (!open && next > prev) {
+          showToast('New chat message received', 'info');
+          if (onNewMessage) onNewMessage(next - prev);
+        }
+        return next;
+      });
+    };
+
+    const onMessage = (m) => {
+      if (!mounted) return;
+      if (!m) return;
+      const msgConvId = Number(m.conversationId ?? m.ConversationId);
+      if (!conversationId || msgConvId !== Number(conversationId)) return;
+
+      setMessages((prev) => {
+        const id = m.id ?? m.Id;
+        if (prev.some(x => (x.id ?? x.Id) === id)) return prev;
+        return [...prev, m];
+      });
+      setTimeout(scrollToBottom, 50);
+    };
+
+    startChatHub().catch(() => {
+    });
+
+    conn.on('chat:unread', onUnread);
+    conn.on('chat:message', onMessage);
+
+    return () => {
+      mounted = false;
+      conn.off('chat:unread', onUnread);
+      conn.off('chat:message', onMessage);
+    };
+  }, [open, conversationId, showToast, onNewMessage]);
+
+  useEffect(() => {
+    if (!conversationId) return;
+    joinConversationGroup(conversationId);
+    return () => {
+      leaveConversationGroup(conversationId);
+    };
   }, [conversationId]);
 
   const handleSend = async () => {

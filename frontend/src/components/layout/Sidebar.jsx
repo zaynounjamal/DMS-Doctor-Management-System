@@ -91,8 +91,8 @@ const Sidebar = ({ isOpen, onClose, navItems, variant = 'mobile', role = 'patien
               isDoctor
                 ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100'
                 : theme === 'light'
-                  ? 'bg-purple-600/80 backdrop-blur-xl border-purple-500/30 text-white'
-                  : 'bg-purple-900/80 backdrop-blur-xl border-purple-800/30 text-white'
+                  ? 'bg-primary-light/80 backdrop-blur-xl border-primary-light/30 text-white'
+                  : 'bg-primary-dark/80 backdrop-blur-xl border-primary-dark/30 text-white'
             } border-r`}
           >
             {/* Close Button - Visible on Mobile */}

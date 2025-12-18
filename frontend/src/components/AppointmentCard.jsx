@@ -1,8 +1,8 @@
 import React from 'react';
-import { Phone, Calendar, Clock, FileText, DollarSign, CheckCircle, Mail, MessageSquare } from 'lucide-react';
+import { Phone, Calendar, Clock, FileText, DollarSign, CheckCircle, Mail, MessageSquare, UserX } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
-const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, showActions = true }) => {
+const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, onMarkNoShow, allowNoShow = false, showActions = true }) => {
   const { theme } = useTheme();
 
   const getStatusColor = (status, isCompleted) => {
@@ -18,12 +18,14 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, sho
   const statusColors = {
     completed: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20',
     cancelled: 'text-red-500 bg-red-50 dark:bg-red-900/20',
+    'no-show': 'text-rose-600 bg-rose-50 dark:bg-rose-900/20',
     scheduled: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20'
   };
 
   const getStatusClass = (status, isCompleted) => {
     if (isCompleted) return statusColors.completed;
     if (status === 'cancelled') return statusColors.cancelled;
+    if (status === 'no-show') return statusColors['no-show'];
     return statusColors.scheduled;
   };
 
@@ -158,6 +160,17 @@ const AppointmentCard = ({ appointment, onMarkAsDone, onViewNotes, onRemind, sho
             >
               <CheckCircle size={16} />
               Mark as Done
+            </button>
+          )}
+
+          {allowNoShow && !appointment.isCompleted && appointment.status !== 'cancelled' && appointment.status !== 'no-show' && (
+            <button
+              onClick={() => onMarkNoShow && onMarkNoShow(appointment)}
+              className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-sm font-bold transition-colors shadow-sm active:transform active:scale-95 flex items-center gap-2"
+              title="Mark patient as no-show"
+            >
+              <UserX size={16} />
+              No-Show
             </button>
           )}
 

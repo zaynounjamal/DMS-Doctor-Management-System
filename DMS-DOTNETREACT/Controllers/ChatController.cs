@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.SignalR;
+using DMS_DOTNETREACT.Hubs;
 
 namespace DMS_DOTNETREACT.Controllers;
 
@@ -14,10 +16,64 @@ namespace DMS_DOTNETREACT.Controllers;
 public class ChatController : ControllerBase
 {
     private readonly ClinicDbContext _context;
+    private readonly IHubContext<ChatHub> _hub;
 
-    public ChatController(ClinicDbContext context)
+    public ChatController(ClinicDbContext context, IHubContext<ChatHub> hub)
     {
         _context = context;
+        _hub = hub;
+    }
+
+    private async Task<object> GetUnreadSummaryForPatientUser(int userId)
+    {
+        var patient = await _context.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null)
+        {
+            return new { unreadMessages = 0, unreadConversations = 0 };
+        }
+
+        var conversationIds = await _context.ChatConversations
+            .AsNoTracking()
+            .Where(c => c.PatientId == patient.Id && c.Status != "closed")
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        var unreadMessages = await _context.ChatMessages
+            .AsNoTracking()
+            .CountAsync(m => conversationIds.Contains(m.ConversationId) && m.ReadAt == null && m.SenderRole == "secretary");
+
+        var unreadConversations = await _context.ChatConversations
+            .AsNoTracking()
+            .Where(c => conversationIds.Contains(c.Id))
+            .CountAsync(c => c.Messages.Any(m => m.ReadAt == null && m.SenderRole == "secretary"));
+
+        return new { unreadMessages, unreadConversations };
+    }
+
+    private async Task<object> GetUnreadSummaryForSecretaryUser(int userId)
+    {
+        var secretary = await _context.Secretaries.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == userId);
+        if (secretary == null)
+        {
+            return new { unreadMessages = 0, unreadConversations = 0 };
+        }
+
+        var conversationIds = await _context.ChatConversations
+            .AsNoTracking()
+            .Where(c => c.Status != "closed" && (c.AssignedSecretaryId == secretary.Id || c.Status == "waiting"))
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        var unreadMessages = await _context.ChatMessages
+            .AsNoTracking()
+            .CountAsync(m => conversationIds.Contains(m.ConversationId) && m.ReadAt == null && m.SenderRole == "patient");
+
+        var unreadConversations = await _context.ChatConversations
+            .AsNoTracking()
+            .Where(c => conversationIds.Contains(c.Id))
+            .CountAsync(c => c.Messages.Any(m => m.ReadAt == null && m.SenderRole == "patient"));
+
+        return new { unreadMessages, unreadConversations };
     }
 
     private bool TryGetUserId(out int userId)
@@ -247,6 +303,44 @@ public class ChatController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        if (userRole == "patient")
+        {
+            await _hub.Clients.Group($"user:{userId}")
+                .SendAsync("chat:unread", await GetUnreadSummaryForPatientUser(userId));
+
+            if (conversation.AssignedSecretaryId.HasValue)
+            {
+                var secretaryUserId = await _context.Secretaries
+                    .AsNoTracking()
+                    .Where(s => s.Id == conversation.AssignedSecretaryId.Value)
+                    .Select(s => s.UserId)
+                    .FirstOrDefaultAsync();
+
+                if (secretaryUserId > 0)
+                {
+                    await _hub.Clients.Group($"user:{secretaryUserId}")
+                        .SendAsync("chat:unread", await GetUnreadSummaryForSecretaryUser(secretaryUserId));
+                }
+            }
+        }
+        else if (userRole == "secretary")
+        {
+            await _hub.Clients.Group($"user:{userId}")
+                .SendAsync("chat:unread", await GetUnreadSummaryForSecretaryUser(userId));
+
+            var patientUserId = await _context.Patients
+                .AsNoTracking()
+                .Where(p => p.Id == conversation.PatientId)
+                .Select(p => p.UserId)
+                .FirstOrDefaultAsync();
+
+            if (patientUserId > 0)
+            {
+                await _hub.Clients.Group($"user:{patientUserId}")
+                    .SendAsync("chat:unread", await GetUnreadSummaryForPatientUser(patientUserId));
+            }
+        }
+
         return Ok(new MarkReadResponse { ConversationId = conversationId, MarkedCount = toMark.Count });
     }
 
@@ -388,7 +482,36 @@ public class ChatController : ControllerBase
         _context.ChatMessages.Add(message);
         await _context.SaveChangesAsync();
 
-        return Ok(ToMessageDto(message));
+        var msgDto = ToMessageDto(message);
+        await _hub.Clients.Group($"conv:{conversationId}").SendAsync("chat:message", msgDto);
+
+        var patientUserId = await _context.Patients
+            .AsNoTracking()
+            .Where(p => p.Id == conversation.PatientId)
+            .Select(p => p.UserId)
+            .FirstOrDefaultAsync();
+        if (patientUserId > 0)
+        {
+            await _hub.Clients.Group($"user:{patientUserId}")
+                .SendAsync("chat:unread", await GetUnreadSummaryForPatientUser(patientUserId));
+        }
+
+        if (conversation.AssignedSecretaryId.HasValue)
+        {
+            var secretaryUserId = await _context.Secretaries
+                .AsNoTracking()
+                .Where(s => s.Id == conversation.AssignedSecretaryId.Value)
+                .Select(s => s.UserId)
+                .FirstOrDefaultAsync();
+
+            if (secretaryUserId > 0)
+            {
+                await _hub.Clients.Group($"user:{secretaryUserId}")
+                    .SendAsync("chat:unread", await GetUnreadSummaryForSecretaryUser(secretaryUserId));
+            }
+        }
+
+        return Ok(msgDto);
     }
 
     [HttpGet("secretary/inbox")]

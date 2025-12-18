@@ -138,12 +138,12 @@ const Profile = () => {
                 className="group flex flex-col p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
               >
                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Calendar className="w-24 h-24 text-primary-light" />
+                    <Calendar className="w-24 h-24 text-primary-light dark:text-primary-dark" />
                  </div>
                  <div className="w-14 h-14 mb-4 rounded-xl bg-primary-light/10 dark:bg-primary-dark/20 flex items-center justify-center text-primary-light dark:text-primary-dark group-hover:scale-110 transition-transform duration-300">
                    <Calendar className="w-7 h-7" />
                  </div>
-                 <h3 className="font-bold text-lg mb-1 group-hover:text-primary-light transition-colors">My Appointments</h3>
+                 <h3 className="font-bold text-lg mb-1 group-hover:text-primary-light dark:group-hover:text-primary-dark transition-colors">My Appointments</h3>
                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">View upcoming visits and history.</p>
               </Link>
 

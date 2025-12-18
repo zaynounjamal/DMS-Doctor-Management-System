@@ -105,6 +105,24 @@ export const completeAppointment = async (appointmentId, finalPrice, completionN
     }
 };
 
+export const updateAppointmentStatusDoctor = async (appointmentId, status) => {
+    const response = await fetch(`${API_URL}/appointments/doctor/appointments/${appointmentId}/status`, {
+        method: 'PUT',
+        headers: getAuthHeader(),
+        body: JSON.stringify({ status })
+    });
+    if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(errorText || 'Failed to update appointment status');
+    }
+    const text = await response.text();
+    try {
+        return text ? JSON.parse(text) : {};
+    } catch (e) {
+        return { message: 'Success' };
+    }
+};
+
 export const updatePaymentStatus = async (appointmentId, status) => {
     const response = await fetch(`${API_URL}/appointments/${appointmentId}/payment-status`, {
         method: 'PUT',

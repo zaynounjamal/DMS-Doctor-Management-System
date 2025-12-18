@@ -1,21 +1,32 @@
 import React, { useMemo } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
-// Colors from reference theme
-const COLORS = {
-    light: {
-        primary: '#7C3AED',
-    },
-    dark: {
-        primary: '#A78BFA',
-    },
+const getParticleColor = (isDark) => {
+  if (typeof window === 'undefined') {
+    return isDark ? 'rgba(167, 139, 250, 0.7)' : 'rgba(109, 40, 217, 0.7)';
+  }
+
+  try {
+    const root = document.documentElement;
+    const triplet = getComputedStyle(root)
+      .getPropertyValue(isDark ? '--primary-dark' : '--primary-light')
+      .trim();
+
+    if (!triplet) {
+      return isDark ? 'rgba(167, 139, 250, 0.7)' : 'rgba(109, 40, 217, 0.7)';
+    }
+
+    return `rgb(${triplet} / 0.7)`;
+  } catch {
+    return isDark ? 'rgba(167, 139, 250, 0.7)' : 'rgba(109, 40, 217, 0.7)';
+  }
 };
 
 export default function AnimatedBackground() {
   const { theme } = useTheme();
   // Ensure theme is defined, default to light if not
   const isDark = theme === 'dark';
-  const particleColor = isDark ? COLORS.dark.primary : COLORS.light.primary;
+  const particleColor = getParticleColor(isDark);
   
   const particles = useMemo(() => {
     return Array.from({ length: 150 }, (_, i) => ({

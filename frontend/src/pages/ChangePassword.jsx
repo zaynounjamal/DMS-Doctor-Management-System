@@ -108,7 +108,7 @@ const ChangePassword = () => {
                     value={formData.currentPassword}
                     onChange={handleChange}
                     required
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 dark:focus:ring-primary-dark/50 focus:border-primary-light dark:focus:border-primary-dark transition-all outline-none"
                     placeholder="Enter current password"
                   />
                </div>
@@ -127,7 +127,7 @@ const ChangePassword = () => {
                        value={formData.newPassword}
                        onChange={handleChange}
                        required
-                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 dark:focus:ring-primary-dark/50 focus:border-primary-light dark:focus:border-primary-dark transition-all outline-none"
                        placeholder="Enter new password"
                      />
                   </div>
@@ -166,7 +166,7 @@ const ChangePassword = () => {
                        value={formData.confirmPassword}
                        onChange={handleChange}
                        required
-                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 dark:focus:ring-primary-dark/50 focus:border-primary-light dark:focus:border-primary-dark transition-all outline-none"
                        placeholder="Re-enter new password"
                      />
                   </div>

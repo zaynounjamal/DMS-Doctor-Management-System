@@ -269,7 +269,7 @@ const EditProfile = () => {
                        value={formData.fullName}
                        onChange={handleChange}
                        required
-                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 dark:focus:ring-primary-dark/50 focus:border-primary-light dark:focus:border-primary-dark transition-all outline-none"
                        placeholder="Enter your full name"
                      />
                   </div>
@@ -287,7 +287,7 @@ const EditProfile = () => {
                        name="email"
                        value={formData.email}
                        onChange={handleChange}
-                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 dark:focus:ring-primary-dark/50 focus:border-primary-light dark:focus:border-primary-dark transition-all outline-none"
                        placeholder="Enter your email"
                      />
                   </div>
@@ -305,7 +305,7 @@ const EditProfile = () => {
                        value={formData.phone}
                        onChange={handleChange}
                        required
-                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-all outline-none"
+                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 dark:focus:ring-primary-dark/50 focus:border-primary-light dark:focus:border-primary-dark transition-all outline-none"
                        placeholder="Enter phone number"
                      />
                   </div>
@@ -323,7 +323,7 @@ const EditProfile = () => {
                         name="specialty"
                         value={formData.specialty || ''}
                         onChange={handleChange}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light outline-none"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-light/50 dark:focus:ring-primary-dark/50 focus:border-primary-light dark:focus:border-primary-dark outline-none"
                         placeholder="e.g. Cardiology"
                       />
                    </div>

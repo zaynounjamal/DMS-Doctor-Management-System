@@ -22,6 +22,19 @@ public class User
 
     public bool IsActive { get; set; } = true;
 
+    public bool IsLoginBlocked { get; set; } = false;
+
+    public bool IsBookingBlocked { get; set; } = false;
+
+    [MaxLength(500)]
+    public string? BlockReason { get; set; }
+
+    public DateTime? BlockedAt { get; set; }
+
+    public int? BlockedByUserId { get; set; }
+
+    public int NoShowCount { get; set; } = 0;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public Patient? Patient { get; set; }

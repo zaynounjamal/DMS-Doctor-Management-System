@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getTreatments, createTreatment, updateTreatment, deleteTreatment } from '../adminApi';
 import { useToast } from '../contexts/ToastContext';
-import { Plus, Edit, Trash2, Search, X, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, X, AlertCircle, Settings } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

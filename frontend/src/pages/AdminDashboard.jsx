@@ -3,6 +3,7 @@ import { getAdminDashboardStats } from '../adminApi';
 import { useToast } from '../contexts/ToastContext';
 import { Users, Calendar, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight, Activity, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import AnimatedBackground from '../components/AnimatedBackground';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
@@ -16,7 +17,21 @@ const AdminDashboard = () => {
     const loadStats = async () => {
         try {
             const data = await getAdminDashboardStats();
-            setStats(data);
+            const raw = data || {};
+            const getNum = (v) => {
+                const n = Number(v);
+                return Number.isFinite(n) ? n : 0;
+            };
+
+            setStats({
+                totalRevenue: getNum(raw.totalRevenue ?? raw.TotalRevenue),
+                revenueToday: getNum(raw.revenueToday ?? raw.RevenueToday),
+                totalAppointments: getNum(raw.totalAppointments ?? raw.TotalAppointments),
+                appointmentsToday: getNum(raw.appointmentsToday ?? raw.AppointmentsToday),
+                totalPatients: getNum(raw.totalPatients ?? raw.TotalPatients),
+                newPatientsMonth: getNum(raw.newPatientsMonth ?? raw.NewPatientsMonth),
+                revenueMonth: getNum(raw.revenueMonth ?? raw.RevenueMonth),
+            });
         } catch (error) {
             showToast('Failed to load dashboard stats', 'error');
         } finally {
@@ -26,8 +41,11 @@ const AdminDashboard = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+            <div className="relative min-h-screen">
+                <AnimatedBackground />
+                <div className="relative z-10 flex items-center justify-center min-h-[400px]">
+                    <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+                </div>
             </div>
         );
     }
@@ -68,7 +86,9 @@ const AdminDashboard = () => {
     );
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-10 pb-12">
+        <div className="relative min-h-screen">
+            <AnimatedBackground />
+            <div className="relative z-10 max-w-[1600px] mx-auto space-y-10 pb-12">
             <header>
                 <motion.h2 
                     initial={{ opacity: 0, x: -20 }}
@@ -91,7 +111,7 @@ const AdminDashboard = () => {
                 <StatCard 
                     title="Total Revenue" 
                     value={`$${stats.totalRevenue.toLocaleString()}`} 
-                    subtext={`$${stats.revenueToday} collected today`}
+                    subtext={`$${stats.revenueToday.toLocaleString()} collected today`}
                     icon={DollarSign} 
                     color="bg-emerald-500"
                     trend={12}
@@ -99,8 +119,8 @@ const AdminDashboard = () => {
                 />
                 <StatCard 
                     title="Daily Appts" 
-                    value={stats.totalAppointments} 
-                    subtext={`${stats.appointmentsToday} scheduled today`}
+                    value={stats.totalAppointments.toLocaleString()} 
+                    subtext={`${stats.appointmentsToday.toLocaleString()} scheduled today`}
                     icon={Calendar} 
                     color="bg-blue-600"
                     trend={5}
@@ -108,8 +128,8 @@ const AdminDashboard = () => {
                 />
                 <StatCard 
                     title="Total Patients" 
-                    value={stats.totalPatients} 
-                    subtext={`${stats.newPatientsMonth} new registrations`}
+                    value={stats.totalPatients.toLocaleString()} 
+                    subtext={`${stats.newPatientsMonth.toLocaleString()} new registrations`}
                     icon={Users} 
                     color="bg-indigo-600"
                     trend={8}
@@ -171,6 +191,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
                 </motion.div>
+            </div>
             </div>
         </div>
     );

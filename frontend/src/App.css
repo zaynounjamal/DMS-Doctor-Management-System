@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --primary-light: hsl(262, 52%, 47%);
-  --primary-dark: hsl(262, 65%, 60%);
-  --secondary-light: hsl(220, 25%, 95%);
-  --secondary-dark: hsl(220, 15%, 20%);
-  --accent-light: hsl(199, 89%, 48%);
-  --accent-dark: hsl(199, 89%, 58%);
-  --muted-light: hsl(240, 10%, 85%);
-  --muted-dark: hsl(240, 5%, 40%);
+  --primary-light: 109 40 217;
+  --primary-dark: 167 139 250;
+  --secondary-light: 243 244 246;
+  --secondary-dark: 31 41 55;
+  --accent-light: 14 165 233;
+  --accent-dark: 56 189 248;
+  --muted-light: 203 213 225;
+  --muted-dark: 100 116 139;
 }
 
 * {

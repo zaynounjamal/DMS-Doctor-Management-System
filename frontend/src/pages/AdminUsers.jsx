@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, createUser, toggleUserStatus, resetPassword } from '../adminApi';
+import { getUsers, createUser, toggleUserStatus, resetPassword, blockUser, unblockUser } from '../adminApi';
 import { useToast } from '../contexts/ToastContext';
-import { Plus, Search, User, Shield, Phone, Activity, Power, Lock, X, Mail, ShieldCheck, UserPlus, Filter, AlertCircle } from 'lucide-react';
+import { Plus, Search, User, Shield, Phone, Activity, Power, Lock, X, Mail, ShieldCheck, UserPlus, Filter, AlertCircle, Ban, Unlock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const AdminUsers = () => {
     const { showToast } = useToast();
@@ -55,6 +56,26 @@ const AdminUsers = () => {
             showToast('User status updated', 'success');
         } catch (error) {
             showToast('Failed to update status', 'error');
+        }
+    };
+
+    const handleBlockUser = async (user) => {
+        try {
+            await blockUser(user.id, { blockLogin: true, blockBooking: true, reason: 'Blocked by admin' });
+            await loadUsers();
+            showToast('User blocked (login + booking)', 'success');
+        } catch (error) {
+            showToast('Failed to block user', 'error');
+        }
+    };
+
+    const handleUnblockUser = async (user) => {
+        try {
+            await unblockUser(user.id);
+            await loadUsers();
+            showToast('User unblocked (no-show reset)', 'success');
+        } catch (error) {
+            showToast('Failed to unblock user', 'error');
         }
     };
 
@@ -127,13 +148,22 @@ const AdminUsers = () => {
                              Access Control & Permissions
                         </p>
                     </div>
-                    <button 
-                        onClick={() => setShowModal(true)}
-                        className="flex items-center justify-center w-full md:w-auto px-6 py-3.5 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm md:text-base"
-                    >
-                        <UserPlus className="w-5 h-5 mr-2" />
-                        Create New User
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                        <Link
+                            to="/admin/blocked-phones"
+                            className="flex items-center justify-center w-full sm:w-auto px-6 py-3.5 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black shadow-xl shadow-gray-200 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm md:text-base"
+                        >
+                            <Phone className="w-5 h-5 mr-2" />
+                            Blocked Phones
+                        </Link>
+                        <button 
+                            onClick={() => setShowModal(true)}
+                            className="flex items-center justify-center w-full sm:w-auto px-6 py-3.5 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm md:text-base"
+                        >
+                            <UserPlus className="w-5 h-5 mr-2" />
+                            Create New User
+                        </button>
+                    </div>
                 </div>
 
                 <div className="mt-8 flex flex-col md:flex-row gap-4">
@@ -174,7 +204,7 @@ const AdminUsers = () => {
                                 <th className="px-6 md:px-8 py-4 md:py-5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 min-w-[200px]">User Identity</th>
                                 <th className="px-6 md:px-8 py-4 md:py-5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 min-w-[200px]">Contact Channels</th>
                                 <th className="px-6 md:px-8 py-4 md:py-5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 min-w-[120px]">Platform Role</th>
-                                <th className="px-6 md:px-8 py-4 md:py-5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 min-w-[140px]">Current Status</th>
+                                <th className="px-6 md:px-8 py-4 md:py-5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 min-w-[200px]">Current Status</th>
                                 <th className="px-6 md:px-8 py-4 md:py-5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 min-w-[100px]">Actions</th>
                             </tr>
                         </thead>
@@ -249,9 +279,37 @@ const AdminUsers = () => {
                                                     <span className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
                                                     {isActive ? 'OPERATIONAL' : 'RESTRICTED'}
                                                 </div>
+
+                                                {user.isLoginBlocked || user.isBookingBlocked ? (
+                                                    <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[9px] md:text-[10px] font-bold bg-gray-900 text-white">
+                                                        <Ban className="w-3.5 h-3.5" />
+                                                        BLOCKED
+                                                    </div>
+                                                ) : null}
+
+                                                <div className="mt-2 text-[10px] md:text-xs font-bold text-gray-500">
+                                                    No-shows: <span className="text-gray-900">{user.noShowCount ?? 0}</span>
+                                                </div>
                                             </td>
                                             <td className="px-6 md:px-8 py-4 md:py-6 text-right">
                                                 <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {user.isLoginBlocked || user.isBookingBlocked ? (
+                                                        <button
+                                                            onClick={() => handleUnblockUser(user)}
+                                                            className="p-2 md:p-2.5 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                                                            title="Unblock user (reset no-show count)"
+                                                        >
+                                                            <Unlock className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleBlockUser(user)}
+                                                            className="p-2 md:p-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all shadow-sm"
+                                                            title="Block user (login + booking)"
+                                                        >
+                                                            <Ban className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => handleOpenResetModal(user)}
                                                         className="p-2 md:p-2.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"

@@ -30,6 +30,8 @@ public class ClinicDbContext : DbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<SecretaryAvailability> SecretaryAvailabilities => Set<SecretaryAvailability>();
 
+    public DbSet<BlockedPhoneNumber> BlockedPhoneNumbers => Set<BlockedPhoneNumber>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
@@ -42,6 +44,10 @@ public class ClinicDbContext : DbContext
 
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
+            .IsUnique();
+
+        modelBuilder.Entity<BlockedPhoneNumber>()
+            .HasIndex(x => x.NormalizedPhone)
             .IsUnique();
 
         modelBuilder.Entity<User>()

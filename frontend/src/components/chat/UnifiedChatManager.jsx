@@ -5,6 +5,7 @@ import AIChatWidget from './AIChatWidget';
 import PatientChatWidget from './PatientChatWidget';
 import { useAuth } from '../../contexts/AuthContext';
 import { getUnreadCount } from '../../chatApi';
+import { getChatHubConnection, isChatHubConnected, startChatHub } from '../../signalr/chatHub';
 
 const UnifiedChatManager = () => {
   const { user } = useAuth();
@@ -66,11 +67,41 @@ const UnifiedChatManager = () => {
     };
 
     refresh();
-    const interval = setInterval(refresh, 6000);
+    const interval = setInterval(() => {
+      if (!isChatHubConnected()) {
+        refresh();
+      }
+    }, 6000);
 
     return () => {
       mounted = false;
       clearInterval(interval);
+    };
+  }, [isPatient, activeChat]);
+
+  // SignalR: live unread updates
+  useEffect(() => {
+    if (!isPatient) return;
+
+    let mounted = true;
+    const conn = getChatHubConnection();
+
+    const onUnread = (payload) => {
+      if (!mounted) return;
+      const next = Number(payload?.unreadMessages || 0);
+      if (!activeChat) {
+        setUnreadCount(next);
+      }
+      prevUnreadRef.current = next;
+    };
+
+    startChatHub().catch(() => {
+    });
+    conn.on('chat:unread', onUnread);
+
+    return () => {
+      mounted = false;
+      conn.off('chat:unread', onUnread);
     };
   }, [isPatient, activeChat]);
 
