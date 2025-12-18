@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, Stethoscope, ChevronDown, User, LogOut } from 'lucide-react';
+import { Menu, Stethoscope, ChevronDown, User, LogOut, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const DoctorHeader = ({ onToggleSidebar, user, onLogout }) => {
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const { lang, toggle } = useLanguage();
   const [showLogo, setShowLogo] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -66,6 +66,19 @@ const DoctorHeader = ({ onToggleSidebar, user, onLogout }) => {
 
           {/* Right Side: Profile Button */}
           <div className="flex items-center space-x-3">
+             <button
+               type="button"
+               onClick={toggleTheme}
+               className="p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+               aria-label="Toggle theme"
+             >
+               {theme === 'dark' ? (
+                 <Sun className="w-5 h-5 text-yellow-500" />
+               ) : (
+                 <Moon className="w-5 h-5 text-purple-600" />
+               )}
+             </button>
              <button
                type="button"
                onClick={toggle}

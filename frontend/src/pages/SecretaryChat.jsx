@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, RefreshCw, Send, ChevronLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -19,6 +19,10 @@ const SecretaryChat = () => {
   const [text, setText] = useState('');
   const [isAvailable, setIsAvailable] = useState(false);
   const [unreadSummary, setUnreadSummary] = useState({ unreadMessages: 0, unreadConversations: 0 });
+  
+  // Frontend-only fix: Track messages sent by secretary to filter from unread count
+  const [sentMessageCount, setSentMessageCount] = useState(0);
+  const lastSentTimeRef = useRef(null);
 
   const selectedConversation = useMemo(
     () => inbox.find((c) => c.id === selectedConversationId) || null,
@@ -43,7 +47,16 @@ const SecretaryChat = () => {
   const loadUnreadSummary = async (silent = false) => {
     try {
       const data = await getUnreadCount();
-      setUnreadSummary(data || { unreadMessages: 0, unreadConversations: 0 });
+      const baseUnread = data || { unreadMessages: 0, unreadConversations: 0 };
+      
+      // Frontend-only fix: Subtract messages sent by secretary from unread count
+      // This prevents secretaries from seeing notifications for their own messages
+      const adjustedUnread = {
+        unreadMessages: Math.max(0, baseUnread.unreadMessages - sentMessageCount),
+        unreadConversations: baseUnread.unreadConversations
+      };
+      
+      setUnreadSummary(adjustedUnread);
     } catch (e) {
       if (!silent) showToast(e.message || 'Failed to load unread count', 'error');
     }
@@ -72,6 +85,10 @@ const SecretaryChat = () => {
       markConversationRead(selectedConversationId).catch(() => {
       });
       loadUnreadSummary(true);
+      
+      // Frontend-only fix: Reset sent message counter when opening a conversation
+      // This ensures we start fresh for each conversation
+      setSentMessageCount(0);
     }
   }, [selectedConversationId]);
 
@@ -99,7 +116,15 @@ const SecretaryChat = () => {
 
     const onUnread = (payload) => {
       if (!mounted) return;
-      setUnreadSummary(payload || { unreadMessages: 0, unreadConversations: 0 });
+      const baseUnread = payload || { unreadMessages: 0, unreadConversations: 0 };
+      
+      // Frontend-only fix: Subtract messages sent by secretary from unread count
+      const adjustedUnread = {
+        unreadMessages: Math.max(0, baseUnread.unreadMessages - sentMessageCount),
+        unreadConversations: baseUnread.unreadConversations
+      };
+      
+      setUnreadSummary(adjustedUnread);
     };
 
     const onMessage = (m) => {
@@ -150,6 +175,12 @@ const SecretaryChat = () => {
       await sendConversationMessage(selectedConversationId, toSend);
       await loadMessages(selectedConversationId);
       await loadInbox(tab);
+      
+      // Frontend-only fix: Increment sent message counter when secretary sends a message
+      // This prevents them from seeing notifications for their own messages
+      setSentMessageCount(prev => prev + 1);
+      lastSentTimeRef.current = Date.now();
+      
       await loadUnreadSummary(true);
     } catch (e) {
       showToast(e.message || 'Failed to send message', 'error');

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, DollarSign, Calendar, FileText, Mail, Phone, CheckCircle, Clock } from 'lucide-react';
 import MedicalNotesList from '../components/MedicalNotesList';
+import PaymentConfirmationModal from '../components/PaymentConfirmationModal';
 import { getPatientDetails, getPatientNotes, updatePaymentStatus } from '../doctorApi';
 
 const DoctorPatientView = () => {
@@ -13,6 +14,8 @@ const DoctorPatientView = () => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('info');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   useEffect(() => {
     loadPatientData();
@@ -386,16 +389,9 @@ const DoctorPatientView = () => {
                     {/* Payment Toggle Button */}
                     {apt.isCompleted && apt.paymentStatus === 'unpaid' && (
                       <button
-                        onClick={async () => {
-                          if (!confirm('Mark this appointment as Paid?')) return;
-                          try {
-                            await updatePaymentStatus(apt.id, 'paid');
-                            // Refresh data
-                            loadPatientData();
-                          } catch (e) {
-                            alert('Failed to update status');
-                            console.error(e);
-                          }
+                        onClick={() => {
+                          setSelectedAppointment(apt);
+                          setShowPaymentModal(true);
                         }}
                         style={{
                           padding: '6px 12px',
@@ -428,6 +424,27 @@ const DoctorPatientView = () => {
           <MedicalNotesList notes={notes} />
         </div>
       )}
+
+      {/* Payment Confirmation Modal */}
+      <PaymentConfirmationModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setSelectedAppointment(null);
+        }}
+        onConfirm={async () => {
+          try {
+            await updatePaymentStatus(selectedAppointment.id, 'paid');
+            setShowPaymentModal(false);
+            setSelectedAppointment(null);
+            loadPatientData();
+          } catch (e) {
+            alert('Failed to update payment status');
+            console.error(e);
+          }
+        }}
+        appointmentDetails={selectedAppointment}
+      />
     </div>
   );
 };

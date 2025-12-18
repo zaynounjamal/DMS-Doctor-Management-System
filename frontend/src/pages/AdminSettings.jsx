@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { getSystemSettings, updateSystemSettings, uploadFile } from '../adminApi';
 import { useToast } from '../contexts/ToastContext';
-import { Save, Upload, Settings, Globe, Shield, HeartPulse, Sparkles, Image as ImageIcon, MapPin, Phone, Mail, Facebook, Twitter, Instagram, ChevronRight, CheckCircle2, Loader2, Command } from 'lucide-react';
+import { Save, Upload, Settings, Globe, Shield, HeartPulse, Sparkles, Image as ImageIcon, MapPin, Phone, Mail, Facebook, Twitter, Instagram, ChevronRight, CheckCircle2, Loader2, Command, Eye, EyeOff, X } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import LiveThemePreview from '../components/admin/LiveThemePreview';
 
 const AdminSettings = () => {
     const { showToast } = useToast();
@@ -12,6 +13,7 @@ const AdminSettings = () => {
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('general');
     const [formData, setFormData] = useState({});
+    const [showPreview, setShowPreview] = useState(false);
 
     useEffect(() => {
         loadSettings();
@@ -175,7 +177,7 @@ const AdminSettings = () => {
     );
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 pb-10">
+        <div className={`${showPreview ? 'max-w-7xl' : 'max-w-4xl'} mx-auto space-y-8 pb-10`}>
             {/* Header */}
             <div className="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-50/50 rounded-full blur-3xl -mr-40 -mt-40 z-0" />
@@ -193,18 +195,31 @@ const AdminSettings = () => {
                         </p>
                     </div>
                     
-                    <button
-                        onClick={handleSubmit}
-                        disabled={saving}
-                        className="flex items-center gap-3 px-8 py-4 bg-gray-900 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black disabled:opacity-50 transition-all shadow-xl shadow-gray-200 group"
-                    >
-                        {saving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />}
-                        {saving ? 'Synchronizing...' : 'Save Configuration'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {activeTab === 'branding' && (
+                            <button
+                                type="button"
+                                onClick={() => setShowPreview(!showPreview)}
+                                className="flex items-center gap-2 px-4 py-3 bg-indigo-100 text-indigo-700 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-indigo-200 transition-all"
+                            >
+                                {showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
+                                {showPreview ? 'Hide' : 'Show'} Preview
+                            </button>
+                        )}
+                        <button
+                            onClick={handleSubmit}
+                            disabled={saving}
+                            className="flex items-center gap-3 px-8 py-4 bg-gray-900 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black disabled:opacity-50 transition-all shadow-xl shadow-gray-200 group"
+                        >
+                            {saving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />}
+                            {saving ? 'Synchronizing...' : 'Save Configuration'}
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+            <div className={`${showPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-8' : ''}`}>
+                <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
                 {/* Custom Tabs */}
                 <div className="px-8 pt-8 flex gap-8 border-b border-gray-50">
                     {[
@@ -380,6 +395,36 @@ const AdminSettings = () => {
                         </div>
                     </form>
                 </div>
+            </div>
+            
+            {/* Live Theme Preview Panel */}
+            <AnimatePresence>
+                {showPreview && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden"
+                    >
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <Eye size={18} className="text-indigo-600" />
+                                    Live Theme Preview
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPreview(false)}
+                                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                                >
+                                    <X size={16} className="text-gray-500" />
+                                </button>
+                            </div>
+                            <LiveThemePreview formData={formData} />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             </div>
         </div>
     );

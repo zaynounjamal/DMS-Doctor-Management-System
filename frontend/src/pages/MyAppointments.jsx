@@ -62,6 +62,19 @@ const MyAppointments = () => {
     return hoursDiff > 12;
   };
 
+  // Debug: Log appointment details to check status and timing
+  useEffect(() => {
+    if (appointments.length > 0) {
+      console.log('Appointments:', appointments.map(apt => ({
+        id: apt.id,
+        status: apt.status,
+        date: apt.appointmentDate,
+        time: apt.appointmentTime,
+        isCancellable: apt.status === 'Scheduled' && canCancel(apt.appointmentDate, apt.appointmentTime)
+      })));
+    }
+  }, [appointments]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -107,12 +120,15 @@ const MyAppointments = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {appointments.map((apt) => {
                const statusColors = {
-                 Scheduled: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
-                 Cancelled: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
-                 Completed: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
+                 'Scheduled': 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
+                 'scheduled': 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
+                 'Cancelled': 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
+                 'cancelled': 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
+                 'Completed': 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
+                 'completed': 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
                };
                const statusStyle = statusColors[apt.status] || 'bg-gray-50 text-gray-700 border-gray-200';
-               const isCancellable = apt.status === 'Scheduled' && canCancel(apt.appointmentDate, apt.appointmentTime);
+               const isCancellable = (apt.status === 'Scheduled' || apt.status === 'scheduled') && canCancel(apt.appointmentDate, apt.appointmentTime);
 
                return (
                 <div key={apt.id} className={`group relative bg-white dark:bg-gray-800 rounded-2xl p-6 border transition-all duration-300 hover:shadow-lg ${apt.status === 'Cancelled' ? 'opacity-75 border-gray-100 dark:border-gray-700 bg-gray-50/50' : 'border-gray-100 dark:border-gray-700'}`}>
@@ -149,7 +165,7 @@ const MyAppointments = () => {
                   </div>
 
                   {/* Actions */}
-                  {apt.status === 'Scheduled' && (
+                  {(apt.status === 'Scheduled' || apt.status === 'scheduled') && (
                     <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
                       {isCancellable ? (
                         <button 

@@ -141,6 +141,7 @@ public class AdminController : ControllerBase
         var today = DateOnly.FromDateTime(DateTime.Today);
         var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
         var startOfMonth = new DateOnly(today.Year, today.Month, 1);
+        var startOfPrevMonth = startOfMonth.AddMonths(-1);
 
         // Revenue (Cash + Balance/Card payments)
         // We look at Payments table
@@ -153,15 +154,62 @@ public class AdminController : ControllerBase
             .Where(p => p.PaymentDate.Date >= startOfMonth.ToDateTime(TimeOnly.MinValue))
             .SumAsync(p => p.Amount);
 
+        var revenuePrevMonth = await _context.Payments
+            .Where(p => p.PaymentDate.Date >= startOfPrevMonth.ToDateTime(TimeOnly.MinValue)
+                        && p.PaymentDate.Date < startOfMonth.ToDateTime(TimeOnly.MinValue))
+            .SumAsync(p => p.Amount);
+
         // Appointments
         var totalAppointments = await _context.Appointments.CountAsync();
         var appointmentsToday = await _context.Appointments.CountAsync(a => a.AppointmentDate == today);
+        var appointmentsYesterday = await _context.Appointments.CountAsync(a => a.AppointmentDate == today.AddDays(-1));
         
         // Patients
         var totalPatients = await _context.Patients.CountAsync();
         var newPatientsMonth = await _context.Patients
             .Include(p => p.User)
             .CountAsync(p => p.User.CreatedAt >= startOfMonth.ToDateTime(TimeOnly.MinValue));
+
+        var newPatientsPrevMonth = await _context.Patients
+            .Include(p => p.User)
+            .CountAsync(p => p.User.CreatedAt >= startOfPrevMonth.ToDateTime(TimeOnly.MinValue)
+                            && p.User.CreatedAt < startOfMonth.ToDateTime(TimeOnly.MinValue));
+
+        static double? PercentChange(double current, double previous)
+        {
+            if (previous == 0)
+            {
+                return current == 0 ? 0 : 100;
+            }
+
+            return ((current - previous) / previous) * 100;
+        }
+
+        var trendRevenueMonth = PercentChange((double)revenueMonth, (double)revenuePrevMonth);
+        var trendAppointmentsToday = PercentChange(appointmentsToday, appointmentsYesterday);
+        var trendNewPatientsMonth = PercentChange(newPatientsMonth, newPatientsPrevMonth);
+
+        // Quick insights (best-effort)
+        string? peakHours = null;
+        var todaysAppts = await _context.Appointments
+            .Where(a => a.AppointmentDate == today)
+            .Select(a => a.AppointmentTime)
+            .ToListAsync();
+
+        if (todaysAppts.Count > 0)
+        {
+            var peakHour = todaysAppts
+                .GroupBy(t => t.Hour)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .FirstOrDefault();
+
+            var endHour = (peakHour + 3) % 24;
+            peakHours = $"{peakHour:00}:00 - {endHour:00}:00";
+        }
+
+        // Not currently tracked in DB; returned as null unless you add a real satisfaction metric.
+        string? patientSatisfaction = null;
 
         return Ok(new
         {
@@ -171,7 +219,16 @@ public class AdminController : ControllerBase
             totalAppointments,
             appointmentsToday,
             totalPatients,
-            newPatientsMonth
+            newPatientsMonth,
+            trends = new
+            {
+                totalRevenue = trendRevenueMonth,
+                totalAppointments = trendAppointmentsToday,
+                totalPatients = trendNewPatientsMonth,
+                revenueMonth = trendRevenueMonth
+            },
+            peakHours,
+            patientSatisfaction
         });
     }
 

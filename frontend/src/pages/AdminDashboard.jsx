@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAdminDashboardStats } from '../adminApi';
 import { useToast } from '../contexts/ToastContext';
-import { Users, Calendar, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight, Activity, Clock } from 'lucide-react';
+import { Users, Calendar, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight, Activity, Clock, Minus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AnimatedBackground from '../components/AnimatedBackground';
 
@@ -22,6 +22,13 @@ const AdminDashboard = () => {
                 const n = Number(v);
                 return Number.isFinite(n) ? n : 0;
             };
+            const getTrend = (v) => {
+                if (v === null || v === undefined || v === '') return undefined;
+                const n = Number(v);
+                return Number.isFinite(n) ? n : undefined;
+            };
+
+            const trends = raw.trends ?? raw.Trends ?? {};
 
             setStats({
                 totalRevenue: getNum(raw.totalRevenue ?? raw.TotalRevenue),
@@ -31,6 +38,12 @@ const AdminDashboard = () => {
                 totalPatients: getNum(raw.totalPatients ?? raw.TotalPatients),
                 newPatientsMonth: getNum(raw.newPatientsMonth ?? raw.NewPatientsMonth),
                 revenueMonth: getNum(raw.revenueMonth ?? raw.RevenueMonth),
+                trendTotalRevenue: getTrend(trends.totalRevenue ?? trends.TotalRevenue ?? raw.trendTotalRevenue ?? raw.TrendTotalRevenue),
+                trendTotalAppointments: getTrend(trends.totalAppointments ?? trends.TotalAppointments ?? raw.trendTotalAppointments ?? raw.TrendTotalAppointments),
+                trendTotalPatients: getTrend(trends.totalPatients ?? trends.TotalPatients ?? raw.trendTotalPatients ?? raw.TrendTotalPatients),
+                trendRevenueMonth: getTrend(trends.revenueMonth ?? trends.RevenueMonth ?? raw.trendRevenueMonth ?? raw.TrendRevenueMonth),
+                peakHours: raw.peakHours ?? raw.PeakHours,
+                patientSatisfaction: raw.patientSatisfaction ?? raw.PatientSatisfaction,
             });
         } catch (error) {
             showToast('Failed to load dashboard stats', 'error');
@@ -63,12 +76,29 @@ const AdminDashboard = () => {
                 <div className={`p-4 rounded-2xl ${color} shadow-lg shadow-current/10 group-hover:scale-110 transition-transform`}>
                     <Icon className="w-7 h-7 text-white" />
                 </div>
-                {trend && (
-                    <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold ${trend > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                        {trend > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                        {Math.abs(trend)}%
-                    </div>
-                )}
+                {trend !== undefined && trend !== null && (() => {
+                    const abs = Math.abs(Number(trend));
+                    const formatted = Number.isFinite(abs)
+                        ? abs.toFixed(1).replace(/\.0$/, '')
+                        : '0';
+
+                    const isUp = trend > 0;
+                    const isDown = trend < 0;
+                    const isFlat = trend === 0;
+
+                    const badgeClass = isUp
+                        ? 'bg-green-50 text-green-600'
+                        : isDown
+                            ? 'bg-red-50 text-red-600'
+                            : 'bg-gray-50 text-gray-600';
+
+                    return (
+                        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold ${badgeClass}`}>
+                            {isUp ? <ArrowUpRight size={14} /> : isDown ? <ArrowDownRight size={14} /> : <Minus size={14} />}
+                            {formatted}%
+                        </div>
+                    );
+                })()}
             </div>
             <div className="mt-6">
                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest leading-none mb-2">{title}</p>
@@ -114,7 +144,7 @@ const AdminDashboard = () => {
                     subtext={`$${stats.revenueToday.toLocaleString()} collected today`}
                     icon={DollarSign} 
                     color="bg-emerald-500"
-                    trend={12}
+                    trend={stats.trendTotalRevenue}
                     delay={0.1}
                 />
                 <StatCard 
@@ -123,7 +153,7 @@ const AdminDashboard = () => {
                     subtext={`${stats.appointmentsToday.toLocaleString()} scheduled today`}
                     icon={Calendar} 
                     color="bg-blue-600"
-                    trend={5}
+                    trend={stats.trendTotalAppointments}
                     delay={0.2}
                 />
                 <StatCard 
@@ -132,7 +162,7 @@ const AdminDashboard = () => {
                     subtext={`${stats.newPatientsMonth.toLocaleString()} new registrations`}
                     icon={Users} 
                     color="bg-indigo-600"
-                    trend={8}
+                    trend={stats.trendTotalPatients}
                     delay={0.3}
                 />
                 <StatCard 
@@ -141,56 +171,9 @@ const AdminDashboard = () => {
                     subtext="Revenue for current month"
                     icon={TrendingUp} 
                     color="bg-orange-500"
-                    trend={-2}
+                    trend={stats.trendRevenueMonth}
                     delay={0.4}
                 />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col justify-center items-center min-h-[300px] text-center"
-                >
-                    <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-6">
-                        <Activity size={40} />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Analytics Visualizer</h3>
-                    <p className="text-gray-500 max-w-sm font-medium">Detailed charts and trend analysis are currently being optimized and will be available shortly.</p>
-                </motion.div>
-
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="bg-indigo-600 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-100"
-                >
-                    <div className="relative z-10">
-                        <h3 className="text-2xl font-bold mb-4">Quick Insights</h3>
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
-                                    <ArrowUpRight size={20} />
-                                </div>
-                                <div>
-                                    <div className="text-xs font-bold uppercase tracking-wider opacity-70">Peak Hours</div>
-                                    <div className="font-bold">10:00 AM - 1:00 PM</div>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
-                                    <Users size={20} />
-                                </div>
-                                <div>
-                                    <div className="text-xs font-bold uppercase tracking-wider opacity-70">Patient Satisfaction</div>
-                                    <div className="font-bold">98.4% Exceptional</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-                </motion.div>
             </div>
             </div>
         </div>
