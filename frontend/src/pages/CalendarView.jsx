@@ -10,7 +10,8 @@ import { Mail } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
-import { searchAppointments, sendReminder, getOffDays } from '../doctorApi';
+import { searchAppointments, sendReminder, getOffDays, getHolidays } from '../doctorApi';
+import { getProfile } from '../api';
 
 const locales = {
   'en-US': enUS,
@@ -88,6 +89,9 @@ const CalendarView = () => {
       const offDaysData = await getOffDays();
       setOffDays(offDaysData);
 
+      // Load holidays
+      const holidaysData = await getHolidays();
+
       // Transform appointments to events
       const appointmentEvents = appointments
         .map(apt => {
@@ -149,15 +153,25 @@ const CalendarView = () => {
         type: 'offDay'
       }));
 
+      // Transform holidays to events
+      const holidayEvents = holidaysData.map(h => ({
+        id: `holiday-${h.id}`,
+        title: `HOLIDAY: ${h.name}`,
+        start: new Date(h.date),
+        end: new Date(h.date),
+        allDay: true,
+        type: 'holiday'
+      }));
+
       if (appendMode) {
         // Merge new events with existing ones, avoiding duplicates
         setEvents(prev => {
           const existingIds = new Set(prev.map(e => e.id));
-          const newEvents = [...appointmentEvents, ...offDayEvents].filter(e => !existingIds.has(e.id));
+          const newEvents = [...appointmentEvents, ...offDayEvents, ...holidayEvents].filter(e => !existingIds.has(e.id));
           return [...prev, ...newEvents];
         });
       } else {
-        setEvents([...appointmentEvents, ...offDayEvents]);
+        setEvents([...appointmentEvents, ...offDayEvents, ...holidayEvents]);
       }
 
       // Debug logging for agenda view
@@ -184,6 +198,8 @@ const CalendarView = () => {
 
     if (event.type === 'offDay') {
       backgroundGradient = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+    } else if (event.type === 'holiday') {
+      backgroundGradient = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; // Amber/Orange for Holidays
     } else if (event.resource?.isCompleted) {
       backgroundGradient = 'rgba(147, 51, 234, 0.1)';
       textColor = '#9333ea';
@@ -256,6 +272,40 @@ const CalendarView = () => {
       toastError(error?.message || 'Failed to send reminder');
     }
   };
+
+  const [workingHours, setWorkingHours] = useState(() => {
+    const s = new Date(); s.setHours(8, 0, 0, 0);
+    const e = new Date(); e.setHours(20, 0, 0, 0);
+    return { start: s, end: e };
+  });
+
+  useEffect(() => {
+     // Fetch doctor profile to get working hours
+     const loadProfile = async () => {
+         try {
+             // Use getProfile from api.js which handles auth and correct URL
+             const data = await getProfile();
+             
+             if (data && data.profile && data.profile.startHour && data.profile.endHour) {
+                 const today = new Date();
+                 const [startH, startM] = data.profile.startHour.toString().split(':');
+                 const [endH, endM] = data.profile.endHour.toString().split(':');
+                 
+                 const start = new Date(today);
+                 start.setHours(parseInt(startH), parseInt(startM), 0);
+                 
+                 const end = new Date(today);
+                 end.setHours(parseInt(endH), parseInt(endM), 0);
+                 
+                 setWorkingHours({ start, end });
+                 console.log('Working hours loaded:', { start, end });
+             }
+         } catch(e) { 
+             console.error("Failed to load working hours", e); 
+         }
+     };
+     loadProfile();
+  }, []);
 
   return (
     <>
@@ -350,6 +400,7 @@ const CalendarView = () => {
         
         .rbc-day-bg:last-child {
           border-right: none !important;
+          border-bottom: 1px solid rgba(147, 51, 234, 0.1) !important;
         }
         
         .rbc-day-bg::before {
@@ -713,10 +764,13 @@ const CalendarView = () => {
           /* Header adjustments */
           .calendar-header h1 {
             font-size: 24px !important;
+            min-height: auto !important;
+            margin-bottom: 8px !important;
           }
           
           .calendar-header p {
             font-size: 14px !important;
+            margin-bottom: 16px !important;
           }
           
           /* Toolbar - stack buttons vertically on mobile */
@@ -730,6 +784,7 @@ const CalendarView = () => {
             font-size: 18px !important;
             margin-bottom: 8px !important;
             text-align: center !important;
+            width: 100% !important;
           }
           
           .rbc-btn-group {
@@ -745,6 +800,7 @@ const CalendarView = () => {
             min-width: calc(50% - 4px) !important;
             padding: 8px 12px !important;
             font-size: 12px !important;
+            margin: 0 !important;
           }
           
           .rbc-toolbar button {
@@ -969,15 +1025,17 @@ const CalendarView = () => {
               events={events}
               startAccessor="start"
               endAccessor="end"
-              style={{ height: '650px', opacity: loading ? 0.5 : 1, transition: 'opacity 0.3s ease' }}
-              eventPropGetter={eventStyleGetter}
+              style={{ height: '100%' }}
               onSelectEvent={handleSelectEvent}
-              onNavigate={handleNavigate}
-              date={currentDate}
+              eventPropGetter={eventStyleGetter}
               views={['month', 'week', 'day', 'agenda']}
-              length={90}
-              popup
-              showMultiDayTimes
+              defaultView="week"
+              step={30}
+              timeslots={2}
+              min={workingHours.start}
+              max={workingHours.end}
+              date={currentDate}
+              onNavigate={handleNavigate}
             />
           </div>
         </div>

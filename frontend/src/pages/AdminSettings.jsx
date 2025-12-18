@@ -274,7 +274,24 @@ const AdminSettings = () => {
                                     </div>
 
                                     <div className="pt-6 border-t border-gray-50">
-                                        <div className="flex items-center gap-2 px-2 mb-6">
+                                        <div className="flex items-center gap-2 px-2">
+                                            <Shield size={14} className="text-emerald-400" />
+                                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Doctor Default Hours</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {renderField('DefaultDoctorStartHour', 'Default Start Hour', 'time')}
+                                            {renderField('DefaultDoctorEndHour', 'Default End Hour', 'time')}
+                                        </div>
+                                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                                            <p className="text-[10px] font-bold text-blue-700 uppercase leading-none">Default Working Hours</p>
+                                            <p className="text-xs text-blue-600 mt-1">
+                                                These hours are used for doctors who haven't set their own working hours in their profile.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-6 border-t border-gray-50">
+                                        <div className="flex items-center gap-2 px-2">
                                             <Shield size={14} className="text-emerald-400" />
                                             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Social Matrix</h3>
                                         </div>

@@ -583,38 +583,6 @@ public class AdminController : ControllerBase
         });
     }
 
-    // --- HOLIDAYS ---
-
-    [HttpGet("holidays")]
-    public async Task<ActionResult> GetHolidays()
-    {
-        var holidays = await _context.Holidays.OrderBy(h => h.Date).ToListAsync();
-        return Ok(holidays);
-    }
-
-    [HttpPost("holidays")]
-    public async Task<ActionResult> CreateHoliday([FromBody] Holiday holiday)
-    {
-        if (await _context.Holidays.AnyAsync(h => h.Date == holiday.Date && !h.IsRecurring))
-            return BadRequest("A holiday already exists on this date.");
-
-        _context.Holidays.Add(holiday);
-        await _context.SaveChangesAsync();
-        await _auditService.LogActionAsync(null, "HOLIDAY_CREATED", $"Holiday '{holiday.Name}' created for {holiday.Date}");
-        return Ok(holiday);
-    }
-
-    [HttpDelete("holidays/{id}")]
-    public async Task<ActionResult> DeleteHoliday(int id)
-    {
-        var holiday = await _context.Holidays.FindAsync(id);
-        if (holiday == null) return NotFound();
-
-        _context.Holidays.Remove(holiday);
-        await _context.SaveChangesAsync();
-        await _auditService.LogActionAsync(null, "HOLIDAY_DELETED", $"Holiday '{holiday.Name}' deleted");
-        return Ok(new { message = "Holiday deleted" });
-    }
 
     // --- PATIENTS ---
 

@@ -4,7 +4,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { Search, Filter, Calendar, Clock, CreditCard, ChevronDown, CheckCircle2, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const AppointmentManager = ({ selectedDoctor }) => {
+const AppointmentManager = ({ selectedDoctor, refreshTrigger }) => {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('today');
   const [appointments, setAppointments] = useState([]);
@@ -19,7 +19,11 @@ const AppointmentManager = ({ selectedDoctor }) => {
 
   useEffect(() => {
     fetchAppointments();
-  }, [activeTab, selectedDoctor]);
+    
+    // Auto-refresh every 30 seconds to catch new bookings
+    const interval = setInterval(fetchAppointments, 30000);
+    return () => clearInterval(interval);
+  }, [activeTab, selectedDoctor, refreshTrigger]);
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -95,7 +99,8 @@ const AppointmentManager = ({ selectedDoctor }) => {
     { id: 'today', label: 'Today' },
     { id: 'tomorrow', label: 'Tomorrow' },
     { id: 'future', label: 'Future' },
-    { id: 'past', label: 'Past' }
+    { id: 'past', label: 'Past' },
+    { id: 'all', label: 'All' }
   ];
 
   return (

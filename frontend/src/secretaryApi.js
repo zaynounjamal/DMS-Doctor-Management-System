@@ -233,3 +233,10 @@ export const getPaymentHistory = async (startDate = null, endDate = null, doctor
     return response.json();
 };
 
+export const getHolidays = async () => {
+    const response = await fetch(`${API_URL}/public/holidays`, {
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch holidays');
+    return response.json();
+};

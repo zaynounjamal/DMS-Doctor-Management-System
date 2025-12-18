@@ -97,13 +97,20 @@ public class OffDaysController : ControllerBase
             return BadRequest("Off day already exists for this date");
         }
 
-        // Check if there are appointments on this day
-        var hasAppointments = await _context.Appointments
-            .AnyAsync(a => a.DoctorId == doctor.Id && a.AppointmentDate == offDate && (a.Status ?? "").ToLower() != "cancelled");
+        // Auto-cancel conflicting appointments
+        var conflicts = await _context.Appointments
+            .Where(a => a.DoctorId == doctor.Id && a.AppointmentDate == offDate && (a.Status ?? "").ToLower() != "cancelled")
+            .ToListAsync();
 
-        if (hasAppointments)
+        if (conflicts.Any())
         {
-            return BadRequest("Cannot mark this day as off because you have scheduled appointments. Please cancel or reschedule them first.");
+            foreach (var appointment in conflicts)
+            {
+                appointment.Status = "cancelled";
+                appointment.CancelReason = "Doctor Off Day";
+            }
+            // Save cancellations
+            await _context.SaveChangesAsync();
         }
 
         var offDay = new OffDay
@@ -119,7 +126,7 @@ public class OffDaysController : ControllerBase
 
         return Ok(new 
         { 
-            message = "Off day added successfully", 
+            message = "Off day added successfully" + (conflicts.Any() ? $". {conflicts.Count} appointments were automatically cancelled." : ""), 
             offDay = new {
                 offDay.Id,
                 offDay.Reason,

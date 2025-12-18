@@ -230,7 +230,7 @@ export const sendReminder = async (appointmentId) => {
             headers: getAuthHeader(),
             body: JSON.stringify({ appointmentId })
         });
-        
+
         if (!response.ok) {
             let errorMessage = 'Failed to send reminder';
             try {
@@ -242,7 +242,7 @@ export const sendReminder = async (appointmentId) => {
             }
             throw new Error(errorMessage);
         }
-        
+
         return await response.json();
     } catch (error) {
         // Network-level failure (backend down, CORS blocked, wrong API_URL, etc.)
@@ -307,5 +307,13 @@ export const checkOffDay = async (date) => {
         headers: getAuthHeader()
     });
     if (!response.ok) throw new Error('Failed to check off day');
+    return response.json();
+};
+// Holidays (Public)
+export const getHolidays = async () => {
+    const response = await fetch(`${API_URL}/public/holidays`, {
+        headers: getAuthHeader()
+    });
+    if (!response.ok) throw new Error('Failed to fetch holidays');
     return response.json();
 };

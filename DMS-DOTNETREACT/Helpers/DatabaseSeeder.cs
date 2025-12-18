@@ -287,7 +287,9 @@ public static class DatabaseSeeder
                 new SystemSetting { Key = "Email", Value = "contact@dmshealth.com", Description = "Contact email address" },
                 new SystemSetting { Key = "FacebookUrl", Value = "https://facebook.com", Description = "Facebook link" },
                 new SystemSetting { Key = "TwitterUrl", Value = "https://twitter.com", Description = "Twitter link" },
-                new SystemSetting { Key = "InstagramUrl", Value = "https://instagram.com", Description = "Instagram link" }
+                new SystemSetting { Key = "InstagramUrl", Value = "https://instagram.com", Description = "Instagram link" },
+                new SystemSetting { Key = "DefaultDoctorStartHour", Value = "09:00", Description = "Default working hour start for doctors" },
+                new SystemSetting { Key = "DefaultDoctorEndHour", Value = "17:00", Description = "Default working hour end for doctors" }
             );
             await context.SaveChangesAsync();
             Console.WriteLine("System settings seeded.");

@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getProfile, updateProfile, updateDoctorProfile, uploadProfilePhoto } from '../api';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, User, Phone, Calendar, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import { Camera, User, Phone, Calendar, Save, Loader2 } from 'lucide-react';
 import BackButton from '../components/ui/BackButton';
 import { BASE_URL } from '../config';
 
 const EditProfile = () => {
   const { user, login } = useAuth(); // Get user and login (to update context)
+  const { success, error: toastError } = useToast();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -21,7 +23,7 @@ const EditProfile = () => {
   const [role, setRole] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -41,9 +43,16 @@ const EditProfile = () => {
       });
       setLoading(false);
     }
-    // Also fetch fresh from API to ensure sync
-    loadProfile();
+    // Only fetch fresh from API if not in the middle of saving
+    if (!isSaving) {
+      loadProfile();
+    }
   }, [user]); // Re-run if user context changes
+
+  // Test notification on component mount
+  useEffect(() => {
+    console.log('EditProfile component mounted');
+  }, []);
 
   const loadProfile = async () => {
     try {
@@ -83,8 +92,9 @@ const EditProfile = () => {
     } catch (error) {
       console.error("Background profile fetch failed:", error);
       // If we have user data from context, suppress the UI error or show it subtly
+      // If we have user data from context, suppress the UI error or show it subtly
       if (!user) {
-        setMessage({ type: 'error', text: 'Failed to load profile: ' + error.message });
+        toastError('Failed to load profile: ' + error.message);
       }
     } finally {
       setLoading(false);
@@ -104,7 +114,6 @@ const EditProfile = () => {
     if (!file) return;
 
     setUploading(true);
-    setMessage(null);
 
     try {
       const result = await uploadProfilePhoto(file);
@@ -112,9 +121,9 @@ const EditProfile = () => {
         ...prev,
         profilePhoto: result.url
       }));
-      setMessage({ type: 'success', text: 'Photo uploaded successfully!' });
+      success('Photo uploaded successfully!');
     } catch (error) {
-      setMessage({ type: 'error', text: error.message });
+      toastError(error.message);
     } finally {
       setUploading(false);
     }
@@ -122,11 +131,12 @@ const EditProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(null);
+    setIsSaving(true);
 
     // Phone Validation
     if (formData.phone && formData.phone.length < 8) {
-      setMessage({ type: 'error', text: 'Phone number must be at least 8 characters long.' });
+      toastError('Phone number must be at least 8 characters long.');
+      setIsSaving(false);
       return;
     }
 
@@ -161,9 +171,16 @@ const EditProfile = () => {
       const updatedUser = { ...user, ...formData };
       login(updatedUser);
 
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      // Show success notification immediately
+      success('Profile updated successfully!');
+      
+      // Reset saving flag after a delay
+      setTimeout(() => {
+        setIsSaving(false);
+      }, 1000);
     } catch (error) {
-      setMessage({ type: 'error', text: error.message });
+      toastError(error.message);
+      setIsSaving(false);
     }
   };
 
@@ -189,16 +206,7 @@ const EditProfile = () => {
            <p className="text-gray-500 dark:text-gray-400 mt-1">Update your personal information and profile picture.</p>
         </div>
 
-        {message && (
-          <div className={`p-4 rounded-xl border flex items-center gap-3 ${
-            message.type === 'error' 
-              ? 'bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800' 
-              : 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800'
-          }`}>
-             {message.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
-             <p>{message.text}</p>
-          </div>
-        )}
+
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8">
           
