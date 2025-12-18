@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MessageCircle, Send, X } from 'lucide-react';
-import { startChat, getConversationMessages, sendConversationMessage } from '../../chatApi';
+import { startChat, getConversationMessages, sendConversationMessage, markConversationRead, getUnreadCount } from '../../chatApi';
 import { useToast } from '../../contexts/ToastContext';
 
 const PatientChatWidget = ({ hideButton = false, open: controlledOpen, onOpenChange, onNewMessage }) => {
@@ -16,6 +16,7 @@ const PatientChatWidget = ({ hideButton = false, open: controlledOpen, onOpenCha
   const [infoMessage, setInfoMessage] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
+  const [unreadCount, setUnreadCount] = useState(0);
   const bottomRef = useRef(null);
   const chatWindowRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -33,20 +34,23 @@ const PatientChatWidget = ({ hideButton = false, open: controlledOpen, onOpenCha
 
   const loadConversation = async (id) => {
     const msgs = await getConversationMessages(id);
-    const newMsgs = msgs || [];
-    
-    if (newMsgs.length > prevMessageCount.current) {
-      const addedCount = newMsgs.length - prevMessageCount.current;
-      // Only notify if there are new messages and it's not the initial load or from the user
-      const lastMsg = newMsgs[newMsgs.length - 1];
-      if (prevMessageCount.current > 0 && lastMsg && lastMsg.sender?.toLowerCase() !== 'patient') {
-        if (onNewMessage) onNewMessage(addedCount);
-      }
-      prevMessageCount.current = newMsgs.length;
-    }
-
-    setMessages(newMsgs);
+    setMessages(msgs || []);
     setTimeout(scrollToBottom, 50);
+  };
+
+  const refreshUnread = async () => {
+    try {
+      const data = await getUnreadCount();
+      const next = Number(data?.unreadMessages || 0);
+      setUnreadCount((prev) => {
+        if (!open && next > prev) {
+          showToast('New chat message received', 'info');
+          if (onNewMessage) onNewMessage(next - prev);
+        }
+        return next;
+      });
+    } catch {
+    }
   };
 
   const initChat = async () => {
@@ -64,10 +68,29 @@ const PatientChatWidget = ({ hideButton = false, open: controlledOpen, onOpenCha
   };
 
   useEffect(() => {
-    if (!conversationId) {
+    if (open && !conversationId) {
       initChat();
     }
-  }, []);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      refreshUnread();
+      const interval = setInterval(() => {
+        refreshUnread();
+      }, 6000);
+      return () => clearInterval(interval);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open && conversationId) {
+      markConversationRead(conversationId)
+        .then(() => refreshUnread())
+        .catch(() => {
+        });
+    }
+  }, [open, conversationId]);
 
   useEffect(() => {
     if (!conversationId) return;
@@ -130,18 +153,27 @@ const PatientChatWidget = ({ hideButton = false, open: controlledOpen, onOpenCha
     };
   }, [isDragging]);
 
+  if (!open && hideButton) {
+    return null;
+  }
+
   return (
-    <div className="fixed bottom-5 right-5 z-[9998]">
+    <div className="fixed bottom-5 right-5 z-50">
       {!open ? (
-        !hideButton && (
-          <button
-            onClick={() => setOpen(true)}
-            className="flex items-center gap-2 px-4 py-3 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700"
-          >
-            <MessageCircle className="w-5 h-5" />
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 px-4 py-3 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700"
+        >
+          <MessageCircle className="w-5 h-5" />
+          <span className="relative">
             Chat
-          </button>
-        )
+            {unreadCount > 0 ? (
+              <span className="absolute -top-2 -right-4 inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                {unreadCount}
+              </span>
+            ) : null}
+          </span>
+        </button>
       ) : (
         <div 
           ref={chatWindowRef}

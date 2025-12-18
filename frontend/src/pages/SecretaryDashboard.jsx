@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSecretaryDashboard, getDoctorAvailability, createAppointment, searchPatients, createPatient, getSecretaryAppointments, updateAppointmentStatus, getDoctors } from '../secretaryApi';
 import { useToast } from '../contexts/ToastContext';
@@ -21,15 +21,15 @@ const SecretaryDashboard = () => {
     const [showWalkInModal, setShowWalkInModal] = useState(false);
     const [doctors, setDoctors] = useState([]);
     const [selectedDoctor, setSelectedDoctor] = useState(''); // '' means all doctors
+    const didInitRef = useRef(false);
 
     useEffect(() => {
         loadInitialData();
     }, []);
 
     useEffect(() => {
-        if (doctors.length > 0) {
-            loadDashboard();
-        }
+        if (!didInitRef.current) return;
+        loadDashboard();
     }, [selectedDoctor]);
 
     const loadInitialData = async () => {
@@ -38,6 +38,7 @@ const SecretaryDashboard = () => {
             const doctorsList = await getDoctors();
             setDoctors(doctorsList);
             await loadDashboard();
+            didInitRef.current = true;
         } catch (error) {
             console.error('Failed to load initial data', error);
             showToast('Failed to load dashboard data', 'error');

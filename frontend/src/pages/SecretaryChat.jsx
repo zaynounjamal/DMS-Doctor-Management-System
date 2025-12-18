@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, RefreshCw, Send, ChevronLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getSecretaryInbox, getConversationMessages, sendConversationMessage, setSecretaryAvailability } from '../chatApi';
+import { getSecretaryInbox, getConversationMessages, sendConversationMessage, setSecretaryAvailability, markConversationRead, getUnreadCount } from '../chatApi';
 import { useToast } from '../contexts/ToastContext';
 
 const SecretaryChat = () => {
@@ -17,6 +17,7 @@ const SecretaryChat = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [text, setText] = useState('');
   const [isAvailable, setIsAvailable] = useState(false);
+  const [unreadSummary, setUnreadSummary] = useState({ unreadMessages: 0, unreadConversations: 0 });
 
   const selectedConversation = useMemo(
     () => inbox.find((c) => c.id === selectedConversationId) || null,
@@ -35,6 +36,15 @@ const SecretaryChat = () => {
       if (!silent) showToast(e.message || 'Failed to load inbox', 'error');
     } finally {
       if (!silent) setLoadingInbox(false);
+    }
+  };
+
+  const loadUnreadSummary = async (silent = false) => {
+    try {
+      const data = await getUnreadCount();
+      setUnreadSummary(data || { unreadMessages: 0, unreadConversations: 0 });
+    } catch (e) {
+      if (!silent) showToast(e.message || 'Failed to load unread count', 'error');
     }
   };
 
@@ -58,6 +68,9 @@ const SecretaryChat = () => {
   useEffect(() => {
     if (selectedConversationId) {
       loadMessages(selectedConversationId);
+      markConversationRead(selectedConversationId).catch(() => {
+      });
+      loadUnreadSummary(true);
     }
   }, [selectedConversationId]);
 
@@ -65,8 +78,10 @@ const SecretaryChat = () => {
     const interval = setInterval(async () => {
       try {
         await loadInbox(tab, true);
+        await loadUnreadSummary(true);
         if (selectedConversationId) {
           await loadMessages(selectedConversationId, true);
+          await markConversationRead(selectedConversationId);
         }
       } catch {
       }
@@ -85,6 +100,7 @@ const SecretaryChat = () => {
       await sendConversationMessage(selectedConversationId, toSend);
       await loadMessages(selectedConversationId);
       await loadInbox(tab);
+      await loadUnreadSummary(true);
     } catch (e) {
       showToast(e.message || 'Failed to send message', 'error');
       setText(toSend);
@@ -120,6 +136,9 @@ const SecretaryChat = () => {
             </button>
             <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">Chat Inbox</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">Ticket-style messages from patients</p>
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Unread chats: {unreadSummary.unreadConversations}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -179,6 +198,7 @@ const SecretaryChat = () => {
               ) : (
                 inbox.map((c) => {
                   const active = c.id === selectedConversationId;
+                  const unreadCount = Number(c.unreadCount || 0);
                   return (
                     <button
                       key={c.id}
@@ -188,7 +208,14 @@ const SecretaryChat = () => {
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="font-semibold text-gray-900 dark:text-white truncate">{c.patientName}</div>
+                        <div className="font-semibold text-gray-900 dark:text-white truncate flex items-center gap-2">
+                          <span className="truncate">{c.patientName}</span>
+                          {unreadCount > 0 ? (
+                            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                              {unreadCount}
+                            </span>
+                          ) : null}
+                        </div>
                         <div className="text-xs text-gray-500">#{c.id}</div>
                       </div>
                       <div className="mt-1 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">

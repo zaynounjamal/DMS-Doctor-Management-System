@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Bot } from 'lucide-react';
 import { AI_URL } from '../../config';
 
 const DEFAULT_SUGGESTIONS = [
@@ -118,9 +119,10 @@ const AIChatWidget = ({ bottomOffsetPx = 20, hideButton = false, open: controlle
         !hideButton && (
           <button
             onClick={() => setOpen(true)}
-            className="rounded-full px-4 py-3 bg-primary-light dark:bg-primary-dark text-white shadow-lg hover:shadow-xl transition"
+            className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300"
+            aria-label="Open AI Chat"
           >
-            AI Chat
+            <Bot className="w-6 h-6" />
           </button>
         )
       ) : (

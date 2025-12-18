@@ -116,7 +116,7 @@ const AdminUsers = () => {
     });
 
     return (
-        <div className="max-w-[1500px] mx-auto space-y-6 md:space-y-8 pb-10 px-4 md:px-0">
+        <div className="max-w-[1500px] mx-auto space-y-6 md:space-y-8 pb-10 px-4">
             {/* Header section */}
             <div className="bg-white rounded-[24px] md:rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -129,7 +129,7 @@ const AdminUsers = () => {
                     </div>
                     <button 
                         onClick={() => setShowModal(true)}
-                        className="flex items-center justify-center px-6 py-3.5 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm md:text-base"
+                        className="flex items-center justify-center w-full md:w-auto px-6 py-3.5 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm md:text-base"
                     >
                         <UserPlus className="w-5 h-5 mr-2" />
                         Create New User
@@ -166,8 +166,9 @@ const AdminUsers = () => {
 
             {/* List */}
             <div className="bg-white rounded-[24px] md:rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
+                <div className="overflow-x-auto -mx-4 md:mx-0">
+                    <div className="px-4 md:px-0">
+                        <table className="w-full border-collapse min-w-[920px]">
                         <thead>
                             <tr className="bg-gray-50/50">
                                 <th className="px-6 md:px-8 py-4 md:py-5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 min-w-[200px]">User Identity</th>
@@ -250,7 +251,7 @@ const AdminUsers = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 md:px-8 py-4 md:py-6 text-right">
-                                                <div className="flex items-center justify-end gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => handleOpenResetModal(user)}
                                                         className="p-2 md:p-2.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
@@ -277,6 +278,7 @@ const AdminUsers = () => {
                             )}
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
 
@@ -295,9 +297,9 @@ const AdminUsers = () => {
                             initial={{ scale: 0.95, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                            className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden mx-auto"
+                            className="bg-white rounded-[24px] md:rounded-[32px] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden mx-auto max-h-[90vh] flex flex-col"
                         >
-                            <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+                            <div className="px-6 md:px-8 py-5 md:py-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
                                 <div>
                                     <h3 className="text-xl font-extrabold text-gray-900">Add System User</h3>
                                     <p className="text-xs text-blue-600 font-black uppercase tracking-widest mt-1">Initialize new operational account</p>
@@ -307,9 +309,9 @@ const AdminUsers = () => {
                                 </button>
                             </div>
                             
-                            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="col-span-2">
+                            <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6 overflow-y-auto">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="col-span-1 sm:col-span-2">
                                         <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">User Permissions Role</label>
                                         <div className="relative">
                                             <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
@@ -359,7 +361,7 @@ const AdminUsers = () => {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Email Endpoint</label>
                                         <input 

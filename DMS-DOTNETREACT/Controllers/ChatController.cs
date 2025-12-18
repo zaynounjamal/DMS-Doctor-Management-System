@@ -50,8 +50,12 @@ public class ChatController : ControllerBase
         c.Status,
         c.CreatedAt,
         c.ClosedAt,
-        LastMessageAt = c.Messages.OrderByDescending(x => x.SentAt).Select(x => (DateTime?)x.SentAt).FirstOrDefault()
+        LastMessageAt = c.Messages.OrderByDescending(x => x.SentAt).Select(x => (DateTime?)x.SentAt).FirstOrDefault(),
+        UnreadCount = c.Messages.Count(m => m.ReadAt == null && m.SenderRole == "patient")
     };
+
+    private static string GetUserRole(ClaimsPrincipal user)
+        => user.FindFirst(ClaimTypes.Role)?.Value?.ToLowerInvariant() ?? string.Empty;
 
     public class StartChatResponse
     {
@@ -64,6 +68,12 @@ public class ChatController : ControllerBase
     public class SendMessageRequest
     {
         public string Text { get; set; } = string.Empty;
+    }
+
+    public class MarkReadResponse
+    {
+        public int ConversationId { get; set; }
+        public int MarkedCount { get; set; }
     }
 
     [HttpPost("start")]
@@ -133,7 +143,7 @@ public class ChatController : ControllerBase
             return Unauthorized("Invalid token");
         }
 
-        var userRole = User.FindFirst(ClaimTypes.Role)?.Value?.ToLowerInvariant();
+        var userRole = GetUserRole(User);
 
         var conversation = await _context.ChatConversations
             .Include(c => c.Patient)
@@ -178,6 +188,131 @@ public class ChatController : ControllerBase
             .ToListAsync();
 
         return Ok(messages.Select(ToMessageDto));
+    }
+
+    [HttpPost("conversations/{conversationId:int}/read")]
+    public async Task<ActionResult<MarkReadResponse>> MarkConversationRead([FromRoute] int conversationId)
+    {
+        if (!TryGetUserId(out var userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var userRole = GetUserRole(User);
+
+        var conversation = await _context.ChatConversations
+            .Include(c => c.Patient)
+            .FirstOrDefaultAsync(c => c.Id == conversationId);
+
+        if (conversation == null)
+        {
+            return NotFound("Conversation not found");
+        }
+
+        if (userRole == "patient")
+        {
+            var patient = await _context.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.UserId == userId);
+            if (patient == null || conversation.PatientId != patient.Id)
+            {
+                return Forbid();
+            }
+        }
+        else if (userRole == "secretary")
+        {
+            var secretary = await _context.Secretaries.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == userId);
+            if (secretary == null)
+            {
+                return Forbid();
+            }
+
+            if (conversation.AssignedSecretaryId.HasValue && conversation.AssignedSecretaryId.Value != secretary.Id && conversation.Status != "waiting")
+            {
+                return Forbid();
+            }
+        }
+        else
+        {
+            return Forbid();
+        }
+
+        var now = DateTime.UtcNow;
+        var toMark = await _context.ChatMessages
+            .Where(m => m.ConversationId == conversationId && m.ReadAt == null && m.SenderRole != userRole)
+            .ToListAsync();
+
+        foreach (var msg in toMark)
+        {
+            msg.ReadAt = now;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new MarkReadResponse { ConversationId = conversationId, MarkedCount = toMark.Count });
+    }
+
+    [HttpGet("unread-count")]
+    public async Task<ActionResult> GetUnreadCount()
+    {
+        if (!TryGetUserId(out var userId))
+        {
+            return Unauthorized("Invalid token");
+        }
+
+        var userRole = GetUserRole(User);
+
+        if (userRole == "secretary")
+        {
+            var secretary = await _context.Secretaries.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == userId);
+            if (secretary == null)
+            {
+                return NotFound("Secretary profile not found");
+            }
+
+            var conversationIds = await _context.ChatConversations
+                .AsNoTracking()
+                .Where(c => c.Status != "closed" && (c.AssignedSecretaryId == secretary.Id || c.Status == "waiting"))
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            var unreadMessages = await _context.ChatMessages
+                .AsNoTracking()
+                .CountAsync(m => conversationIds.Contains(m.ConversationId) && m.ReadAt == null && m.SenderRole == "patient");
+
+            var unreadConversations = await _context.ChatConversations
+                .AsNoTracking()
+                .Where(c => conversationIds.Contains(c.Id))
+                .CountAsync(c => c.Messages.Any(m => m.ReadAt == null && m.SenderRole == "patient"));
+
+            return Ok(new { unreadMessages, unreadConversations });
+        }
+
+        if (userRole == "patient")
+        {
+            var patient = await _context.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.UserId == userId);
+            if (patient == null)
+            {
+                return NotFound("Patient profile not found");
+            }
+
+            var conversationIds = await _context.ChatConversations
+                .AsNoTracking()
+                .Where(c => c.PatientId == patient.Id && c.Status != "closed")
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            var unreadMessages = await _context.ChatMessages
+                .AsNoTracking()
+                .CountAsync(m => conversationIds.Contains(m.ConversationId) && m.ReadAt == null && m.SenderRole == "secretary");
+
+            var unreadConversations = await _context.ChatConversations
+                .AsNoTracking()
+                .Where(c => conversationIds.Contains(c.Id))
+                .CountAsync(c => c.Messages.Any(m => m.ReadAt == null && m.SenderRole == "secretary"));
+
+            return Ok(new { unreadMessages, unreadConversations });
+        }
+
+        return Forbid();
     }
 
     [HttpPost("conversations/{conversationId:int}/messages")]
